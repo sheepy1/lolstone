@@ -7,6 +7,7 @@ import { allHeroClasses } from '../engine';
 import { UiRoot } from '../ui/UiRoot';
 import '../ui/styles.css';
 import '../ui/menu.css';
+import '../ui/cursors.css';
 import { MENU_FONT } from '../ui/hextech';
 import { GameApp } from './game';
 import { setUi } from './store';

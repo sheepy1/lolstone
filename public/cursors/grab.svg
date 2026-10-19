@@ -1,0 +1,25 @@
+<!-- 拖拽中：三只金爪尖朝内收拢，扣住中间发光的青色晶核。热点 (16, 16)，在晶核中心 -->
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#fff2c8"/><stop offset="0.45" stop-color="#e0b25e"/><stop offset="1" stop-color="#8c6428"/>
+    </linearGradient>
+    <linearGradient id="ink" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#1f3346"/><stop offset="1" stop-color="#070d15"/>
+    </linearGradient>
+  </defs>
+  <defs>
+    <radialGradient id="core"><stop offset="0" stop-color="#ffffff"/><stop offset="0.45" stop-color="#5ff3e6"/><stop offset="1" stop-color="#0e6f72"/></radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6"/></filter>
+    <path id="claw" d="M11.6 3.4 L20.4 3.4 L18.6 7.8 L16 11.2 L13.4 7.8 Z"/>
+  </defs>
+  <circle cx="16" cy="16" r="6" fill="#3ff0e0" opacity="0.7" filter="url(#glow)"/>
+  <g stroke="#04070b" stroke-width="3" stroke-linejoin="round" fill="none">
+    <use href="#claw"/><use href="#claw" transform="rotate(120 16 16)"/><use href="#claw" transform="rotate(240 16 16)"/>
+  </g>
+  <g fill="url(#ink)" stroke="url(#gold)" stroke-width="1.3" stroke-linejoin="miter">
+    <use href="#claw"/><use href="#claw" transform="rotate(120 16 16)"/><use href="#claw" transform="rotate(240 16 16)"/>
+  </g>
+  <path d="M16 11.2 L20.2 16 L16 20.8 L11.8 16 Z" fill="url(#core)" stroke="#04070b" stroke-width="1.2" stroke-linejoin="round"/>
+  <path d="M16 12.6 L18.4 16 L16 19.4" fill="none" stroke="#ffffff" stroke-width="0.7" stroke-opacity="0.8"/>
+</svg>

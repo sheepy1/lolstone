@@ -983,3 +983,19 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
   满场同时死亡时一帧 700 次、9ms。改成把子树的目标放进集合、全部补间只扫一遍。
 
 M1 基准机上没测，合并后要在 M1 上用 `bench.benchCombat(bench.fullBoard(), () => bench.fullBoardWipe(bench.current.director.displayed), 2.5)` 再测一次。
+
+## 鼠标指针（M4，2026-10-20）
+
+海克斯风格的指针，和主菜单、结束回合按钮同一种视觉语言：深色填充、金色描边、青色光。
+
+- 图：`public/cursors/<名>.svg` 是源文件，`<名>.png`（32×32）和 `<名>@2x.png`（64×64）由 `node scripts/render-cursors.ts`
+  渲染（无头 Chromium 截透明底）。用 PNG 不用 SVG 当光标：Chrome 按 1 倍光栅化 SVG 光标，Retina 屏上发糊。改了 SVG 要重跑脚本。
+- 六种状态：默认（尖角箭头，热点 3,2）、可交互（同一个箭头提亮加青光和四角星，热点不变，切换时不跳）、拖拽中（三只金爪扣住
+  青色晶核，热点在中心）、选目标（金色准星，中间红色菱形，和目标箭头同色）、等待（海克斯沙漏）、不可用（灰色箭头加红色禁止徽记）。
+- `src/ui/cursors.css`：每种状态先写只有 1 倍图的 `url()`，再写 `image-set()`，最后一项是系统兜底指针；表格写在文件头。
+  React 层的 `#ui button`、`#ui a`、单选项用可交互指针，覆盖 `styles.css` 里的 `cursor: pointer`，不用改那个文件。
+- 画布：`Interaction.setCursor` 把状态写进 canvas 的 `data-cursor`，CSS 按它选图。`syncCursor` 按当前状态算：拿着牌是拖拽，
+  拉着箭头是选目标；输入锁定时（对方回合或动画在播）是等待；否则看指针下的东西：能出的牌、能攻击的随从、可用的英雄技能、
+  我方回合的结束回合按钮是可交互，自己回合里出不了的手牌是不可用，其余是默认。悬停、拿起、选目标、提交、取消和每次 `refresh`
+  都会调它。
+- 截图不带系统指针。验证时在页面里注入一个调试浮层：读指针下元素算出的 `cursor`，把同一张图按 1x/2x srcset 画在鼠标位置。

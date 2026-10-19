@@ -180,7 +180,7 @@ export const judgment: SignatureModule = (c) => {
 };
 
 export const demacianJustice: SignatureModule = (c) => {
-  if (c.events[0]!.kind === 'spell_cast') return prelude(c, { fx: 'holy', color: HOLY_GLOW, preset: 'holy_pillar', count: 10, scale: 0.5, sounds: ['spell.holy'] });
+  if (c.events[0]!.kind === 'spell_cast') return prelude(c, { fx: 'holy', color: HOLY_GLOW, preset: 'holy_pillar', count: 10, scale: 0.5, sounds: [] }) // magic 层是主步的天光，起手不放，免得 spell.holy 响两次;
   const J = JUSTICE;
   const { scene } = c;
   const t = gsap.timeline();

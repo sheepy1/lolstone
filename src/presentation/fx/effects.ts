@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { FONT_CN, FONT_NUM } from '../../scene/theme';
 import type { Vec3 } from '../layout';
 import { hdr, markBloom } from './materials';
-import { shared } from '../../scene/dispose';
+import { releaseTexture, shared } from '../../scene/dispose';
 
 const MAX_PARTICLES = 2000; // spec 5.10
 let liveParticles = 0;
@@ -53,7 +53,7 @@ export function textSprite(str: string, color: number, height: number, font = FO
 function disposeSprite(s: THREE.Sprite | null): void {
   if (!s) return;
   s.removeFromParent();
-  s.material.map?.dispose();
+  if (s.material.map) releaseTexture(s.material.map);
   s.material.dispose();
 }
 

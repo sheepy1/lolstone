@@ -7,7 +7,7 @@ import { flashMaterial, markBloom } from '../presentation/fx/materials';
 import { textSprite } from '../presentation/fx/effects';
 import { cardBackTexture, makeLabelCanvas, strokeText } from './canvasArt';
 import { COLORS, FONT_CN } from './theme';
-import { shared } from './dispose';
+import { releaseTexture, shared } from './dispose';
 
 const gemGeo = shared(new THREE.OctahedronGeometry(0.2, 0));
 const socketGeo = shared(new THREE.CylinderGeometry(0.22, 0.26, 0.08, 8));
@@ -106,7 +106,7 @@ export class DeckView extends THREE.Group {
   showCount(on: boolean): void {
     if (this.tip) {
       this.tip.removeFromParent();
-      this.tip.material.map?.dispose();
+      if (this.tip.material.map) releaseTexture(this.tip.material.map);
       this.tip.material.dispose();
       this.tip = null;
     }

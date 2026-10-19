@@ -4,7 +4,34 @@
 import gsap from 'gsap';
 
 export type PlacedCue = { channel: string; at: number; weight: number; run: () => void; many?: () => void };
-export type Placed = { tl: gsap.core.Timeline; impact?: number; cues?: PlacedCue[]; order?: number; stagger?: number };
+export type Placed = { tl: gsap.core.Timeline; impact?: number; cues?: PlacedCue[]; order?: number; stagger?: number; tail?: number };
+
+// 组间重叠（m4-storyboard 1.7）：上一组最后结束的那个事件，收尾进行到 OVERLAP 时，下一组可以开始。
+// 收尾可以重叠，命中帧不能：所以这个时刻不早于这一步里任何一个命中帧。
+export const OVERLAP = 0.6;
+
+// 这一步在合成时间线上的哪个时刻可以放下一组开始。没有声明收尾时就是整步结束
+export function readyTime(anims: readonly Placed[], starts: readonly number[]): number {
+  let end = 0;
+  let last = -1;
+  anims.forEach((a, i) => {
+    const e = starts[i] + a.tl.duration();
+    if (e >= end) {
+      end = e;
+      last = i;
+    }
+  });
+  if (last < 0) return 0;
+  const hits = anims.filter((x) => x.impact !== undefined).map((x) => starts[anims.indexOf(x)] + x.impact!);
+  // 有命中帧的一步（攻击）：最后一个命中帧之后都算收尾，不管最后结束的是攻击本身还是跟在撞击上的受伤
+  if (hits.length > 0) {
+    const hit = Math.max(...hits);
+    return hit + (end - hit) * OVERLAP;
+  }
+  const a = anims[last];
+  const tail = Math.max(0, Math.min(a.tl.duration(), a.tail ?? 0));
+  return end - tail * (1 - OVERLAP);
+}
 
 // 每条事件时间线在整步里的开始时刻
 export function placeStarts(anims: readonly Placed[]): number[] {
@@ -50,6 +77,7 @@ export function composeStep(anims: readonly Placed[]): gsap.core.Timeline {
   const starts = placeStarts(anims);
   anims.forEach((a, i) => master.add(a.tl, starts[i]));
   for (const c of pickCues(anims, starts)) master.call(c.run, undefined, c.time);
+  master.data = { ready: readyTime(anims, starts) };
   return master;
 }
 

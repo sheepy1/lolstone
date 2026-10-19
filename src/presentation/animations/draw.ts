@@ -7,20 +7,34 @@ import { above, deckSlot } from '../layout';
 import type { AnimModule } from './types';
 import { tl } from './util';
 
-export const draw: AnimModule<'draw'> = (e, { scene, after, viewer }) => {
+export const draw: AnimModule<'draw'> = (e, { scene, after, viewer, step, index }) => {
   const t = tl();
   const mine = e.side === viewer;
+  // 同一步里多张抽牌（同组）错开 120ms 起飞（E03 的"并行"）：按这一张在同一步同一方的抽牌里排第几算
+  const nth = step && index !== undefined ? step.slice(0, index).filter((x) => x.kind === 'draw' && x.side === e.side).length : 0;
+  const delay = nth * DRAW_STAGGER;
   t.call(() => {
     scene.spawnAtSlot = true;
     scene.sync(after, 0.25);
     scene.spawnAtSlot = false;
     const card = scene.handCards.get(e.card.instanceId);
     if (!card) return;
+    const id = e.card.instanceId;
+    scene.incomingHand.add(id);
     const from = above(deckSlot(scene.place(e.side)).pos, 0.3);
     const pan = scene.panAt(from);
-    if (!mine) playSfx('card.draw', { pan });
-    flyFromDeck(card, from, { flip: mine, onFlip: mine ? () => playSfx('card.draw', { pan }) : undefined });
+    const fly = flyFromDeck(card, from, { flip: mine, onFlip: mine ? () => playSfx('card.draw', { pan }) : undefined });
+    if (!mine) fly.call(() => playSfx('card.draw', { pan }), undefined, 0);
+    fly.delay(delay);
+    // 落位后并进扇形：飞行途中同一步的其他抽牌可能已经改了张数，槽位要按最新的张数重排
+    fly.call(() => {
+      scene.incomingHand.delete(id);
+      scene.layoutHand(0.15);
+    });
   });
-  t.to({}, { duration: FLOW.drawLift + FLOW.drawFly + FLOW.drawSettle });
-  return { tl: t };
+  t.to({}, { duration: delay + FLOW.drawLift + FLOW.drawFly + FLOW.drawSettle });
+  return { tl: t, tail: FLOW.drawSettle };
 };
+
+// 同组抽牌错开的间隔（m4-storyboard E03）
+export const DRAW_STAGGER = 0.12;

@@ -12,6 +12,8 @@ export type AnimContext = {
   viewer: Side;
   // 同一步里的全部事件（含这个）。受伤模块据此判断自己是不是攻击撞击的一部分
   step?: readonly PresentationEvent[];
+  // 这个事件在同一步里的序号（从 0 数）。同组多张抽牌据此错开（m4-storyboard E03）
+  index?: number;
 };
 
 // 一步里只能出现一次的反馈（m4-storyboard 1.7）：震屏取最重的一次，命中声取最重的一次，语音只播最后一条。
@@ -29,7 +31,9 @@ export type Cue = {
 // impact：同一步里有带 impact 的事件（攻击）时，其余事件从 impact 时刻开始，表现为"撞上的瞬间受伤"。
 // order、stagger：同组多个目标按 order（目标在画面上的横坐标）从左到右每个错开 stagger 秒（1.7 的"一道波"）；
 // 有攻击的一步不错开，攻击方和被攻击方同一个命中帧。
-export type Anim = { tl: gsap.core.Timeline; impact?: number; cues?: Cue[]; order?: number; stagger?: number };
+// tail：时间线最后多少秒是收尾（回弹、淡出、让位、残留），m4-storyboard 1.7 的组间重叠按它算：这一步里最后结束的事件
+// 收尾进行到 60% 时，下一组就可以开始。有 impact 的一步不看 tail：最后一个命中帧之后都算收尾。其余不写时算 0（不重叠）。
+export type Anim = { tl: gsap.core.Timeline; impact?: number; cues?: Cue[]; order?: number; stagger?: number; tail?: number };
 
 export type AnimModule<K extends PresentationEventKind> = (e: PresentationEventOf<K>, ctx: AnimContext) => Anim;
 

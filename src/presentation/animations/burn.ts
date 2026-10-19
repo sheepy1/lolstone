@@ -35,5 +35,5 @@ export const burn: AnimModule<'burn'> = (e, { scene, after }) => {
   }, undefined, P.show + P.hold);
   t.to({}, { duration: P.burn }, P.show + P.hold);
   t.add(syncTo(scene, after, 0.1));
-  return { tl: t };
+  return { tl: t, tail: 0.1 };
 };

@@ -131,9 +131,12 @@ describe('阶段时长和分镜一致', () => {
     expect(DEATH.stagger).toBeCloseTo(0.05);
   });
 
-  it('E17 冻结：扩散 200 + 覆冰 300 = 500，解冻冰层 150', () => {
-    expect(FREEZE.spread + FREEZE.coat).toBeCloseTo(0.5);
-    expect(FREEZE.thaw).toBeCloseTo(0.15);
+  it('E17 冻结（按用户反馈重做后）：冰棱长完、闪光都在 700ms 内；解冻先裂 150ms 再碎', () => {
+    expect(FREEZE.growAt + FREEZE.grow).toBeLessThanOrEqual(FREEZE.flashAt + 1e-9);
+    expect(FREEZE.flashAt + FREEZE.flash).toBeLessThanOrEqual(FREEZE.total + 0.1);
+    expect(FREEZE.crack).toBeCloseTo(0.15);
+    expect(FREEZE.crack + FREEZE.shatter).toBeLessThanOrEqual(FREEZE.thawTotal + 1e-9);
+    expect(FREEZE.stagger).toBeCloseTo(0.04);
   });
 
   it('E12、E24：命中声 ≥ 3 换重、≥ 5 叠低频，英雄 3 到 4 S1、≥ 5 S2；同组错开 40ms', () => {

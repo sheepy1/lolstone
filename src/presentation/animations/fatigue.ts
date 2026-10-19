@@ -70,5 +70,5 @@ export const fatigue: AnimModule<'fatigue'> = (e, { scene, after }) => {
   });
   t.to({}, { duration: P.fade });
   t.add(syncTo(scene, after, 0.1));
-  return { tl: t };
+  return { tl: t, tail: 0.1 };
 };

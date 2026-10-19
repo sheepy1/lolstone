@@ -5,5 +5,5 @@ import { syncTo, tl } from './util';
 export const gameStart: AnimModule<'game_start'> = (_e, { scene, after }) => {
   const t = tl();
   t.add(syncTo(scene, after, 0.4));
-  return { tl: t };
+  return { tl: t, tail: 0.4 };
 };

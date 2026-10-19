@@ -1,7 +1,9 @@
 // 随从入场（spec 5.6 v0.6.2、m4-storyboard E07）：
 // 从手牌打出的：牌悬在落点上方，蓄力再抬一点，然后变成随从底座快速砸到台面；落地时底座压扁再回弹，脚下扬起尘土，
 // 相邻随从同时让位；高费随从加一圈冲击波和很轻的镜头震动。尘土是粒子预设 dust_land（分镜表 1.5）。英雄随从落地后说登场台词。
-// 效果和英雄技能召唤的衍生物从光点凝聚成形。
+// 效果和英雄技能召唤的衍生物（m4-storyboard E20，500ms，比出随从轻一档：没有砸落，没有语音）：
+// 凝聚 250ms（summon_gather 20 粒在槽位向内聚，相邻随从同时让位）→ 成形 200ms（底座 0 到 1.1 到 1，dust_land 4 粒）。
+// 声音：combat.summon 在 t=0，轻落地 card.land 在成形帧。同一步召唤多个时错开 80ms。
 import gsap from 'gsap';
 import { playSfx, playVoice } from '../../audio';
 import { championOf } from '../../assets/manifest';
@@ -28,25 +30,60 @@ export const PLAY_MINION = {
   shakeCost: 6, // 这个费用及以上落地加镜头轻震（S1）
 };
 
+// 衍生物：光点凝聚成形（E20）
+function tokenSummon(
+  e: Parameters<AnimModule<'minion_summoned'>>[0],
+  scene: Parameters<AnimModule<'minion_summoned'>>[1]['scene'],
+  after: ViewState,
+  step: Parameters<AnimModule<'minion_summoned'>>[1]['step'],
+  index: number | undefined,
+) {
+  const t = tl();
+  const P = TOKEN_SUMMON;
+  const id = e.target.kind === 'minion' ? e.target.instanceId : -1;
+  // 同一步召唤多个（嘉文四世）错开 80ms
+  const nth = step && index !== undefined ? step.slice(0, index).filter((x) => x.kind === 'minion_summoned' && x.via !== 'play').length : 0;
+  const at = nth * P.stagger;
+  t.call(() => {
+    // 先让位：新随从放上去但先不显示，相邻随从滑开
+    scene.heldSpawns.add(id);
+    scene.sync(after, P.gather);
+    const m = scene.minion(id);
+    const pos = m ? { x: m.position.x, y: 0, z: m.position.z } : pointOf(scene, e.target)();
+    playSfx('combat.summon', { pan: scene.panAt(pos) });
+    scene.particles.emit('summon_gather', { at: pos, count: 20 });
+  }, undefined, at);
+  // 成形（弹）：底座从 0 放大到 1.1 再回到 1，脚下一点尘土，轻落地声
+  t.call(
+    () => {
+      const m = scene.minion(id);
+      if (!m) return;
+      const pos = { x: m.position.x, y: 0, z: m.position.z };
+      m.body.visible = true;
+      m.body.position.y = 0;
+      gsap.fromTo(m.body.scale, { x: 0.01, y: 0.01, z: 0.01 }, { x: 1, y: 1, z: 1, duration: P.form, ease: 'back.out(2.2)' });
+      flash(m.flash, 0xfff1a0, 0.7, P.form);
+      scene.particles.emit('dust_land', { at: pos, count: 4 });
+      playSfx('card.land', { pan: scene.panAt(pos) });
+      statusEnter(scene, id, keywordsOf(after, e.side, id));
+    },
+    undefined,
+    at + P.gather,
+  );
+  t.to({}, { duration: P.form }, at + P.gather);
+  return { tl: t, tail: P.form };
+}
+
 const dustCount = (cost: number) => (cost <= 3 ? 8 : cost <= 6 ? 14 : 20);
 
 const keywordsOf = (v: ViewState, side: Side, id: number) => v.players[side].board.find((m) => m.instanceId === id)?.keywords ?? [];
 
-export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before, after }) => {
+// E20 的参数
+export const TOKEN_SUMMON = { gather: 0.25, form: 0.2, stagger: 0.08 };
+
+export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before, after, step, index }) => {
   const t = tl();
-  const where = pointOf(scene, e.target);
-  if (e.via !== 'play' || e.target.kind !== 'minion') {
-    // 衍生物：光点凝聚成形
-    t.add(syncTo(scene, after, 0.35));
-    t.call(() => playSfx('combat.summon'), undefined, 0);
-    t.add(ring(scene.layers.fx, where, 0xfff1a0, 90, 0.45), 0);
-    t.call(() => {
-      const m = e.target.kind === 'minion' ? scene.minion(e.target.instanceId) : undefined;
-      if (m) flash(m.flash, 0xffffff, 0.9, 0.35);
-      if (m) statusEnter(scene, m.instanceId, keywordsOf(after, e.side, m.instanceId));
-    }, undefined, 0.05);
-    return { tl: t };
-  }
+  if (e.via !== 'play' || e.target.kind !== 'minion') return tokenSummon(e, scene, after, step, index);
   const id = e.target.instanceId;
   const P = PLAY_MINION;
   const cost = getCard(e.cardId).cost;
@@ -99,5 +136,6 @@ export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before
     if (champ) playVoice(champ, 'choose');
   }, undefined, '+=0.15');
   t.to({}, { duration: Math.max(0, P.settle - 0.15) });
-  return { tl: t };
+  // 落地之后（压扁回弹、冲击波、登场台词）都算收尾，下一组可以在收尾进行到 60% 时开始
+  return { tl: t, tail: Math.max(0, t.duration() - (P.charge + P.smash)) };
 };

@@ -1,53 +1,14 @@
-// 随从身上常驻状态的进入和退出（m4-storyboard E17 冻结、E18 圣盾、E19 潜行、E16 沉默）。
-// 常驻状态本身（冰层、外壳、烟、护盾环）归 MinionView，按显示局面显示或隐藏；这里只做"从无到有"和"从有到无"的过程，
+// 随从身上常驻状态的进入和退出（m4-storyboard E18 圣盾、E19 潜行、E16 沉默；冻结在 iceShell.ts）。
+// 常驻状态本身（外壳、烟、护盾环）归 MinionView，按显示局面显示或隐藏；这里只做"从无到有"和"从有到无"的过程，
 // 每个函数在调用的那一刻开始播，自己管自己的补间。
 import gsap from 'gsap';
 import * as THREE from 'three';
 import { MINION_BASE, MINION_TOP } from '../../scene/geometry';
 import type { MinionView } from '../../scene/minionView';
-import { MINION_HEIGHT } from '../layout';
 import { fresnelMaterial, hdr } from './materials';
 
 // 潜行时底座和头像的透明度（m4-storyboard E19），MinionView 的常驻状态也用它
 export const STEALTH_OPACITY = 0.55;
-
-const ICE_H = MINION_HEIGHT + 0.22; // 冰层的高度（minionView.ts 里冰块的尺寸）
-
-// 冰层从底座向上覆盖（裁切 0 → 1）。冰层的可见性由 MinionView 按显示局面管，调用前先 sync 让它可见
-export function iceRise(m: MinionView, duration: number): gsap.core.Tween {
-  const ice = m.ice;
-  ice.visible = true;
-  const st = { k: 0 };
-  const apply = () => {
-    const k = Math.max(0.001, st.k);
-    ice.scale.y = ICE_H * k;
-    ice.position.y = (ICE_H * k) / 2;
-  };
-  apply();
-  return gsap.to(st, { k: 1, duration, ease: 'power2.out', onUpdate: apply, onComplete: apply });
-}
-
-// 冰层退去（1 → 0），结束时把尺寸恢复，可见性交还给 MinionView
-export function iceMelt(m: MinionView, duration: number): gsap.core.Tween {
-  const ice = m.ice;
-  const st = { k: 1 };
-  const apply = () => {
-    const k = Math.max(0.001, st.k);
-    ice.scale.y = ICE_H * k;
-    ice.position.y = (ICE_H * k) / 2;
-  };
-  return gsap.to(st, {
-    k: 0,
-    duration,
-    ease: 'power2.in',
-    onUpdate: apply,
-    onComplete: () => {
-      ice.visible = false;
-      st.k = 1;
-      apply();
-    },
-  });
-}
 
 // 获得圣盾：外壳 0 → over → 1（弹），护盾环收拢亮起
 export function shieldGain(m: MinionView, duration: number, over: number, ringTime: number): void {

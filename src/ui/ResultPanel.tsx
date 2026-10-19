@@ -34,7 +34,7 @@ export function ResultPanel({ app }: { app: GameApp }) {
     if (replay) location.reload();
     else {
       const m = getUi().menu;
-      void app.startMatch(m.humanClass, m.aiClass, undefined, m.difficulty);
+      void app.startMatch(m.humanClass, m.aiClass, undefined, m.difficulty, m.humanDeck);
     }
   };
   const toMenu = () => {

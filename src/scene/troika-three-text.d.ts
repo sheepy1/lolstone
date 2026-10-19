@@ -12,6 +12,8 @@ declare module 'troika-three-text' {
     anchorX: Anchor;
     anchorY: Anchor;
     maxWidth: number;
+    overflowWrap: 'normal' | 'break-word';
+    whiteSpace: 'normal' | 'nowrap';
     textAlign: 'left' | 'right' | 'center' | 'justify';
     lineHeight: number | 'normal';
     outlineWidth: number | string;

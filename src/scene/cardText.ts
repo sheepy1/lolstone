@@ -1,10 +1,12 @@
 // 卡面文字（spec 5.4、6.1）：费用、名字、文本、攻击、生命用 troika-three-text 的 SDF 文本，叠在卡面底图上，
 // 透视缩小、放大都清晰。字体是按卡池用到的字做的子集（public/fonts，生成方法见 NOTES「M3 表现层」）。
 // 坐标是卡牌本地坐标（卡牌中心为原点，宽 CARD_W、高 CARD_H），和 canvasArt.ts 里卡面底图的版式一一对应。
+// 正文的断行和字号由 cardTextLayout.ts 算（troika 只在空白处折行，中文整句不会折）。
 import { preloadFont, Text } from 'troika-three-text';
 import { getCard, type CardDef } from '../engine';
 import { cardFontUrl } from '../assets/manifest';
 import { CARD_H, CARD_T, CARD_W } from '../presentation/layout';
+import { approxMeasure, layoutBody, type BodyBox, type BodyLayout, type Measure } from './cardTextLayout';
 import { COLORS } from './theme';
 
 // 卡面底图是 512×716 的 canvas，这里把它的像素坐标换成卡牌本地坐标
@@ -14,6 +16,64 @@ const at = (px: number, py: number): [number, number] => [-CARD_W / 2 + px * PX,
 const Z = CARD_T / 2 + 0.004;
 
 type Slot = 'cost' | 'name' | 'body' | 'attack' | 'health';
+
+// 正文文本框（canvasArt.ts 的文本框是 x 48 到 464、y 475 到 656 像素）。正文从 y 488 起排，左右各留 6 像素；
+// 随从卡底部两角有攻击、生命圆章（顶边在 y 594），正文排到 y 592 为止，法术卡排到 y 648。
+const BODY_TOP = 488;
+const BODY_FONT = 0.088;
+const BODY_LINE = 1.3;
+const BODY_WIDTH = (464 - 48 - 12) * PX;
+export const BODY_BOX: Record<'minion' | 'spell', BodyBox> = {
+  minion: { width: BODY_WIDTH, height: (592 - BODY_TOP) * PX, fontSize: BODY_FONT, lineHeight: BODY_LINE },
+  spell: { width: BODY_WIDTH, height: (648 - BODY_TOP) * PX, fontSize: BODY_FONT, lineHeight: BODY_LINE },
+};
+
+// 量宽度用的 canvas 和卡面字体。字体加载好之前用近似宽度，加载好后之前建的卡重新排一次。
+const MEASURE_FAMILY = 'MeLoL Card Measure';
+let measureCtx: CanvasRenderingContext2D | null = null;
+let measureFontReady = false;
+let measureFontLoading: Promise<void> | null = null;
+const live = new Set<CardTexts>();
+const layoutCache = new Map<string, BodyLayout>();
+
+const measure: Measure = (s) => {
+  if (!measureFontReady) return approxMeasure(s);
+  if (!measureCtx) {
+    measureCtx = document.createElement('canvas').getContext('2d')!;
+    measureCtx.font = `700 100px "${MEASURE_FAMILY}"`;
+  }
+  return measureCtx.measureText(s).width / 100;
+};
+
+function loadMeasureFont(): Promise<void> {
+  if (measureFontLoading) return measureFontLoading;
+  if (typeof FontFace === 'undefined' || typeof document === 'undefined') return Promise.resolve();
+  const face = new FontFace(MEASURE_FAMILY, `url(${cardFontUrl()})`, { weight: '700' });
+  measureFontLoading = face
+    .load()
+    .then((f) => {
+      document.fonts.add(f);
+      measureFontReady = true;
+      layoutCache.clear();
+      for (const t of live) t.relayout();
+      live.clear();
+    })
+    .catch(() => {
+      // 字体文件缺失：一直用近似宽度，troika 那边也会退回默认字体
+    });
+  return measureFontLoading;
+}
+
+function bodyLayout(def: CardDef): BodyLayout {
+  const kind = def.type === 'minion' ? 'minion' : 'spell';
+  const key = `${kind}|${def.text}`;
+  let l = layoutCache.get(key);
+  if (!l) {
+    l = layoutBody(def.text, measure, BODY_BOX[kind]);
+    layoutCache.set(key, l);
+  }
+  return l;
+}
 
 function make(): Text {
   const t = new Text();
@@ -43,12 +103,14 @@ export class CardTexts {
     name.outlineWidth = '7%';
     name.maxWidth = 1.3;
     const body = make();
-    [body.position.x, body.position.y] = at(256, 488);
+    [body.position.x, body.position.y] = at(256, BODY_TOP);
     body.anchorY = 'top';
-    body.fontSize = 0.088;
-    body.maxWidth = 1.22;
+    body.fontSize = BODY_FONT;
+    // 换行由 bodyLayout 算好写进文本；maxWidth 比排版宽度宽一点，量出来的宽度和 troika 有细微出入时不会再被它折一次
+    body.maxWidth = BODY_WIDTH + 0.06;
+    body.overflowWrap = 'break-word';
     body.textAlign = 'center';
-    body.lineHeight = 1.3;
+    body.lineHeight = BODY_LINE;
     const attack = make();
     [attack.position.x, attack.position.y] = at(72, 650);
     attack.fontSize = 0.19;
@@ -59,6 +121,18 @@ export class CardTexts {
     health.outlineWidth = '10%';
     this.texts = { cost, name, body, attack, health };
     parent.add(cost, name, body, attack, health);
+    // 只记字体加载好之前建的卡（一般是加载页之前就建好的，很少），加载好后重排一次就不再引用，不拖住已销毁的卡
+    if (!measureFontReady) live.add(this);
+    void loadMeasureFont();
+  }
+
+  // 卡面字体加载好后按准确宽度重新断行
+  relayout(): void {
+    if (!this.def) return;
+    const l = bodyLayout(this.def);
+    this.texts.body.text = l.lines.join('\n');
+    this.texts.body.fontSize = l.fontSize;
+    this.texts.body.sync();
   }
 
   // 显示一张卡的文字。null 表示看不到的牌（卡背），文字全部隐藏。
@@ -75,7 +149,9 @@ export class CardTexts {
     t.name.text = def.name;
     // 名字太长时缩小字号，横幅里放得下
     t.name.fontSize = def.name.length > 6 ? 0.12 : 0.14;
-    t.body.text = def.text;
+    const body = bodyLayout(def);
+    t.body.text = body.lines.join('\n');
+    t.body.fontSize = body.fontSize;
     const minion = def.type === 'minion';
     t.attack.text = String(def.attack ?? 0);
     t.health.text = String(def.health ?? 0);
@@ -128,12 +204,17 @@ export class CardTexts {
   }
 
   dispose(): void {
+    live.delete(this);
     for (const x of Object.values(this.texts)) x.dispose();
   }
 }
 
 // 加载页预载字体和本局用到的字，开局时卡面文字不用临时排版
+// 同时加载正文断行量宽度用的同一份字体
 export function preloadCardFont(characters: string): Promise<void> {
-  return new Promise((resolve) => preloadFont({ font: cardFontUrl(), characters }, () => resolve()));
+  return Promise.all([
+    new Promise<void>((resolve) => preloadFont({ font: cardFontUrl(), characters }, () => resolve())),
+    loadMeasureFont(),
+  ]).then(() => {});
 }
 

@@ -1,15 +1,17 @@
-// 英雄：水晶枢纽（spec 5.2 v0.6.2）。枢纽和英雄头像融为一体，小巧、不悬空、不挡视线：头像圆盘嵌在底座上，
-// 生命值是底座右前角的一枚六边形生命徽章（和随从的生命徽章同一套造型，大一号）。造型待用户定稿，先做三个方案：
-//   a 水晶台座：底座本身是半透明的发光水晶六棱台，上面一圈金属沿，头像嵌在顶面；
-//   b 金属台座加嵌件：深色金属六棱台，六个角上嵌着发光的小水晶，头像嵌在顶面；
+// 英雄：水晶枢纽（spec 5.2、5.4 v0.6.7）。枢纽和英雄头像融为一体，小巧、不悬空、不挡视线：头像圆盘嵌在底座上，
+// 生命值是底座右前角的一枚六边形生命徽章（和随从的生命徽章同一套造型，大一号）。用户定稿的是方案 b：
+//   b 暗色金属六棱台，四周一圈半球形玻璃罩小灯（nexusLamps.ts），头像嵌在顶面。默认用它。
+// 另外两个否掉的方案留着对比，用地址参数 ?nexus=a|c 切换（spec 5.4 写明不再回头）：
+//   a 水晶台座：底座本身是半透明的发光水晶六棱台，上面一圈金属沿；
 //   c 水晶环：薄的金属底座，头像外围一圈发光的水晶环。
-// 方案用地址参数 ?nexus=a|b|c 切换（默认 c，待用户定稿）。生命低于 10 时水晶部分闪烁；输掉时水晶碎掉。
+// 生命低于 10 时，b 的小灯从后往前逐颗熄灭、剩下的不稳地闪；a、c 的水晶闪烁。输掉时发光部分碎掉。
 import gsap from 'gsap';
 import * as THREE from 'three';
 import { getCard, getHeroClass, type HeroClass } from '../engine';
 import { NEXUS } from '../presentation/layout';
 import { EDGE_GLOW, flashMaterial, glowMaterial, markBloom } from '../presentation/fx/materials';
 import { makeLabelCanvas, portraitTexture, strokeText, hexPath } from './canvasArt';
+import { NexusLamps } from './nexusLamps';
 import { StatBadge } from './statBadge';
 import { COLORS, FONT_CN, FONT_NUM, REGION_COLORS } from './theme';
 import { shared } from './dispose';
@@ -18,13 +20,12 @@ export type NexusStyle = 'a' | 'b' | 'c';
 
 export function nexusStyle(): NexusStyle {
   const v = new URLSearchParams(globalThis.location?.search ?? '').get('nexus');
-  return v === 'a' || v === 'b' ? v : 'c';
+  return v === 'a' || v === 'c' ? v : 'b';
 }
 
 const discGeo = shared(new THREE.CircleGeometry(NEXUS.discRadius, 40));
 const discRimGeo = shared(new THREE.TorusGeometry(NEXUS.discRadius + 0.02, 0.05, 8, 40));
 const targetRingGeo = shared(new THREE.TorusGeometry(1.32, 0.07, 8, 48));
-const shardGeo = shared(new THREE.OctahedronGeometry(0.16, 0));
 
 export class HeroView extends THREE.Group {
   readonly body = new THREE.Group();
@@ -37,6 +38,8 @@ export class HeroView extends THREE.Group {
   private low: gsap.core.Tween | null = null;
   private dimmed = false;
   private readonly glow: number;
+  // 方案 b 的一圈小灯（其他方案为 null）
+  readonly lamps: NexusLamps | null = null;
 
   constructor(cls: HeroClass, enemy: boolean, side: 0 | 1, style: NexusStyle = nexusStyle()) {
     super();
@@ -72,18 +75,15 @@ export class HeroView extends THREE.Group {
       const lip = add(new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.07, 6), trim));
       lip.position.y = 0.37;
     } else if (style === 'b') {
-      // 深色金属六棱台，六个角上嵌着发光的小水晶
+      // 深色金属六棱台，四周一圈半球形小灯；灯座和台座的金属沿同一种材质
       const base = add(new THREE.Mesh(new THREE.CylinderGeometry(0.98, 1.1, 0.34, 6), metal));
       base.position.y = 0.17;
       const lip = add(new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.05, 6), trim));
       lip.position.y = 0.36;
-      for (let i = 0; i < 6; i++) {
-        const a = (Math.PI / 3) * i;
-        const shard = add(new THREE.Mesh(shardGeo, this.crystalMat), true);
-        shard.position.set(Math.cos(a) * 1.0, 0.22, Math.sin(a) * 1.0);
-        shard.scale.set(0.8, 1.5, 0.8);
-        shard.rotation.y = -a;
-      }
+      // 双方的呼吸错开半拍，不同步起伏
+      this.lamps = new NexusLamps(teamColor, trim, side * 1.3);
+      this.body.add(this.lamps);
+      this.crystals.push(...this.lamps.roots);
     } else {
       // 薄金属底座，头像外围一圈发光水晶环
       const base = add(new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.05, 0.22, 6), metal));
@@ -125,12 +125,14 @@ export class HeroView extends THREE.Group {
 
   // 每帧调：水晶的光缓慢呼吸
   tick(t: number): void {
+    if (this.lamps) return this.lamps.tick(t);
     if (this.low) return;
     this.crystalMat.emissiveIntensity = this.glow * (0.85 + 0.15 * Math.sin(t * 1.6));
   }
 
   setHealth(health: number, max: number): void {
     this.hp.set(health, health < max ? COLORS.debuffed : 0xffffff);
+    if (this.lamps) return this.lamps.setHealth(health);
     const lowNow = health < 10;
     if (lowNow && !this.low) {
       this.low = gsap.to(this.crystalMat, { emissiveIntensity: 0.15, duration: 0.6, yoyo: true, repeat: -1, ease: 'sine.inOut' });
@@ -139,6 +141,11 @@ export class HeroView extends THREE.Group {
       this.low = null;
       this.crystalMat.emissiveIntensity = this.glow;
     }
+  }
+
+  // 是不是这一方的回合：方案 b 的小灯自己回合亮一些
+  setActive(on: boolean): void {
+    this.lamps?.setActive(on);
   }
 
   // 受伤、治疗时生命徽章弹一下
@@ -152,6 +159,7 @@ export class HeroView extends THREE.Group {
     if (dim !== this.dimmed) {
       this.dimmed = dim;
       this.crystalMat.color.multiplyScalar(dim ? 0.45 : 1 / 0.45);
+      this.lamps?.setDim(dim);
     }
   }
 
@@ -161,6 +169,7 @@ export class HeroView extends THREE.Group {
     this.low?.kill();
     this.low = null;
     t.to(this.crystalMat, { emissiveIntensity: 3, duration: 0.25 });
+    t.call(() => this.lamps?.flare(), undefined, 0);
     for (const c of this.crystals) t.to(c.scale, { x: 0.01, y: 0.01, z: 0.01, duration: 0.35, ease: 'power3.in' }, 0.25);
     return t;
   }

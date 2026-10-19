@@ -18,6 +18,35 @@ export function hdr(hex: number, intensity: number): THREE.Color {
   return new THREE.Color(hex).multiplyScalar(intensity);
 }
 
+// 只有边缘亮的透明外壳（菲涅尔）：正对镜头的地方几乎透明，越靠轮廓越亮。加色混合、不写深度，
+// 所以不挡住壳里后画的东西，也进不了选择性泛光。base 是正中的亮度，rim 是轮廓处加上的亮度，power 越大亮边越窄。
+// uniforms.color 可以改，改它就改整个壳的颜色和亮度。
+export function fresnelMaterial(color: THREE.Color, base = 0.03, rim = 0.85, power = 3): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: { color: { value: color } },
+    vertexShader: `
+      varying vec3 vN;
+      varying vec3 vV;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vN = normalize(normalMatrix * normal);
+        vV = normalize(-mv.xyz);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform vec3 color;
+      varying vec3 vN;
+      varying vec3 vV;
+      void main() {
+        float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), ${power.toFixed(2)});
+        gl_FragColor = vec4(color * (${base.toFixed(3)} + ${rim.toFixed(3)} * f), 1.0);
+      }`,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+}
+
 // 发光边、准星、箭头用的不受光照材质
 export function glowMaterial(hex: number, intensity = EDGE_GLOW): THREE.MeshBasicMaterial {
   return new THREE.MeshBasicMaterial({ color: hdr(hex, intensity), toneMapped: false });

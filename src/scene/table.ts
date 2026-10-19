@@ -32,6 +32,7 @@ import type { CardStats } from './cardText';
 import { fadeOutAndDispose, releaseGpu } from './dispose';
 import { HeroPowerView, HeroView } from './heroView';
 import { MinionView } from './minionView';
+import { useLampReflections } from './nexusLamps';
 import type { Stage } from './stage';
 import { BoardView } from './board';
 import { DeckView, EndTurnButton, ManaBarView, ThinkingView } from './tableParts';
@@ -132,6 +133,7 @@ export class TableScene {
   ) {
     this.view = view;
     const v = view.viewer;
+    useLampReflections(stage.reflections);
     this.heroes = [new HeroView(view.players[0].heroClass, v !== 0, 0), new HeroView(view.players[1].heroClass, v !== 1, 1)];
     this.heroPowers = [new HeroPowerView(view.players[0].heroClass, 0), new HeroPowerView(view.players[1].heroClass, 1)];
     this.addLights();
@@ -320,6 +322,7 @@ export class TableScene {
     for (const side of [0, 1] as Side[]) {
       const p = view.players[side];
       this.heroes[side].setHealth(p.hero.health, p.hero.maxHealth);
+      this.heroes[side].setActive(view.phase === 'playing' && view.current === side);
       this.heroPowers[side].setUsed(p.heroPowerUsed);
       this.decks[side].set(p.deckCount, p.fatigue);
       this.mana[side].set(p.mana);

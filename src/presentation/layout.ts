@@ -24,7 +24,7 @@ export const TABLE = { width: 22, depth: 14.4, thickness: 0.7 };
 // 卡牌原始尺寸（scale 为 1 时）。
 export const CARD_W = 1.5;
 export const CARD_H = 2.1;
-export const CARD_T = 0.04;
+export const CARD_T = 0.06;
 // 随从底座
 export const MINION_SIZE = 1.5;
 export const MINION_HEIGHT = 0.32;
@@ -45,6 +45,8 @@ export const RIVER_Z = 0;
 export const BOARD_ROW_HALF = 1.3;
 // 手牌区的边界：拖牌时指针投到台面上的 z 超过它就算还在手牌区
 export const HAND_ZONE_Z = 5.6;
+// 手牌往后仰的角度（相对正对镜头）
+export const HAND_LEAN = 0.42;
 
 const v = (x: number, y: number, z: number): Vec3 => ({ x, y, z });
 const flat = { x: -Math.PI / 2, y: 0, z: 0 }; // 平放在台面上，正面朝上
@@ -61,7 +63,8 @@ export function handSlot(p: Placement, index: number, count: number): Slot {
     const sag = offset * offset * 0.045;
     return {
       pos: v(offset * step, 2.2 - sag + index * 0.004, 8.4 + Math.abs(offset) * 0.02),
-      rot: { x: -CAMERA_PITCH + 0.12, y: 0, z: -offset * 0.05 },
+      // 往后仰、随扇形微微转向，不平贴着正对镜头：看得到倾角和厚度边（spec 5.4 v0.6.2）
+      rot: { x: -CAMERA_PITCH + HAND_LEAN, y: -offset * 0.06, z: -offset * 0.05 },
       scale: 1.3,
     };
   }
@@ -73,10 +76,10 @@ export function handSlot(p: Placement, index: number, count: number): Slot {
   };
 }
 
-// 悬停的那张手牌：抬起、放大、朝镜头转正。
+// 悬停的那张手牌：抬起、放大，倾角减半但不完全转正，保留立体感（spec 5.4 v0.6.2）。
 export function handHoverSlot(index: number, count: number): Slot {
   const base = handSlot('near', index, count);
-  return { pos: v(Math.max(-8, Math.min(8, base.pos.x)), 3.9, 7.1), rot: facing(0), scale: 1.95 };
+  return { pos: v(Math.max(-8, Math.min(8, base.pos.x)), 3.85, 7.2), rot: { x: -CAMERA_PITCH + HAND_LEAN / 2, y: base.rot.y * 0.4, z: 0 }, scale: 1.8 };
 }
 
 // 悬停时邻牌让开的偏移量（x 方向）。
@@ -88,7 +91,8 @@ export function handNeighborShift(index: number, hovered: number): number {
 
 // 换牌阶段的起手牌：在台面中央上方立起来，放大。
 export function mulliganSlot(index: number, count: number): Slot {
-  return { pos: v((index - (count - 1) / 2) * 2.6, 3.4, 2.6), rot: facing(0), scale: 1.45 };
+  const o = index - (count - 1) / 2;
+  return { pos: v(o * 2.6, 3.4, 2.6), rot: { x: -CAMERA_PITCH + 0.32, y: -o * 0.07, z: 0 }, scale: 1.45 };
 }
 
 // 场上第 index 个随从（共 count 个）。gapAt 不为 null 时在那个位置空出一格（拖随从牌时的空位）。
@@ -111,14 +115,16 @@ export function boardRowZ(p: Placement): number {
   return ROWS[p].board;
 }
 
-// 水晶枢纽内部的摆放（相对枢纽原点）：头像圆盘嵌在台座正面、朝镜头倾斜，生命数字在圆盘右下。
+// 水晶枢纽内部的摆放（相对枢纽原点）：头像圆盘嵌在底座上、朝镜头倾斜，生命徽章嵌在底座右前角。
 // HeroView 按这些值摆放，布局测试也用它们算生命数字在画面上的位置。
 export const NEXUS = {
-  discPos: v(0, 0.85, 0.35),
-  discTilt: -CAMERA_PITCH + 0.25, // 圆盘绕 x 轴的转角
-  discRadius: 0.62,
-  hpOffset: v(0.72, -0.42, 0.12), // 在圆盘坐标系里
-  hpSize: 0.95,
+  // 圆盘像一枚硬币嵌在台座顶面，朝镜头微微仰起；中心抬到近侧边沿不会陷进台座顶板的高度
+  discPos: v(0, 0.66, -0.05),
+  discTilt: -Math.PI / 2 + 0.34,
+  discRadius: 0.66,
+  hpPos: v(0.74, 0.42, 0.6),
+  hpScale: 1.45, // 生命徽章比随从的大一号
+  hpRadius: 0.4,
 };
 
 export function heroSlot(p: Placement): Slot {

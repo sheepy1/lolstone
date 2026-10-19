@@ -72,13 +72,7 @@ function sphereBox(p: THREE.Vector3, r: number): Box {
 
 function nexusHpBox(p: Placement): Box {
   const h = heroSlot(p).pos;
-  const disc = new THREE.Matrix4().compose(
-    new THREE.Vector3(h.x + NEXUS.discPos.x, h.y + NEXUS.discPos.y, h.z + NEXUS.discPos.z),
-    new THREE.Quaternion().setFromEuler(new THREE.Euler(NEXUS.discTilt, 0, 0)),
-    new THREE.Vector3(1, 1, 1),
-  );
-  const c = new THREE.Vector3(NEXUS.hpOffset.x, NEXUS.hpOffset.y, NEXUS.hpOffset.z).applyMatrix4(disc);
-  return sphereBox(c, NEXUS.hpSize / 2);
+  return sphereBox(new THREE.Vector3(h.x + NEXUS.hpPos.x, h.y + NEXUS.hpPos.y, h.z + NEXUS.hpPos.z), NEXUS.hpRadius);
 }
 
 function nexusDiscBox(p: Placement): Box {

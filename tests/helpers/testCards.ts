@@ -141,4 +141,42 @@ export const TEST_CARDS: CardDef[] = [
     text: '在你的回合开始时，对敌方英雄造成 1 点伤害',
     effects: [{ trigger: 'turn_start', actions: [{ kind: 'damage', amount: 1, target: 'enemy_hero', fx: 'fire' }] }],
   },
+  // fxId 透传（spec 3.4）：每张卡的动作都带 fxId 'test.spark'，覆盖会把 fx 写进事件的每种动作
+  {
+    id: 'test.fxid_multi', name: '测试特效组合', type: 'spell', class: 'neutral', cost: 1,
+    text: '对一个随从依次：1 点伤害、治疗 1、+1/+1、冻结、沉默',
+    effects: [{
+      trigger: 'cast', target: { pick: 'any_minion' },
+      actions: [
+        { kind: 'damage', amount: 1, target: 'chosen', fx: 'fire', fxId: 'test.spark' },
+        { kind: 'heal', amount: 1, target: 'chosen', fx: 'holy', fxId: 'test.spark' },
+        { kind: 'buff', target: 'chosen', attack: 1, health: 1, duration: 'permanent', fx: 'holy', fxId: 'test.spark' },
+        { kind: 'freeze', target: 'chosen', fx: 'frost', fxId: 'test.spark' },
+        { kind: 'silence', target: 'chosen', fx: 'shadow', fxId: 'test.spark' },
+      ],
+    }],
+  },
+  {
+    id: 'test.fxid_bounce', name: '测试特效回手', type: 'spell', class: 'neutral', cost: 1,
+    text: '将一个随从移回手牌',
+    effects: [{ trigger: 'cast', target: { pick: 'any_minion' }, actions: [{ kind: 'bounce', target: 'chosen', fx: 'shadow', fxId: 'test.spark' }] }],
+  },
+  {
+    id: 'test.fxid_transform', name: '测试特效变形', type: 'spell', class: 'neutral', cost: 1,
+    text: '将一个随从变成云龙',
+    effects: [{
+      trigger: 'cast', target: { pick: 'any_minion' },
+      actions: [{ kind: 'transform', target: 'chosen', into: 'neutral.cloud_drake', fx: 'holy', fxId: 'test.spark' }],
+    }],
+  },
+  {
+    id: 'test.fxid_summon', name: '测试特效召唤', type: 'spell', class: 'neutral', cost: 1,
+    text: '召唤一只虚空蠕虫',
+    effects: [{ trigger: 'cast', actions: [{ kind: 'summon', token: 'token.void_worm', count: 1, fx: 'shadow', fxId: 'test.spark' }] }],
+  },
+  {
+    id: 'test.fxid_destroy', name: '测试特效消灭', type: 'spell', class: 'neutral', cost: 1,
+    text: '消灭一个随从',
+    effects: [{ trigger: 'cast', target: { pick: 'any_minion' }, actions: [{ kind: 'destroy', target: 'chosen', fx: 'physical', fxId: 'test.spark' }] }],
+  },
 ];

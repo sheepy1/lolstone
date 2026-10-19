@@ -35,9 +35,25 @@ const cardShape = roundedRect(CARD_W, CARD_H, 0.12);
 
 // 卡牌：有厚度的圆角薄板，正反两面各一张贴图面片。
 export const CARD_BODY = shared((() => {
-  const g = new THREE.ExtrudeGeometry(cardShape, { depth: CARD_T, bevelEnabled: false, curveSegments: 6 });
-  g.translate(0, 0, -CARD_T / 2);
+  // 边缘带一点倒角，厚度边在斜着看时能看出来
+  const b = 0.012;
+  const g = new THREE.ExtrudeGeometry(roundedRect(CARD_W - b * 2, CARD_H - b * 2, 0.11), {
+    depth: CARD_T - b * 2,
+    bevelEnabled: true,
+    bevelThickness: b,
+    bevelSize: b,
+    bevelSegments: 2,
+    curveSegments: 6,
+  });
+  g.translate(0, 0, -CARD_T / 2 + b);
   return g;
+})());
+// 卡面上凸起的边框：一圈带倒角的金属框，斜着看、转动时高光沿着它流动
+export const CARD_FRAME = shared((() => {
+  const outer = roundedRect(CARD_W - 0.01, CARD_H - 0.01, 0.115);
+  outer.holes.push(roundedRect(CARD_W - 0.11, CARD_H - 0.11, 0.08));
+  const b = 0.01;
+  return new THREE.ExtrudeGeometry(outer, { depth: 0.012, bevelEnabled: true, bevelThickness: b, bevelSize: b * 0.8, bevelSegments: 2, curveSegments: 6 });
 })());
 export const CARD_FACE = shared(normalizeUv(new THREE.ShapeGeometry(cardShape, 6), CARD_W, CARD_H));
 // 发光边：比卡牌大一圈的圆角面片，放在卡牌背后

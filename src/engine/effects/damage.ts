@@ -1,5 +1,5 @@
 import { getCard } from '../cardDb';
-import { emit, findMinion, heroRef, type Ctx } from '../context';
+import { emit, findMinion, fxIdField, heroRef, type Ctx } from '../context';
 import type { SourceRef } from '../events';
 import { hasKeyword } from '../keywords';
 import { getScript } from '../scripts';
@@ -18,6 +18,7 @@ export function dealDamage(
   target: TargetRef,
   amount: number,
   fx: Fx,
+  fxId?: string,
 ): number {
   if (amount <= 0) return 0;
   let dealt = 0;
@@ -36,6 +37,7 @@ export function dealDamage(
       healthAfter: hero.health,
       lethalPrevented: false,
       fx,
+      ...fxIdField(fxId),
     });
   } else {
     const loc = findMinion(ctx.state, target.instanceId);
@@ -53,6 +55,7 @@ export function dealDamage(
         healthAfter: m.health,
         lethalPrevented: false,
         fx,
+        ...fxIdField(fxId),
       });
       emit(ctx, group, { kind: 'shield_broken', target });
       return 0;
@@ -87,6 +90,7 @@ export function dealDamage(
       healthAfter: m.health,
       lethalPrevented,
       fx,
+      ...fxIdField(fxId),
     });
     if (sourceMinion && source.kind === 'minion' && source.side === other(loc.side)) {
       ctx.kills = ctx.kills.filter((k) => k.victim !== m.instanceId);

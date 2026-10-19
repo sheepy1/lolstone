@@ -221,6 +221,7 @@ export class GameApp {
     if (!director.busy) {
       player.resetSpeed();
       scene.draggingHand = null;
+      scene.boardGap = null;
       if (director.errors.length > 0) setUi({ error: `动画出错 ${director.errors.length} 次，见控制台` });
     }
     s.interaction.refresh();

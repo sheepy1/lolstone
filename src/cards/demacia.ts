@@ -97,14 +97,14 @@ export const DEMACIA_CARDS: CardDef[] = [
   {
     id: 'demacia.judgment', name: '审判', type: 'spell', class: 'demacia', cost: 4,
     text: '对所有敌方随从造成 2 点伤害',
-    effects: [{ trigger: 'cast', actions: [{ kind: 'damage', amount: 2, target: 'all_enemy_minions', fx: 'physical' }] }],
+    effects: [{ trigger: 'cast', actions: [{ kind: 'damage', amount: 2, target: 'all_enemy_minions', fx: 'physical', fxId: 'garen.judgment' }] }],
   },
   {
     id: 'demacia.demacian_justice', name: '德玛西亚正义', type: 'spell', class: 'demacia', cost: 5,
     text: '消灭一个敌方随从',
     effects: [{
       trigger: 'cast', target: { pick: 'enemy_minion' },
-      actions: [{ kind: 'destroy', target: 'chosen', fx: 'holy' }],
+      actions: [{ kind: 'destroy', target: 'chosen', fx: 'holy', fxId: 'garen.demacian_justice' }],
     }],
   },
 ];

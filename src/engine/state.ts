@@ -54,8 +54,8 @@ export type ActionTarget =
   | 'random_other_friendly_minion';
 
 export type EffectAction =
-  | { kind: 'damage'; amount: number; target: ActionTarget; fx: Fx }
-  | { kind: 'heal'; amount: number; target: ActionTarget; fx: Fx }
+  | { kind: 'damage'; amount: number; target: ActionTarget; fx: Fx; fxId?: string }
+  | { kind: 'heal'; amount: number; target: ActionTarget; fx: Fx; fxId?: string }
   | {
       kind: 'buff';
       target: ActionTarget;
@@ -64,14 +64,15 @@ export type EffectAction =
       keywords?: Keyword[];
       duration: 'permanent' | 'turn';
       fx: Fx;
+      fxId?: string;
     }
-  | { kind: 'summon'; token: string; count: number; fx: Fx }
+  | { kind: 'summon'; token: string; count: number; fx: Fx; fxId?: string }
   | { kind: 'draw'; count: number }
-  | { kind: 'freeze'; target: ActionTarget; fx: Fx }
-  | { kind: 'silence'; target: ActionTarget; fx: Fx }
-  | { kind: 'destroy'; target: ActionTarget; fx: Fx }
-  | { kind: 'bounce'; target: ActionTarget; fx: Fx }
-  | { kind: 'transform'; target: ActionTarget; into: string; fx: Fx }
+  | { kind: 'freeze'; target: ActionTarget; fx: Fx; fxId?: string }
+  | { kind: 'silence'; target: ActionTarget; fx: Fx; fxId?: string }
+  | { kind: 'destroy'; target: ActionTarget; fx: Fx; fxId?: string }
+  | { kind: 'bounce'; target: ActionTarget; fx: Fx; fxId?: string }
+  | { kind: 'transform'; target: ActionTarget; into: string; fx: Fx; fxId?: string }
   | { kind: 'gain_mana'; mode: 'empty' | 'temp'; amount: number }
   | { kind: 'extra_attack'; target: 'self' }
   | { kind: 'random_keyword'; target: 'self'; from: Keyword[] };

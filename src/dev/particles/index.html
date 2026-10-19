@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MeLoL 粒子预设</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #0b1410; color: #e8e2d0; font-family: 'PingFang SC', sans-serif; }
+      #stage { position: fixed; inset: 0; }
+      #hud { position: fixed; left: 10px; top: 10px; font: 12px/1.5 Menlo, monospace; background: rgba(0,0,0,.62); padding: 6px 10px; white-space: pre; pointer-events: none; }
+      #log { position: fixed; left: 10px; bottom: 12px; font-size: 13px; background: rgba(0,0,0,.6); padding: 6px 10px; max-width: 640px; }
+      #log:empty { display: none; }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="hud"></div>
+    <div id="log"></div>
+    <script type="module" src="/src/dev/particles/main.ts"></script>
+  </body>
+</html>

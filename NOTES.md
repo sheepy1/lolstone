@@ -268,24 +268,44 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
   `{ pos, rot, scale }`。
 - 镜头：fov 38，从 (0, 18, 12.4) 看 (0, 0, 1.4)，俯角约 58.6°。画布按 16:9 等比缩放到窗口，最窄 1280 宽。
 - 手牌：不悬停时下沉到画面底边，只露出上面约七成（费用、原画、名字）。`tests/presentation-layout.test.ts` 用真实镜头
-  投影核对：1 到 10 张手牌不挡双方的生命数字、英雄技能、法力条，对方手牌不被画面上边缘裁掉。悬停时牌抬起、放大、朝镜头转正。
+  投影核对：1 到 10 张手牌不挡双方的生命数字、英雄技能、法力条，对方手牌不被画面上边缘裁掉。
+  手牌不是正对镜头的平面：比正对镜头少转 0.42 弧度（`HAND_LEAN`），看得到透视和底边厚度，扇形两侧再各带一点偏转。
+  悬停时牌抬起、放大，倾角减半，不完全转正（spec v0.6.2）。换牌阶段的起手牌同样带倾角。
 - 光照：半球光 0.85 加一盏投影的方向光 1.9，阴影贴图 2048，阴影相机只罩住台面。WebGL2，ACES 色调映射和 sRGB 输出由
   OutputPass 做，设备像素比上限 2。
 - 泛光（spec 6.1）：pmndrs postprocessing 的 SelectiveBloomEffect，只认图层不认亮度：打开 `BLOOM_LAYER`（11）的物件泛光
   （`markBloom`），其余一律不泛光，所以受光照的卡面、白色血条和数字再亮也不晕开。泛光的有：能出的牌的发光边、
-  能攻击和可选目标的描边、嘲讽金边、圣盾外壳、水晶、亮着的法力宝石、箭头、准星、特效。它按深度对上选中物件的像素，
+  能攻击和可选目标的描边、嘲讽金边、生命徽章外圈的护盾环、水晶、亮着的法力宝石、箭头、准星、特效。它按深度对上选中物件的像素，
   所以要泛光的材质必须写深度（特效的加色材质也开了 depthWrite）。色调映射改由 ToneMappingEffect（ACES）做，
   渲染器本身是 NoToneMapping。
-- 物件：卡牌是 ExtrudeGeometry 薄板，正反面各一张面片。卡面底图（边框、原画、费用六边形、名字横幅、文本框）用 canvas
+- 物件：卡牌是带倒角的 ExtrudeGeometry 薄板（厚 0.06），正反面各一张面片。正面是 MeshPhysicalMaterial 加清漆层，
+  高光随角度移动；四周一圈凸起的金属边框（`CARD_FRAME`），边框材质按职业共用。卡面底图（边框、原画、费用六边形、名字横幅、文本框）用 canvas
   合成并按卡牌 id 缓存，头像图稍后加载好时重画；卡面文字（费用、名字、文本、攻击、生命）是 troika-three-text 的 SDF
   文本（`scene/cardText.ts`），按底图版式摆在卡面上。
-  随从是带倒角的方块底座，顶面贴头像；血条和攻击数字是每个随从自己的 canvas sprite，数值变了才重画。生命数字最低显示 0。
+  随从是带倒角的方块底座，顶面贴头像，没有血条（spec 5.4 v0.6.2）：攻击和生命是底座内部左下、右下两个对称的凸起
+  六边形徽章（`scene/statBadge.ts`），和卡面上的位置对应，整个落在底座边框以内。数字颜色和卡面同一套规则：攻击高于卡面
+  绿、低于卡面红；生命受伤或上限低于卡面红，上限高于卡面绿。受伤、治疗、增益、减益的动画都作用在徽章上
+  （`popStat`：数字所在的徽章弹起再弹回，按分镜颜色闪一下）。生命数字最低显示 0。
+  关键词小图标（毒、吸、风、冲、突、法术伤害、沉默）排在底座上沿、头像上方。各种状态不盖住徽章：潜行的烟只罩头像中部；
+  圣盾外壳是只有边缘亮的菲涅尔材质，中间几乎透明，不写深度也不泛光（写深度会挡掉壳里的徽章数字，整个壳泛光会把底座
+  洗成一片白），发光的是生命徽章外圈的白色护盾环，破盾时外壳和护盾环一起碎掉。
+- 枢纽（英雄）：头像圆盘略向镜头倾斜，嵌在矮台座里，生命徽章在右前方，不再有悬浮的水晶。三种台座用地址参数
+  `?nexus=a|b|c` 切换：a 半透明水晶六棱台，b 暗金属台座加六颗发光镶嵌，c 薄金属台座加头像外一圈发光水晶环（默认）。
 - 3D 物件共用材质，淡出不能改透明度，`fadeOutAndDispose` 改成缩小到 0 再移除。
 - 显存释放：几何体、材质、贴图默认归物件自己，物件销毁、一局结束时一起释放（`scene/dispose.ts` 的 `releaseGpu`）；
   多个物件、多局之间共用的（模块级常量、卡面和头像缓存）用 `shared()` 标记，不释放。漏释放的后果是每局留一份
   （棋盘贴图 2048 宽），连开多局后页面崩溃；改完连开 7 局再回菜单，几何体回到 22 个，贴图只随新见到的卡牌增加。
-- 输入：射线只射手牌、随从、枢纽和台面物件三层，往上找 `userData.pick`；拖着的牌在 y = 2.2 的水平面上跟随指针，
-  落点判定用指针在台面（y = 0）上的投影点。
+- 输入：射线只射手牌、随从、枢纽和台面物件三层，往上找 `userData.pick`；落点判定用指针在台面（y = 0）上的投影点。
+- 拖牌手感（`interaction.ts` 的 `DRAG`，调试台可调）：指针只设弹簧的目标点，牌在每帧里用阻尼弹簧追过去
+  （6 Hz、阻尼比 0.7，按 1/120 秒分步积分），落后最多 0.3 张牌宽。牌按速度前后俯仰、左右侧倾（每张牌宽每秒 6°，
+  最多 18°），停下来弹回；拿起时离开台面并放大 1.08 倍，脚下的影子随高度变大变淡。拖到我方随从行上时，牌逐渐缩小、
+  转平、降低，过渡成底座预览，并往落点的空位靠，两边的随从带弹性地让开（`back.out`）。取消或拖回手牌区时沿一条
+  拱起的弧线回到手牌里的位置。
+- 出随从（`minionSummoned.ts` 的 `PLAY_MINION`，参数取自 m4-storyboard 的 E07）：松手后牌飞到落点上方转平悬着，
+  蓄力上提 0.1 秒，再 0.11 秒加速砸下（expo.in），落地压扁到 0.85 再弹回（elastic），扬起尘土（费用越高越多），
+  费用 ≥ 5 加一圈冲击波，≥ 6 镜头轻震，全程约 0.6 秒。松手到砸落之间空位一直留着（`scene.boardGap` 到砸落时才清），
+  不然两边的随从会先合拢再被推开。对手的随从和效果召唤的随从不砸，用光圈加闪光出场。
+- 出法术：自己的法术沿弧线飞到中央放大，停 0.35 秒，再放大提亮缩没，接法术效果；对手打出的牌在中央停 0.8 秒再淡出。
 - 换牌阶段压暗棋盘：一块朝镜头的半透明黑板，放在离镜头 18 的位置，在起手牌（17.6）之后、我方枢纽（18.4）之前。
 
 - 卡面字体：思源宋体粗体（Noto Serif SC Bold，OFL，许可证在 `public/fonts/OFL.txt`）按卡池用到的字做子集，
@@ -318,6 +338,13 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
   可能是另一份实例，推它的时钟对应用没有作用。要截动画中间帧，最稳的办法是把全局时间线调慢
   （`melol.gsap.globalTimeline.timeScale(0.05)`），不管页面在不在后台都有效。
 
+- 自动化录帧要完全接管 GSAP 的时钟：`gsap.ticker.sleep()` 之后再把 `gsap.ticker.wake` 换成空函数，然后每步
+  `gsap.updateRoot(T += 1/60)`、`stage.frame(1/60)`，再用 MessageChannel 让出一次（处理 promise 和 troika 的 worker 回复）。
+  GSAP 建新补间时会自己唤醒 ticker，不拦住就有两个时钟同时推全局时间线，时间来回跳，时间线开头的回调反复触发
+  （换牌的 takeHandCard 被调了几百次，留下几百张没销毁的牌）。手动推时钟时也不要快进：改全局时间线的 timeScale 会
+  按 ticker 的真实时间重新对齐，之后新建的补间全落在"未来"，永远播不完。
+- Vite 的 `server.watch.ignored` 不能写 `'**/.claude/**'`：在 `.claude/worktrees/<名>` 里起开发服务器时，项目自己的文件路径
+  也带 `.claude`，全被忽略，改了代码页面还是旧的。现在按相对项目根目录的路径判断，只忽略根目录下的 `.claude/`。
 - canvas 贴图的像素内存不在 JS 堆里，垃圾回收按堆的压力触发，飘字、横幅、血条这类一次性 canvas 只靠回收会越积越多，
   连续自动对局几分钟后页面崩溃。释放 canvas 贴图时把 canvas 缩成 0×0（`releaseTexture`），像素内存马上还回去。
 - 设备像素比 2 时 1080p 窗口实际渲染 4K，后处理的半精度缓冲再开 4 倍多重采样会吃掉几百 MB 显存；像素比 ≥ 1.5 时不开
@@ -327,6 +354,179 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
 
 `tests/fixtures/l0-replay.json`：种子 181、弗雷尔卓德对德玛西亚的 L0 对 L0，按批存原始事件和开局显示局面。
 `pnpm fixture:record` 重新录制（卡池或事件改了之后）。它没有回手和失去潜行，这两种由构造的事件测试覆盖。
+
+## fxId 透传（spec 3.4，2026-10-19）
+
+- 带 fx 的动作都可以写可选的 `fxId`（招牌卡专属特效 id）。引擎不读它，只在发事件时原样放进去，涉及 `minion_summoned`、
+  `damage`、`heal`、`buff`、`silence`、`freeze`、`bounce`、`transform`。
+- 动作没写 fxId 时，事件里**这个键不出现**（不是 `null`）。表现层用 `e.fxId !== undefined` 或 `'fxId' in e` 判断。
+  这样没有招牌卡的老事件和录制的夹具保持原样；事件字段表（`tests/helpers/events.ts`）里 fxId 是可选字段，只在有值时才允许出现。
+- 引擎自己产生的事件（攻击伤害、疲劳、吸血治疗、激怒、增益到期）没有动作可挂，永远没有 fxId。随从自己打出时的
+  `minion_summoned`（via 为 play）也没有。
+- `destroy` 动作本身不发事件，所以 fxId 没处可放。做法：消灭带 fxId 时，引擎记下 fx 和 fxId，随后该随从的 `death` 事件
+  同时带上 `fx` 和 `fxId`（只有被带 fxId 的消灭动作消灭时才有，其余死亡的 death 事件字段不变）。德玛西亚正义就是这样。
+  代价是 death 比别的事件多了两个可选字段；如果表现层希望消灭有独立事件，要改事件契约，这里没做。
+- 校验（`src/cards/validate.ts`）：fxId 必须是字符串，匹配 `^[a-z0-9_]+\.[a-z0-9_]+$`（小写字母、数字、下划线，
+  中间恰好一个点，写成"英雄 key.招式"）；没有 fx 的动作（draw、gain_mana、extra_attack、random_keyword）不能写 fxId。
+  spec 只写了字符集和"英雄 key.招式"的形状，"恰好一个点"是我按这个形状收紧的，要放宽改 `FX_ID`。
+- 已标 fxId 的 9 张：狂风绝息斩（damage）、暴风雪（damage 和 freeze 都标，两种事件都带）、丽桑卓（freeze）、卡特琳娜（damage）、
+  审判（damage）、德玛西亚正义（destroy，在 death 上）、劫（summon）、李青（combo 的 bounce）、纳什男爵（turn_end 的 buff）。
+  泰达米尔和易数据没改，由表现层按 (卡牌 id, 触发时机) 映射。
+- 测试：`tests/fxid.test.ts`（透传、没写时键不出现、9 张卡各一条、卡池里带 fxId 的恰好是这 9 张、校验），
+  测试专用卡 `test.fxid_*` 在 `tests/helpers/testCards.ts`。
+
+## 非英雄卡的配图（fetch-icons）
+
+`scripts/data/card-art.json` 是映射表：没有 champion 字段的 47 张卡（小兵、野怪、亚龙、法术、衍生物）、4 个英雄技能、11 个关键词，
+每项写来源、裁切建议、选图理由和备选。`scripts/fetch-icons.ts` 按它下载，`scripts/art-review.ts` 出逐张对照页。还没接进卡面和场景，
+等 M3 定稿后再接：卡面原画窗口读 `art`（按 `crop` 裁），场上随从头像读 `icon`，清单是 `public/art/icons-manifest.json`。
+
+### 来源
+
+- 峡谷单位（小兵、野怪、亚龙、男爵、虚空幼虫和虚空螨）：CommunityDragon 的 `characters/<单位>/hud/<名>_square.png`，128×128。
+  目录可以用 `https://raw.communitydragon.org/json/latest/game/assets/characters/<单位>/hud/` 列出来，返回 JSON。
+  虚空幼虫对应 `sru_horde`（Voidgrub），虚空蠕虫对应 `sru_horde_mini`（Voidmite）。
+- 技能、被动、物品、召唤师技能图标：Data Dragon，64×64，地址带版本号。回城图标 Data Dragon 没有，用 CommunityDragon 的
+  `game/assets/spells/icons2d/recallhome.png`。
+- 皮肤原画：Data Dragon `cdn/img/champion/splash/<Key>_<编号>.jpg`，1215×717，和竖版原画一样不带版本号，带了返回 403。
+- 符文之地传说（Legends of Runeterra）卡牌原画：`https://dd.b.pvp.net/7_10_0/<set>/en_us/img/cards/<卡号>-full.png`，2048×1024。
+  卡号和 set 查 `https://dd.b.pvp.net/latest/<set>/en_us/data/<set>-en_us.json`（zh_cn 返回 403，en_us 能用）；set 有
+  set1 到 set9 以及 set6cde、set7b，卡号前两位不能直接推出 set（06 开头的分在 set6 和 set6cde）。服务器是没有 CDN 的 S3，
+  单张 15 到 100 秒，所以 http.ts 加了 `timeoutMs`，这类来源放宽到 10 分钟。
+
+### 选图的取舍（用户 2026-10-19 定）
+
+- 中立卡有官方大图的用大图：蓝色哨兵、山脉、海洋、云端亚龙、远古巨龙用符文之地传说的同名卡原画。其余中立卡和虚空蠕虫先用峡谷头像
+  （128 像素，放进原画窗口偏糊），映射表里带 `generate`（生成要求）和 `generatePriority`（先后，纳什男爵第一，其余按费用从高到低），
+  `fetch-icons.ts` 跑完会按先后列出来。失去坐骑的克烈、法力药水也在这个清单里，排最后。
+- 场上随从头像（`icon`）一律用峡谷头像，有大图的卡也一样。
+- 法术优先用符文之地传说里效果或名字对得上的卡（审判、大杀四方、回城、魔法水晶箭等），再退到皮肤原画。英雄本人的原皮原画已经
+  被随从卡或职业英雄用了，法术要用皮肤原画时换别的皮肤，避免两张卡同图。符文之地传说已确认可以作为来源，spec 5.9 由设计会话补。
+- 符文之地传说的法术原画是黑底上的圆形画面，`crop.zoom` 设 1.55（窗口宽高比 1:0.86 时四角刚好落在圆里）；单位原画是满幅的，不用放大。
+- 英雄技能图标不和任何法术、关键词同图：召集用盖伦 W「勇气」（spec 5.9 原来写的 GarenE 是法术「审判」的图标），诺克萨斯断头台用
+  德莱厄斯 W「致残打击」（DariusExecute 给了法术「处决」）。灵魄（阿狸 Q）和法术灵魄突袭（阿狸 R、灵魂莲华阿狸原画）本来就不同图。
+  映射表里所有主选图（icon 和 art）两两不重复。
+- 嘲讽用拉莫斯 E「狂乱嘲讽」。spec 5.4 写的 W 是笔误，设计会话会改。
+- spec 5.9 写 fetch-icons 输出到 `public/art/icons/`，实际按卡牌、英雄技能、关键词分成 `cards/`、`heropowers/`、`keywords/` 三个目录。
+
+## 音效和音乐素材（M4 准备，2026-10-19）
+
+脚本和用法见 README 的"音效和音乐"。这里记选择和踩过的坑。
+
+### 来源
+
+- 只用 CC0：Kenney 7 个音效包（页面写 CC0，包里带 License.txt），加 OpenGameArt 上 35 个页面（43 个文件）的素材，这些页面的授权一栏都只写了 CC0。
+  每个来源的页面、作者、授权依据在 `scripts/data/audio-sources.json` 的 `sources`。双授权（CC0 和 OGA-BY 并列）、
+  CC-BY 的一律没收，哪怕更合适（比如 YannZ 的菜单曲、JC Sounds 的自然环境音包）。
+- 没用 freesound：下原始文件要登录，不登录只能拿 128 kbps 的试听版。以后要补冷门音效再去，记得只挑 CC0 的。
+- 环境音用 Thimras 的公园录音（风、河水、鸟叫三条），每条十几分钟、七八十到一百 MB，`maxBytes` 只取开头一段，
+  混成 60 秒，结尾 4 秒叠回开头做成无缝循环。
+
+### 响度目标（建议写进 spec 5.7"一致性和分层"）
+
+| 类别 | 对齐指标 | 目标 | 声道 | 限幅器最多压 |
+| --- | --- | --- | --- | --- |
+| 音效 | 最大瞬时响度（400 毫秒窗口） | -18 LUFS | 单声道 | 6 dB |
+| 语音 | 积分响度 | -18 LUFS | 单声道 | 3 dB |
+| 胜负收尾 | 积分响度 | -18 LUFS | 立体声 | 3 dB |
+| 菜单、对局音乐 | 积分响度 | -20 LUFS | 立体声 | 3 dB |
+| 环境音 | 积分响度 | -30 LUFS | 立体声 | 3 dB |
+
+统一 48 kHz，真峰值不超过 -1 dBTP，ogg（Vorbis）加 mp3 兜底。音效单声道是为了按位置做声像时左右干净。
+
+- 音效不用积分响度：短于 400 毫秒的算不出来，几百毫秒的也偏低。
+- 增益是整段的静态增益，不做动态压缩。起音很尖（撞击、碎裂、冰咒）或只有几十毫秒（点击）的音效，要达到目标峰值得
+  高出上限十几 dB，所以增益有上限：限幅器最多压 6 dB，再多就停在峰值上限。这类音效最终的响度只取决于这个上限，和目标
+  无关；目标从 -14 降到 -18，就是为了让撞击、碎裂这些重要的声音不比"增益"这类柔和的声音轻太多。实测处理后音效的
+  最大瞬时响度中位数 -19.3，最轻的 10% 在 -26 以下（基本是界面点击声）。
+- 同类之间的轻重（悬停比按钮轻）不靠素材，靠 `src/audio/sfx.ts` 音效表的 volume。音效表的 volume 最大是 1，素材太轻
+  就补不回来，所以宁可目标低一点。
+
+### 接进 src/audio 时要做的
+
+- 清单 `public/audio/manifest.json` 的 `id` 和 `sfx.ts` 的 `SfxId`、`music.ts` 的 `TrackId` 一一对应。用户在试听页
+  定下留用的候选后，把对应的 `audio/sfx/<id>/<序号>.ogg` 填进 `SFX_TABLE` 的 variants，Howl 的 src 写成 `[ogg, mp3]`。
+- 清单里有 4 个 `sfx.ts` 还没有的键：`spell.big`（群体法术）、`flow.game_start`（开场音）、`flow.nexus_light`（枢纽点亮）、
+  `flow.nexus_explode`（胜负时枢纽爆炸）。spec 5.6 的声音列写了前三个，第四个是画面列有、声音列没写的。
+- 胜负收尾在 `sfx.ts` 里叫 `flow.victory`、`flow.defeat`，在 `music.ts` 里叫 `victory`、`defeat`，素材是同一段，接的时候
+  二选一，另一个删掉。
+- 语音处理后 `public/audio/voice/<key>/` 下多了 `choose.mp3`、`ban.mp3`，`voice.ts` 可以把 src 改成 `[ogg, mp3]`。
+- 菜单音乐的 1 号（Fantasy Orchestral Theme）不是循环曲；对局音乐 1、2 号是作者给的循环版；环境音三个都做成了无缝循环。
+
+### 踩过的坑
+
+- OpenGameArt 单连接只有十几 KB/s，大文件常常下到 5 MB、10 MB 这类整数处断开。`fetch-sfx.ts` 用 HTTP Range 从断开的
+  位置续传，30 秒收不到数据就重连。
+- ffmpeg 的 ebur128 在补的静音段上给出 `nan`，`Math.max` 遇到 NaN 结果整个变 NaN，短音效全被当成静音放大了 56 dB。
+  解析时跳过非有限值。
+- 限幅器只看采样点，真峰值会冒出来；Vorbis 编码又会冒出 1 dB 左右。现在先升到 4 倍采样率再限幅，上限设 -2.5 dBFS，
+  处理后真峰值最高 -1.4 dBTP。
+- `fetch-voice.ts` 按文件大小判断是否已下载，语音处理过之后大小变了，重跑 `fetch:voice` 会把原件重新下回来覆盖成品。
+  `normalize-audio.ts` 按内容认得出来，重跑一次就行。
+
+## 粒子系统（M4，分镜表 1.5）
+
+代码在 `src/presentation/fx/particles/`，演示页 `src/dev/particles/`，测试 `tests/particles.test.ts`。还没接进事件动画，
+M4 各事件模块直接调用。
+
+### 用法
+
+```ts
+const fx = new ParticleSystem({ camera: stage.camera });
+stage.scene.add(fx.object);              // 挂在场景根上（位置都是世界坐标，父节点必须是单位变换）
+const stop = driveWithGsap(fx);          // 跟 GSAP 的时钟走，乘全局时间线的 timeScale：导演快进、调试台慢放都会带上粒子
+await fx.emit('spark_heavy', { at, count: 14 });                     // 句柄可以 await，最后一个粒子消失时完成
+fx.emit('fire_bolt', { at: castPos, to: target, color: FX_PALETTE.ice }); // 冰箭；飞行 0.25 秒，duration 可改
+fx.emit('slash_trail', { at, follow: () => attacker.position });      // 跟着冲锋的随从
+tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 包成时间线；时间线被杀掉时粒子一起清掉
+// 一局结束：stop(); fx.dispose();
+```
+
+- 预设 18 个：分镜表 1.5 列的 16 个名字（spark_light / spark_heavy 算两个）加 burn_ash、nexus_burst。参数只有
+  分镜约定的 count、dir（up / out / in / toward）、color、scale，外加 to（目标）、duration（飞行时长）、follow、timeScale。
+- `at` 是物件脚下台面上的点（y = 0），贴地的效果按随从底座 1.5 宽设计，发射半径在底座外面；打在随从身上的火花、
+  碎冰传 y ≈ 0.3 到 0.4。
+- count 改的是"主体"那几层，闪光、冲击环这类单个的层不跟着变。每层数量默认有 ±10% 随机（spec 5.5），
+  `countJitter: 0` 关掉。
+- 句柄：`kill()` 立刻清掉，`stop()` 停止发射、已有的放完，`timeScale(v)` 单独调快慢，`origin` 可以直接交给 GSAP 补间。
+
+### 实现要点
+
+- 一个 2000 格的池（结构化 Float32Array），池满时新粒子不生成，计入 `dropped`；每帧只读写这些数组，不分配对象。
+- 三批绘制：alpha（普通透明，按远到近排序）、add（加法，不进泛光）、bloom（加法，进泛光）。最多 4 次绘制调用。
+- 进泛光：stage.ts 的选择性泛光按深度对上被选中物件的像素，而泛光的深度通道用 MeshDepthMaterial 重画选中的物件。
+  所以朝向、拉伸都在 CPU 上算进实例矩阵（深度通道只认实例矩阵），bloom 批另有一个同实例数据的网格只写亮核的深度、
+  放在 BLOOM_LAYER 上。只有小而亮的粒子（火花、光点）进泛光：大闪光、烟进了泛光会把底下的台面一起晕开。
+- 贴图是程序生成的 8 格图集（DataTexture，不依赖 DOM，测试里也能建）。颜色在线性空间、可以大于 1；
+  渐变的亮度别给太高，ACES 会把 3 以上的都压成白色，看不出主色。
+- 软粒子：默认按离台面的高度淡出（0.08 单位）；`setSoftDepth(深度贴图, 镜头, 宽, 高)` 换成按场景深度淡出，
+  需要调用方自己准备深度贴图（演示页里有一个预渲染的例子，开销是多画一遍场景）。
+- 朝镜头的烟团中心要抬到 0.3 倍大小以上，否则下半截插进台面被深度裁掉，看起来像没发出来。
+- 显存：几何体、材质、图集都归系统，`dispose()` 一起释放。不要交给 `scene/dispose.ts` 的 `releaseGpu`，
+  它不认 ShaderMaterial 里的贴图。
+
+### 演示页和自动化
+
+- `pnpm dev` 后打开 `/src/dev/particles/`。lil-gui 里选预设、位置、改参数，空格触发，S 慢放 0.1 倍，"逐个演示全部"，
+  "最重的 5 个同时"，"打满 2000"。左上角是帧率、粒子数、丢弃数、update 和 render 耗时。
+- 控制台 `pfx`：`pfx.shots(前缀)` 18 个预设各截一张；`pfx.capture(名字, [毫秒…], 前缀)` 按固定步长推进、截指定时刻的帧
+  （不依赖页面在前台）；`pfx.bench('idle' | 'heavy5' | 'fill', 秒)` 测帧率（要页面在前台，rAF 才跑）。
+  截图存到 `.dev-output/`。
+- 坑：`vite.config.ts` 的 `watch.ignored: ['**/.claude/**']` 在 worktree 里也会匹配到 worktree 自己的路径，
+  开发服务器看不到任何文件改动，改完代码要重启服务器才生效。
+
+### 性能（2026-10-19，Apple M4 Pro，不是 spec 的 M1 基准机；Chrome 内置浏览器，120Hz 屏）
+
+单帧同步耗时 = 粒子 update + 渲染 + 读回一个像素等 GPU 做完，每种场景测 3 秒：
+
+| 场景 | 画布 | 帧率 | update | 单帧同步耗时 | 粒子峰值 |
+| --- | --- | --- | --- | --- | --- |
+| 空场景 | 1920×1080 | 120（屏幕上限） | 0 | 3.57ms | 0 |
+| 最重的 5 个同时（victory_confetti、nexus_burst、fire_bolt、burn_ash、holy_pillar） | 1920×1080 | 120 | 0.09ms | 3.71ms | 390 |
+| 打满 2000 | 1920×1080 | 120 | 0.29ms | 3.90ms | 2000 |
+
+粒子带来的额外耗时：5 个最重的同时约 0.15ms，打满 2000 约 0.35ms。设备像素比 2（3840×2160）时单帧 9 到 12ms，
+两次测量里空场景和打满的先后关系相反，差异落在测量噪声里；在 M1 上要在接进对局后再测一次。
 
 ## M4 菜单页面（加载、主菜单、结算）
 
@@ -364,9 +564,6 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
 
 ### 截图和验证
 
-- 开发服务器不监听本 worktree：`vite.config.ts` 的 `watch.ignored` 有 `**/.claude/**`，而 worktree 本身就在
-  `.claude/worktrees/` 下，改了文件页面不会更新，开发服务器还会继续发旧的转换结果。在 worktree 里调界面要每次改完重启
-  开发服务器。
 - 原尺寸截图用 Playwright 缓存里的 `chrome-headless-shell`（`~/Library/Caches/ms-playwright/chromium_headless_shell-*/`）
   加 `--use-angle=metal` 走 GPU，通过 CDP 设视口、点按钮、`Page.captureScreenshot`。`Runtime.evaluate` 要带
   `replMode: true` 才能在表达式里 `await import('/src/app/store.ts')` 拿到和应用同一份的界面状态。

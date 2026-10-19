@@ -1,6 +1,6 @@
 // 带重试的 HTTP 请求。只用 Node 内置的 fetch。
 
-const TIMEOUT_MS = 30_000;
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 export class HttpError extends Error {
   status: number;
@@ -24,6 +24,8 @@ function isRetryable(err: unknown): boolean {
 export type RetryOptions = {
   /** 第一次失败之后再试几次。 */
   retries?: number;
+  /** 单次请求的超时，默认 30 秒。符文之地传说的大图服务器慢，要放宽。 */
+  timeoutMs?: number;
 };
 
 async function withRetry<T>(fn: () => Promise<T>, { retries = 2 }: RetryOptions = {}): Promise<T> {
@@ -37,8 +39,8 @@ async function withRetry<T>(fn: () => Promise<T>, { retries = 2 }: RetryOptions 
   }
 }
 
-async function get(url: string): Promise<Response> {
-  const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+async function get(url: string, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<Response> {
+  const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
   if (!res.ok) {
     await res.body?.cancel();
     throw new HttpError(res.status, url);
@@ -47,11 +49,11 @@ async function get(url: string): Promise<Response> {
 }
 
 export function fetchBytes(url: string, opts?: RetryOptions): Promise<Uint8Array> {
-  return withRetry(async () => new Uint8Array(await (await get(url)).arrayBuffer()), opts);
+  return withRetry(async () => new Uint8Array(await (await get(url, opts?.timeoutMs)).arrayBuffer()), opts);
 }
 
 export function fetchJson<T>(url: string, opts?: RetryOptions): Promise<T> {
-  return withRetry(async () => (await (await get(url)).json()) as T, opts);
+  return withRetry(async () => (await (await get(url, opts?.timeoutMs)).json()) as T, opts);
 }
 
 export function describeError(err: unknown): string {

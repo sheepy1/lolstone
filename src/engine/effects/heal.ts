@@ -1,5 +1,5 @@
 import type { SourceRef } from '../events';
-import { emit, findMinion, type Ctx } from '../context';
+import { emit, findMinion, fxIdField, type Ctx } from '../context';
 import type { Fx, TargetRef } from '../state';
 import { updateEnrage } from './buff';
 
@@ -11,6 +11,7 @@ export function healCharacter(
   target: TargetRef,
   amount: number,
   fx: Fx,
+  fxId?: string,
 ): number {
   if (amount <= 0) return 0;
   if (target.kind === 'hero') {
@@ -25,6 +26,7 @@ export function healCharacter(
       healthBefore: before,
       healthAfter: hero.health,
       fx,
+      ...fxIdField(fxId),
     });
     return hero.health - before;
   }
@@ -41,6 +43,7 @@ export function healCharacter(
     healthBefore: before,
     healthAfter: m.health,
     fx,
+    ...fxIdField(fxId),
   });
   updateEnrage(ctx, group, loc.side, m);
   return m.health - before;

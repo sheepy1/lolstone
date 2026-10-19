@@ -1,12 +1,16 @@
 // 动画调试台 /dev/fx（spec 6.1、6.2，只进开发构建）：在一块固定的中盘棋盘上单独触发任意一种事件的动画，
 // 慢放、改整步时长和缓动曲线、调光照和泛光；GSDevTools 接在最近一步的时间线上，可以拖时间轴。
+// 棋盘也可以直接玩：手牌能拖、随从能攻击（只有我方，没有对手 AI），用来调拿起手感（DRAG）和出随从砸落（PLAY_MINION）。
+// 播过样例事件后显示局面和真实局面不一致，要先"重置棋盘"才能再拖牌。
 // M4 在这里逐条打磨动画：试出满意的时长和曲线后写回 src/presentation/animations 里对应的模块。
 import gsap from 'gsap';
 import { GSDevTools } from 'gsap/GSDevTools';
 import GUI from 'lil-gui';
 import { l0ChooseAction } from '../../ai/l0';
 import { installDefaultPool, PRESET_DECKS } from '../../cards';
-import { applyAction, createGame, seedRng, type Fx, type GameState, type RngState, type Side } from '../../engine';
+import { applyAction, createGame, listLegalActions, maskEvents, seedRng, type Action, type Fx, type GameState, type RngState, type Side } from '../../engine';
+import { PLAY_MINION } from '../../presentation/animations/minionSummoned';
+import { DRAG, Interaction } from '../../scene/interaction';
 import { Director } from '../../presentation/director';
 import { PRESENTATION_EVENT_KINDS, type PresentationEventKind } from '../../presentation/events';
 import { createGsapPlayer, type GsapPlayer } from '../../presentation/player';
@@ -37,11 +41,12 @@ function benchState(): GameState {
   throw new Error('没有找到合适的中盘局面');
 }
 
-const base: ViewState = viewFromState(benchState(), 0);
+const baseState: GameState = benchState();
+const base: ViewState = viewFromState(baseState, 0);
 const stage = new Stage(document.getElementById('stage')!);
 const log = document.getElementById('log')!;
 
-type Bench = { scene: TableScene; director: Director; player: GsapPlayer };
+type Bench = { scene: TableScene; director: Director; player: GsapPlayer; interaction: Interaction; state: GameState; dirty: boolean };
 let bench: Bench | null = null;
 let devtools: GSDevTools | null = null;
 
@@ -62,6 +67,7 @@ const settings = {
 function build(): void {
   if (bench) {
     for (const t of gsap.globalTimeline.getChildren(false, true, true)) t.kill();
+    bench.interaction.destroy();
     bench.scene.dispose();
   }
   const scene = new TableScene(base, stage);
@@ -71,7 +77,26 @@ function build(): void {
     devtools?.kill();
     devtools = GSDevTools.create({ animation: tl, container: document.body, minimal: false, persist: false });
   };
-  bench = { scene, director: new Director(base, player.play), player };
+  const director = new Director(base, player.play);
+  const b: Bench = { scene, director, player, interaction: null as never, state: baseState, dirty: false };
+  const legal = (): Action[] | null => (director.busy || b.dirty || b.state.current !== 0 ? null : listLegalActions(b.state, 0));
+  b.interaction = new Interaction(scene, {
+    legal,
+    submit: (a) => {
+      const r = applyAction(b.state, a);
+      if (!r.ok) return;
+      b.state = r.state;
+      director.enqueue(maskEvents(r.events, 0));
+    },
+    busy: () => director.busy,
+    fastForward: () => {},
+    hover: () => {},
+    mulliganChanged: () => {},
+    waiting: () => false,
+  });
+  director.subscribe(() => b.interaction.refresh());
+  b.interaction.refresh();
+  bench = b;
   applySettings();
 }
 
@@ -93,7 +118,9 @@ function play(): void {
     log.textContent = `${settings.kind}：当前棋盘造不出这个事件（比如场上没有随从了），先点"重置棋盘"`;
     return;
   }
-  log.textContent = `播放 ${events.map((e) => e.kind).join(' + ')}`;
+  log.textContent = `播放 ${events.map((e) => e.kind).join(' + ')}（之后先"重置棋盘"再拖牌）`;
+  bench.dirty = true;
+  bench.interaction.refresh();
   bench.director.enqueue(events);
 }
 
@@ -117,6 +144,36 @@ light.add(settings, 'sun', 0, 4, 0.05).name('方向光').onChange(applySettings)
 light.add(settings, 'hemi', 0, 3, 0.05).name('半球光').onChange(applySettings);
 light.add(settings, 'bloomIntensity', 0, 4, 0.05).name('泛光强度').onChange(applySettings);
 light.add(settings, 'bloomRadius', 0, 1, 0.05).name('泛光半径').onChange(applySettings);
+
+const drag = gui.addFolder('拿起手感 DRAG');
+drag.add(DRAG, 'frequency', 1, 15, 0.5).name('弹簧频率 Hz');
+drag.add(DRAG, 'damping', 0.2, 1.5, 0.05).name('阻尼比');
+drag.add(DRAG, 'maxLag', 0, 1, 0.05).name('最多落后（卡宽）');
+drag.add(DRAG, 'tiltPerSpeed', 0, 15, 0.5).name('倾斜（度/卡宽每秒）');
+drag.add(DRAG, 'maxTilt', 0, 40, 1).name('倾角上限（度）');
+drag.add(DRAG, 'roll', 0, 1.5, 0.05).name('翻滚比例');
+drag.add(DRAG, 'lift', 0, 1, 0.05).name('拿起高度（卡高）');
+drag.add(DRAG, 'pickScale', 0.8, 1.4, 0.01).name('拿起放大');
+drag.add(DRAG, 'rowScale', 0.3, 1, 0.01).name('随从行上缩到');
+drag.add(DRAG, 'returnTime', 0.1, 1, 0.05).name('取消回手时长');
+const slam = gui.addFolder('出随从砸落 PLAY_MINION');
+slam.add(PLAY_MINION, 'hover', 0.4, 3, 0.05).name('悬停高度');
+slam.add(PLAY_MINION, 'charge', 0, 0.4, 0.01).name('蓄力时长');
+slam.add(PLAY_MINION, 'chargeLift', 0, 0.6, 0.01).name('蓄力上抬');
+slam.add(PLAY_MINION, 'smash', 0.04, 0.4, 0.01).name('砸落时长');
+slam.add(PLAY_MINION, 'squashY', 0.5, 1, 0.01).name('压扁高度');
+slam.add(PLAY_MINION, 'squashX', 1, 1.4, 0.01).name('压扁宽度');
+slam.add(PLAY_MINION, 'settle', 0.1, 0.8, 0.01).name('回弹时长');
+slam.add(PLAY_MINION, 'shockwaveCost', 0, 10, 1).name('冲击波费用');
+slam.add(PLAY_MINION, 'shakeCost', 0, 10, 1).name('震屏费用');
+slam.add(PLAY_MINION, 'shake', 0, 0.3, 0.005).name('震屏幅度');
+const look = gui.addFolder('枢纽方案（切换会重新加载）');
+const nexus = { style: new URLSearchParams(location.search).get('nexus') ?? 'c' };
+look.add(nexus, 'style', ['a', 'b', 'c']).name('方案').onChange((v: string) => {
+  const q = new URLSearchParams(location.search);
+  q.set('nexus', v);
+  location.search = q.toString();
+});
 
 window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyP') play();

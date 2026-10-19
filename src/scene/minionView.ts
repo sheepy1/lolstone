@@ -85,6 +85,8 @@ export class MinionView extends THREE.Group {
   private iconSlots: { k: string; x0: number; x1: number }[] = [];
   private last: ViewMinion | null = null;
   private hudKey = '';
+  // 盖章动画还没落下的关键词：格子留着，图标先不画（statusFx 的 keywordStamp，E19）
+  private readonly heldIcons = new Set<string>();
   private stealthed = false;
   private tone = { sleepy: false, dim: false, dead: false };
 
@@ -195,7 +197,7 @@ export class MinionView extends THREE.Group {
       m.health < m.maxHealth ? COLORS.debuffed : m.maxHealth > baseHp ? COLORS.buffed : m.maxHealth < baseHp ? COLORS.debuffed : 0xffffff,
     );
     this.badges.health.setShield(shield);
-    const key = JSON.stringify([m.keywords, m.silenced, spellDamage]);
+    const key = JSON.stringify([m.keywords, m.silenced, spellDamage, [...this.heldIcons]]);
     if (key === this.hudKey) return;
     this.hudKey = key;
     // 底座上沿的 buff 小图标
@@ -213,6 +215,7 @@ export class MinionView extends THREE.Group {
       const y = 10;
       const s = P - 20;
       this.iconSlots.push({ k: ic.k, x0: cx - P / 2, x1: cx + P / 2 });
+      if (this.heldIcons.has(ic.k)) return;
       // 深色底托加一圈黑边：放在任何头像上都压得住
       a.fillStyle = 'rgba(8,10,14,0.92)';
       a.beginPath();
@@ -246,6 +249,15 @@ export class MinionView extends THREE.Group {
     });
     this.iconPlane.visible = shown.length > 0;
     this.icons.texture.needsUpdate = true;
+  }
+
+  // 先不画某个关键词图标（held = true），盖章落下时再画上；格子位置不变，别的图标不挪
+  holdIcon(k: string, held: boolean): void {
+    if (held === this.heldIcons.has(k)) return;
+    if (held) this.heldIcons.add(k);
+    else this.heldIcons.delete(k);
+    this.hudKey = '';
+    if (this.last) this.drawHud(this.last);
   }
 
   // 某个关键词图标在 body 里的位置和边长（动画在它上面叠一层做出现、消失），没有这个图标返回 null

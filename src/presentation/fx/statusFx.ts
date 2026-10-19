@@ -134,50 +134,143 @@ export function stripStatus(m: MinionView, duration: number): void {
 type Cell = { x: number; y: number; z: number; size: number };
 const cellGeo = shared(new THREE.PlaneGeometry(1, 1));
 
-// 关键词图标的出现和消失（spec 5.4 潜行的"视野被遮"图标，E19）。底座上沿那排图标是一张 canvas，单个格子没法单独淡入淡出，
-// 所以在那一格上叠一张同样的图标：
-// - in：从 1.8 倍大、透明压到原位，像盖章（那一格本身已经画上了图标，叠层落定后正好重合）；
-// - out：那一格已经擦掉了，叠层从原位缩小、淡出。cell 要在显示局面同步之前取（同步后那一格就没了）
-export function keywordStamp(m: MinionView, k: string, cell: Cell | null, mode: 'in' | 'out', duration: number): void {
-  if (!cell) return;
+// 盖章的参数（E19 进入，整段约 330ms，在分镜的 400ms 以内）
+export const STAMP = {
+  from: 4.5, // 起始大小（格子边长的倍数）：格子在 1080p 下只有十几像素，要放到和随从差不多大才认得出图标
+  lift: 0.5, // 起始离格子的高度
+  appear: 0.06, // 透明度 0 → 1：在大尺寸时就看得清
+  press: 0.16, // 压下来到原位（加速，像盖下去）
+  pressAt: 0.03, // 压下从第几秒开始（和显现重叠一点）
+  impact: 0.14, // 落下后的冲击：金边往外扩、淡出，盖章本身白闪回原色
+  ring: 3, // 金边扩到多大（格子很小，扩到 3 倍才看得出一下冲击）
+};
+
+// 关键词图标的一格画在 canvas 上：深色底托、图标、金边。ring = true 只画一圈发光的金边（落下时的冲击）。
+// 图标图片第一次用时可能还没加载完，加载完再重画一遍
+function stampTexture(k: string, ring: boolean): THREE.CanvasTexture {
   const c = document.createElement('canvas');
   c.width = c.height = 128;
   const g = c.getContext('2d')!;
-  g.fillStyle = 'rgba(8,10,14,0.92)';
-  g.beginPath();
-  g.roundRect(2, 2, 124, 124, 22);
-  g.fill();
-  const drawn = drawKeywordIcon(g, k, 10, 10, 108, 108, 16, () => {});
-  if (!drawn) {
-    g.fillStyle = '#9090b0';
-    g.beginPath();
-    g.roundRect(10, 10, 108, 108, 16);
-    g.fill();
-  }
-  g.strokeStyle = '#c8aa6e';
-  g.lineWidth = 6;
-  g.beginPath();
-  g.roundRect(10, 10, 108, 108, 16);
-  g.stroke();
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false });
+  const draw = () => {
+    g.clearRect(0, 0, 128, 128);
+    if (ring) {
+      g.shadowColor = '#ffd98a';
+      g.shadowBlur = 14;
+      g.strokeStyle = '#ffe2a0';
+      g.lineWidth = 8;
+      g.beginPath();
+      g.roundRect(14, 14, 100, 100, 16);
+      g.stroke();
+      return;
+    }
+    g.fillStyle = 'rgba(8,10,14,0.92)';
+    g.beginPath();
+    g.roundRect(2, 2, 124, 124, 22);
+    g.fill();
+    const drawn = drawKeywordIcon(g, k, 10, 10, 108, 108, 16, () => {
+      draw();
+      tex.needsUpdate = true;
+    });
+    if (!drawn) {
+      g.fillStyle = '#9090b0';
+      g.beginPath();
+      g.roundRect(10, 10, 108, 108, 16);
+      g.fill();
+    }
+    g.strokeStyle = '#c8aa6e';
+    g.lineWidth = 6;
+    g.beginPath();
+    g.roundRect(10, 10, 108, 108, 16);
+    g.stroke();
+  };
+  draw();
+  return tex;
+}
+
+function stampMesh(tex: THREE.Texture, cell: Cell, onTop: boolean): THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> {
+  // 盖章在半空时不做深度测试：放大后会伸进头像和潜行的烟里，被挡住就读不出来
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: !onTop, toneMapped: false });
   const mesh = new THREE.Mesh(cellGeo, mat);
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.set(cell.x, cell.y + 0.006, cell.z);
-  mesh.renderOrder = 3;
-  m.body.add(mesh);
-  const st = { k: mode === 'in' ? 0 : 1 };
+  mesh.renderOrder = onTop ? 10 : 3;
+  return mesh;
+}
+
+// 关键词图标的出现和消失（spec 5.4 潜行的"视野被遮"图标，E19）。底座上沿那排图标是一张 canvas，单个格子没法单独淡入淡出，
+// 所以在那一格上叠一张同样的图标：
+// - in（盖章）：那一格先空着（MinionView.holdIcon）。叠层在格子上方以 4.5 倍大出现，60ms 内变成不透明，再加速压下到原位；
+//   落下那一刻图标画进那一格，叠层白闪一下回到原色，一圈金边往外扩、淡出，然后叠层撤掉。透明度和缩放分开走，
+//   放大的时候已经看得清图标。duration 不用（时长在 STAMP）。
+// - out：那一格已经擦掉了，叠层从原位缩小、淡出。cell 要在显示局面同步之前取（同步后那一格就没了）
+export function keywordStamp(m: MinionView, k: string, cell: Cell | null, mode: 'in' | 'out', duration: number): void {
+  if (!cell) return;
+  if (mode === 'out') {
+    const tex = stampTexture(k, false);
+    const mesh = stampMesh(tex, cell, false);
+    const mat = mesh.material;
+    m.body.add(mesh);
+    const st = { k: 1 };
+    const apply = () => {
+      mesh.scale.setScalar(cell.size * (0.4 + st.k * 0.6));
+      mat.opacity = st.k;
+    };
+    apply();
+    const release = () => {
+      mesh.removeFromParent();
+      releaseTexture(tex);
+      mat.dispose();
+    };
+    gsap.to(st, { k: 0, duration, ease: 'power1.in', onUpdate: apply, onComplete: release, onInterrupt: release });
+    return;
+  }
+  const P = STAMP;
+  m.holdIcon(k, true);
+  const tex = stampTexture(k, false);
+  const ringTex = stampTexture(k, true);
+  const stamp = stampMesh(tex, cell, true);
+  const ring = stampMesh(ringTex, cell, true);
+  ring.visible = false;
+  m.body.add(stamp, ring);
+  const st = { a: 0, s: P.from, h: P.lift, white: 0, r: 0 };
   const apply = () => {
-    const s = mode === 'in' ? 1 + (1 - st.k) * 0.8 : 0.4 + st.k * 0.6;
-    mesh.scale.setScalar(cell.size * s);
-    mat.opacity = st.k;
+    stamp.scale.setScalar(cell.size * st.s);
+    stamp.position.y = cell.y + 0.006 + st.h;
+    stamp.material.opacity = st.a;
+    stamp.material.color.setScalar(1 + st.white);
+    ring.scale.setScalar(cell.size * (1 + (P.ring - 1) * st.r));
+    ring.material.opacity = 1 - st.r;
   };
   apply();
+  const landAt = P.pressAt + P.press;
+  const t = gsap.timeline({ onUpdate: apply });
+  t.to(st, { a: 1, duration: P.appear, ease: 'power1.out' }, 0);
+  t.to(st, { s: 1, h: 0, duration: P.press, ease: 'power3.in' }, P.pressAt);
+  // 落下：图标画进那一格，叠层白闪回原色，金边往外扩
+  t.call(
+    () => {
+      m.holdIcon(k, false);
+      ring.visible = true;
+      st.white = 1.5;
+    },
+    undefined,
+    landAt,
+  );
+  t.to(st, { white: 0, duration: P.impact, ease: 'power2.out' }, landAt);
+  t.to(st, { r: 1, duration: P.impact, ease: 'power2.out' }, landAt);
+  // 叠层和画上去的图标重合，最后淡掉撤走
+  t.to(st, { a: 0, duration: 0.06, ease: 'none' }, landAt + P.impact);
   const release = () => {
-    mesh.removeFromParent();
+    m.holdIcon(k, false);
+    stamp.removeFromParent();
+    ring.removeFromParent();
     releaseTexture(tex);
-    mat.dispose();
+    releaseTexture(ringTex);
+    stamp.material.dispose();
+    ring.material.dispose();
   };
-  gsap.to(st, { k: mode === 'in' ? 1 : 0, duration, ease: mode === 'in' ? 'power2.out' : 'power1.in', onUpdate: apply, onComplete: release, onInterrupt: release });
+  t.eventCallback('onComplete', release);
+  t.eventCallback('onInterrupt', release);
 }

@@ -23,6 +23,7 @@ export const ENDGAME = {
   dim: 0.6, // 失败：压暗
   word: 0.8,
   panelAt: 2.6,
+  wordOut: 0.35, // 面板升起时场景里的大字淡出
 };
 
 export const gameOver: AnimModule<'game_over'> = (e, { scene, viewer }) => {
@@ -117,7 +118,27 @@ export const gameOver: AnimModule<'game_over'> = (e, { scene, viewer }) => {
       },
     }, wAt);
   }
-  // 面板：界面层在这一步播完时升起
-  t.call(() => playSfx('ui.click'), undefined, P.panelAt);
+  // 面板：界面层在这一步播完时升起。结算面板自己有一个同样的大标题（"胜利""失败""平局"），而面板的底是半透明的，
+  // 场景里的大字留着就会和它叠成两份（用户试玩时看到过），所以面板升起时场景里的大字和光晕淡出、销毁，交给面板的标题
+  t.call(
+    () => {
+      playSfx('ui.click');
+      const st = { a: 1 };
+      const halo0 = word.halo.material.opacity;
+      gsap.to(st, {
+        a: 0,
+        duration: P.wordOut,
+        ease: 'power1.in',
+        onUpdate: () => {
+          word.text.fillOpacity = st.a;
+          word.text.outlineOpacity = st.a;
+          word.halo.material.opacity = halo0 * st.a;
+        },
+        onComplete: () => word.dispose(),
+      });
+    },
+    undefined,
+    P.panelAt,
+  );
   return { tl: t };
 };

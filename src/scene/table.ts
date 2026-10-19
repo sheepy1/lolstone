@@ -111,6 +111,8 @@ export class TableScene {
   draggingHand: number | null = null;
   // 正沿弧线飞回手牌的牌：参与手牌排位，但位置由飞行动画管
   readonly returningHand = new Set<number>();
+  // 正在从牌库飞进手牌的牌（E03）：飞行由动画模块自己做，布局同步不去挪它，落位后再并进扇形
+  readonly incomingHand = new Set<number>();
   // 由动画模块接管入场的随从：sync 建出来时先藏起来，不做默认的落下动画
   readonly heldSpawns = new Set<number>();
   // 自己打出、悬在落点上方等着砸落的随从牌（card_played 放进来，minion_summoned 取走）
@@ -131,6 +133,10 @@ export class TableScene {
   readonly particles: ParticleSystem;
   // 开局演出（E01）进行中：换牌的压暗板先不出来
   intro = false;
+  // 每个显示局面属于第几步（播放器在每步开始时登记）。组间重叠时，前一步收尾里的同步可能晚于后一步的同步；
+  // 同步到比最新那步更旧的局面会把后一步刚放上去的牌、随从挪走，所以这种过时的同步直接跳过
+  private readonly viewSeq = new WeakMap<ViewState, number>();
+  private newestSeq = 0;
   // 为 true 时，sync 新建的手牌直接放在目标槽位上（不从牌库滑过去），由动画模块自己做从牌库飞来的那一段
   spawnAtSlot = false;
   // 胜负定格（E28、E29）：河水、灯、法力水晶这些常驻的小动画停下
@@ -332,7 +338,14 @@ export class TableScene {
   // ---------- 同步 ----------
 
   // 把场景对到显示局面。duration 为 0 时直接跳到位。返回有没有物件需要移动。
+  markViews(views: readonly ViewState[], seq: number): void {
+    for (const v of views) this.viewSeq.set(v, seq);
+    this.newestSeq = Math.max(this.newestSeq, seq);
+  }
+
   sync(view: ViewState, duration = LAYOUT_DURATION): boolean {
+    const seq = this.viewSeq.get(view);
+    if (seq !== undefined && seq < this.newestSeq) return false;
     this.view = view;
     this.shade.visible = view.phase === 'mulligan' && !this.intro;
     this.syncPotionCaption();
@@ -453,7 +466,7 @@ export class TableScene {
       } else slot = handSlot(p, i, visible.length);
       // 悬停的牌画在最上面（它离镜头最近，深度测试本来就对；renderOrder 只防同深度闪烁）
       c.renderOrder = i === hoveredIndex ? 2 : 0;
-      if (this.returningHand.has(card.instanceId)) return;
+      if (this.returningHand.has(card.instanceId) || this.incomingHand.has(card.instanceId)) return;
       if (spawned && this.spawnAtSlot) {
         put(c, slot);
         return;

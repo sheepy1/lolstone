@@ -15,7 +15,7 @@ export const turnEnd: AnimModule<'turn_end'> = (e, { scene, viewer }) => {
   const t = tl();
   if (e.side !== viewer) {
     t.add(wait(0.2));
-    return { tl: t };
+    return { tl: t, tail: 0.2 }; // 对手结束回合：只是停顿
   }
   const P = TURN_END;
   const banner = new Banner(scene.stage, scene.layers.top, bannerSlot().pos, '对方回合', COLD);
@@ -23,5 +23,5 @@ export const turnEnd: AnimModule<'turn_end'> = (e, { scene, viewer }) => {
   t.call(() => playSfx('flow.turn_end'), undefined, P.dim);
   t.add(banner.in(P.bannerIn, P.bannerHold), P.dim);
   t.add(banner.out(P.bannerOut));
-  return { tl: t };
+  return { tl: t, tail: TURN_END.bannerOut };
 };

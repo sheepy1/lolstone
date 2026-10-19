@@ -72,5 +72,5 @@ export const cardPlayed: AnimModule<'card_played'> = (e, { scene, before, after,
     } else fadeOutAndDispose(c, OPPONENT.exit);
   });
   t.to({}, { duration: mine ? 0.2 : OPPONENT.exit });
-  return { tl: t };
+  return { tl: t, tail: mine ? 0.2 : OPPONENT.exit };
 };

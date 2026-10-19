@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { playL0Game } from '../src/ai/selfplay';
 import { PRESET_DECKS } from '../src/cards';
 import { createGame, maskEvents, type GameEvent, type HeroClass } from '../src/engine';
-import { composeStep, startTimes } from '../src/presentation/compose';
+import { composeStep, OVERLAP, placeStarts, readyTime, startTimes } from '../src/presentation/compose';
 import { Director, splitSteps, type Step } from '../src/presentation/director';
 import type { PresentationEvent } from '../src/presentation/events';
 import { initialView, reduceView, viewFromState, type ViewState } from '../src/presentation/viewState';
@@ -103,6 +103,78 @@ describe('Director', () => {
     console.error = origError;
     expect(d.errors).toHaveLength(2);
     expect(d.displayed.phase).toBe('playing');
+  });
+});
+
+describe('组间重叠（m4-storyboard 1.7）', () => {
+  // 可以分开控制 ready 和 done 的播放器
+  function overlapRecorder() {
+    const log: string[] = [];
+    const ctl: { ready: () => void; done: () => void }[] = [];
+    const play = (step: Step) => {
+      log.push(`start ${step.batch}:${step.group}`);
+      let ready = () => {};
+      let done = () => {};
+      const r = new Promise<void>((res) => (ready = res));
+      const d = new Promise<void>((res) => (done = () => (log.push(`done ${step.batch}:${step.group}`), res())));
+      ctl.push({ ready, done });
+      return { ready: r, done: d };
+    };
+    const tick = async () => {
+      for (let i = 0; i < 4; i++) await Promise.resolve();
+    };
+    return { log, ctl, play, tick };
+  }
+
+  it('上一步 ready 时下一步就开始、显示局面推进；所有步 done 之前一直算忙', async () => {
+    const r = overlapRecorder();
+    const d = new Director(blankView(), r.play);
+    d.enqueue([ev('game_start', 0), ev('turn_end', 1)]);
+    expect(r.log).toEqual(['start 1:0']);
+    r.ctl[0].ready();
+    await r.tick();
+    // 第一步的收尾还没播完，第二步已经开始，显示局面已经推进
+    expect(r.log).toEqual(['start 1:0', 'start 1:1']);
+    expect(d.displayed.phase).toBe('playing');
+    r.ctl[1].ready();
+    r.ctl[1].done();
+    await r.tick();
+    expect(d.busy).toBe(true);
+    r.ctl[0].done();
+    await r.tick();
+    expect(d.busy).toBe(false);
+  });
+
+  it('收尾还没播完时新进来的事件接着播，不等收尾', async () => {
+    const r = overlapRecorder();
+    const d = new Director(blankView(), r.play);
+    d.enqueue([ev('game_start', 0)]);
+    r.ctl[0].ready();
+    await r.tick();
+    d.enqueue([ev('turn_end', 0)]);
+    await r.tick();
+    expect(r.log).toEqual(['start 1:0', 'start 2:0']);
+    r.ctl[0].done();
+    r.ctl[1].ready();
+    r.ctl[1].done();
+    await d.whenIdle();
+  });
+
+  const seg = (d: number) => gsap.timeline().to({}, { duration: d });
+
+  it('带攻击的一步：命中帧之后都算收尾，下一组在收尾进行到 60% 时开始，不早于命中帧', () => {
+    const anims = [{ tl: seg(1), impact: 0.5 }, { tl: seg(0.3) }];
+    const starts = placeStarts(anims);
+    // 第二个事件从命中帧 0.5 开始、到 0.8 结束；整步 1.0 结束，收尾 0.5，60% 处是 0.8
+    expect(readyTime(anims, starts)).toBeCloseTo(0.5 + 0.5 * OVERLAP);
+    // 跟在撞击上的受伤比攻击晚结束时，也按最后一个命中帧之后算
+    const longer = [{ tl: seg(0.6), impact: 0.3 }, { tl: seg(0.7) }];
+    expect(readyTime(longer, placeStarts(longer))).toBeCloseTo(0.3 + 0.7 * OVERLAP);
+  });
+
+  it('没有声明收尾的事件不重叠；声明了收尾的按收尾算', () => {
+    expect(readyTime([{ tl: seg(0.8) }], [0])).toBeCloseTo(0.8);
+    expect(readyTime([{ tl: seg(0.8), tail: 0.3 }], [0])).toBeCloseTo(0.8 - 0.3 * (1 - OVERLAP));
   });
 });
 

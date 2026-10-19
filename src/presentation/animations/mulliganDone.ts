@@ -35,7 +35,7 @@ export const mulliganDone: AnimModule<'mulligan_done'> = (e, { scene, after, vie
   if (e.replaced.length === 0) {
     t.call(() => scene.sync(after, 0.3));
     t.to({}, { duration: 0.3 });
-    return { tl: t };
+    return { tl: t, tail: 0.3 };
   }
   // 新牌：sync 放到位置上，再从牌库飞过去
   t.call(
@@ -54,5 +54,5 @@ export const mulliganDone: AnimModule<'mulligan_done'> = (e, { scene, after, vie
     MULLIGAN.back,
   );
   t.to({}, { duration: e.drawn.length * MULLIGAN.gap + 0.5 });
-  return { tl: t };
+  return { tl: t, tail: 0.3 };
 };

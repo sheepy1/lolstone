@@ -1,11 +1,10 @@
 // 设置（spec 5.1 设置页）：动画速度和 AI 难度的默认值，存在 localStorage。四条音量由 src/audio 自己存（melol.volumes），
 // 这里只在"恢复默认"时把它们设回默认值。localStorage 读写都包在 try/catch 里：隐私模式、存储被禁用时只在本次生效。
+import { VOLUME_DEFAULTS, type Channel } from '../audio/defaults';
 import type { Difficulty } from './menuData';
 
-// 和 src/audio/channels.ts 的 Channel、Volumes 一样。这里不从 src/audio 引类型：这个文件要在 Node 里测试，
-// 引了会把依赖 DOM 的音频模块带进 Node 侧的类型检查
-type Channel = 'master' | 'music' | 'sfx' | 'voice';
-type Volumes = Record<Channel, number>;
+// 音量的类型和默认值来自 src/audio/defaults.ts（不依赖 DOM，Node 侧测试也能引）
+export { VOLUME_DEFAULTS };
 
 export type AnimSpeed = 1 | 1.5 | 2;
 
@@ -16,8 +15,6 @@ export type Settings = {
 
 export const SETTINGS_KEY = 'melol.settings';
 export const SETTINGS_DEFAULTS: Settings = { animSpeed: 1, difficulty: 'l1' };
-// 和 src/audio/channels.ts 的 DEFAULTS 一致（那边没有导出）
-export const VOLUME_DEFAULTS: Volumes = { master: 0.8, music: 0.5, sfx: 0.8, voice: 0.9 };
 
 export const ANIM_SPEEDS: { id: AnimSpeed; name: string }[] = [
   { id: 1, name: '正常' },

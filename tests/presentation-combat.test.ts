@@ -3,7 +3,7 @@
 import gsap from 'gsap';
 import { describe, expect, it } from 'vitest';
 import { ATTACK, DEATH, FREEZE, HERO_HIT, HIT } from '../src/presentation/animations/combat';
-import { composeStep, pickCues, placeStarts, startTimes, type Placed } from '../src/presentation/compose';
+import { composeStep, pickCues, placeStarts, readyTime, startTimes, type Placed } from '../src/presentation/compose';
 import { tierOf } from '../src/presentation/fx/combatText';
 import { allowShake } from '../src/presentation/fx/screen';
 import type { TableScene } from '../src/scene/table';
@@ -149,5 +149,31 @@ describe('阶段时长和分镜一致', () => {
 
   it('飘字字号三档：≤ 2 小、3 到 4 中、≥ 5 大', () => {
     expect([1, 2, 3, 4, 5, 9].map(tierOf)).toEqual(['small', 'small', 'mid', 'mid', 'big', 'big']);
+  });
+});
+
+describe('组间重叠：战斗事件的收尾和亡语（分镜 1.7、E14）', () => {
+  it('增益只报命中帧之后的收尾：0.4 秒的一步在 0.4 - 0.28 × 40% 时放下一组', () => {
+    const a: Placed[] = [{ tl: seg(0.4), tail: 0.28 }];
+    expect(readyTime(a, [0])).toBeCloseTo(0.4 - 0.28 * 0.4);
+  });
+
+  it('死亡：没有亡语时按合拢那段收尾算；带亡语时下一组（亡语的 trigger）在合拢开始时起', () => {
+    const close = DEATH.freeze + DEATH.closeAt;
+    const tail = DEATH.freeze + DEATH.shatter + DEATH.close - close;
+    const plain: Placed[] = [{ tl: seg(0.7), tail }];
+    expect(readyTime(plain, [0])).toBeCloseTo(0.7 - tail * 0.4);
+    const rattle: Placed[] = [{ tl: seg(0.7), tail, readyAt: close }];
+    expect(readyTime(rattle, [0])).toBeCloseTo(close);
+    expect(composeStep(rattle).data.ready).toBeCloseTo(close);
+  });
+
+  it('同组错开的死亡：取带亡语的那个合拢开始的时刻，不早于它', () => {
+    const anims: Placed[] = [
+      { tl: seg(0.7), tail: 0.37, order: 0, stagger: 0.05 },
+      { tl: seg(0.7), tail: 0.37, order: 2, stagger: 0.05, readyAt: 0.33 },
+    ];
+    const starts = placeStarts(anims);
+    expect(readyTime(anims, starts)).toBeCloseTo(0.05 + 0.33);
   });
 });

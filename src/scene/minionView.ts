@@ -243,6 +243,15 @@ export class MinionView extends THREE.Group {
     this.icons.texture.needsUpdate = true;
   }
 
+  // 某个关键词图标在 body 里的位置和边长（动画在它上面叠一层做出现、消失），没有这个图标返回 null
+  keywordCell(k: string): { x: number; y: number; z: number; size: number } | null {
+    const c = this.iconSlots.find((s) => s.k === k);
+    if (!c || !this.iconPlane.visible) return null;
+    const u = (c.x0 + c.x1) / 2 / ICON_W;
+    const p = this.iconPlane.position;
+    return { x: p.x + (u - 0.5) * ICON_SLOTS * ICON_CELL, y: p.y, z: p.z, size: ICON_CELL };
+  }
+
   // 悬停：uv 落在哪个关键词图标上（iconPlane 的射线交点），没有返回 null
   keywordAtUv(u: number): string | null {
     if (!this.iconPlane.visible) return null;

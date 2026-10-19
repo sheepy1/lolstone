@@ -34,5 +34,6 @@ export const heal: AnimModule<'heal'> = (e, { scene }) => {
   });
   t.add(combatText(scene.layers.top, above, `+${e.amount}`, TINT.heal, tierOf(e.amount), HIT.textRise * UNIT.base), 0);
   hold(t, 0.4, 0);
-  return { tl: t, order: x, stagger: HEAL.stagger };
+  // 收尾：命中帧的闪光和徽章弹起之后（光点上升、绿光退、飘字）
+  return { tl: t, order: x, stagger: HEAL.stagger, tail: HEAL.tail };
 };

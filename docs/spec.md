@@ -1,9 +1,10 @@
 # MeLoL 设计规格
 
-版本 v0.4 · 2026-10-19
+版本 v0.4.1 · 2026-10-19
 
 修订记录：
 
+- v0.4.1：素材抓取时发现的两处不符：竖版原画地址去掉版本号，补充中文 champion.json 的 name / title 字段含义；卡池里娑娜、莎弥拉、赛恩改成官方译名。
 - v0.4：视觉语言定为"峡谷战局"，完成度仍对标炉石：第 5 节的界面、视觉风格、事件清单按 LoL 对局的视觉语言重写，反馈分量和节奏以炉石为参考；「幸运币」改名「法力药水」；5.8 的输入规则改为指向 6.6。
 - v0.3：按实现会话的评审补引擎接口：换牌进引擎、效果和动作的类型定义、英雄技能数据化、召唤位置、变形规则、满员处理、事件清单、输入时序、局面可序列化。第 5 节没动。
 - v0.2：视听表现从"第一版不做"改成和玩法同等级的目标。第 5 节重写，技术栈从 CSS 过渡换成 PixiJS + GSAP，里程碑加了视听打磨阶段。
@@ -623,7 +624,9 @@ M4 按这张表逐条做、逐条验收。时长是目标值，调试时可以�
 - 版本列表：`https://ddragon.leagueoflegends.com/api/versions.json`
 - 英雄中文名和数字 id：`https://ddragon.leagueoflegends.com/cdn/<版本>/data/zh_CN/champion.json`
 - 头像（120×120）：`https://ddragon.leagueoflegends.com/cdn/<版本>/img/champion/<Key>.png`
-- 竖版原画（308×560）：`https://ddragon.leagueoflegends.com/cdn/<版本>/img/champion/loading/<Key>_0.jpg`
+- 竖版原画（308×560）：`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/<Key>_0.jpg`。这个地址不带版本号，带了会返回 403；头像地址带版本号正常。
+
+中文 `champion.json` 里 `name` 是称号（如"迅捷斥候"），`title` 才是英雄名（如"提莫"），和英文数据正好相反；`key` 是数字 id，语音地址用它。卡池里的中文名以 `title` 为准。
 
 英雄语音，CommunityDragon 的游戏数据镜像：
 

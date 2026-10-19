@@ -92,7 +92,7 @@ function choosePlaying(real: GameState, side: Side, opts: L1Options): Action {
 
 // 合法动作去掉结束回合；随从只放最右边。M1 卡池里没有看站位的效果，放哪儿模拟结果都一样，
 // 只留一个位置能把模拟次数降到几分之一。
-function candidateActions(state: GameState, side: Side): Action[] {
+export function candidateActions(state: GameState, side: Side): Action[] {
   const boardSize = state.players[side].board.length;
   return listLegalActions(state, side).filter(
     (a) => a.kind !== 'end_turn' && !(a.kind === 'play_card' && a.position !== undefined && a.position !== boardSize),

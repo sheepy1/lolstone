@@ -39,7 +39,7 @@ export function parseSettings(raw: string | null | undefined): Settings {
     data = {};
   }
   const animSpeed = ANIM_SPEEDS.some((s) => s.id === data.animSpeed) ? (data.animSpeed as AnimSpeed) : SETTINGS_DEFAULTS.animSpeed;
-  const difficulty = data.difficulty === 'l0' || data.difficulty === 'l1' ? data.difficulty : SETTINGS_DEFAULTS.difficulty;
+  const difficulty = data.difficulty === 'l0' || data.difficulty === 'l1' || data.difficulty === 'l2' ? data.difficulty : SETTINGS_DEFAULTS.difficulty;
   return { animSpeed, difficulty };
 }
 

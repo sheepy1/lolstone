@@ -2,20 +2,24 @@
 //   pnpm arena --a l1 --b l0 --games 100
 //   pnpm arena --a l1 --b l1 --class-a demacia --class-b freljord,demacia --games 250 --seed 1
 // 选项：
-//   --a / --b              两边的 AI：l0 或 l1，默认 l1 对 l0
+//   --a / --b              两边的 AI：l0、l1 或 l2，默认 l1 对 l0
 //   --class-a / --class-b  职业，逗号分隔，默认所有有预组的职业；每个组合（A 职业 × B 职业）各打 --games 局
 //   --games N              每个职业组合的局数，默认 100
 //   --seed N               起始种子，第 g 局用 seed + g，默认 1
 //   --max-turn N           回合数超过它算失败，默认 120（spec 6.7）
+//   --l2-opts JSON         L2 的参数（覆盖 L2_DEFAULTS 里的项），调参用，比如 '{"nodeLimit":5000}'
 // 同一组合里 A 和 B 轮流当先手（偶数局 A 先手），抵消先手优势。
 import { l0ChooseAction } from '../ai/l0';
 import { l1ChooseAction } from '../ai/l1';
+import { createL2, type L2Options } from '../ai/l2';
 import { playGame } from '../ai/selfplay';
 import type { ChooseAction } from '../ai/types';
 import { installDefaultPool, PRESET_DECKS } from '../cards';
 import type { HeroClass, Side } from '../engine/state';
 
-const AIS: Record<string, ChooseAction> = { l0: l0ChooseAction, l1: l1ChooseAction };
+// 每次取一个新实例：L2 带状态（记着搜出的序列），两边都是 L2 时不能共用一个
+let l2Opts: Partial<L2Options> = {};
+const AIS: Record<string, () => ChooseAction> = { l0: () => l0ChooseAction, l1: () => l1ChooseAction, l2: () => createL2(l2Opts) };
 
 type Args = {
   a: string;
@@ -25,6 +29,7 @@ type Args = {
   games: number;
   seed: number;
   maxTurn: number;
+  l2?: string;
 };
 
 function parseArgs(argv: string[]): Args {
@@ -53,6 +58,7 @@ function parseArgs(argv: string[]): Args {
     games: Number(get('--games') ?? 100),
     seed: Number(get('--seed') ?? 1),
     maxTurn: Number(get('--max-turn') ?? 120),
+    l2: get('--l2-opts'),
   };
 }
 
@@ -97,10 +103,11 @@ function pct(n: number, total: number): string {
 
 function main(): void {
   const args = parseArgs(process.argv.slice(2));
+  if (args.l2) l2Opts = JSON.parse(args.l2) as Partial<L2Options>;
   installDefaultPool();
   const timers = { a: new ThinkTimer(), b: new ThinkTimer() };
-  const aiA = timers.a.wrap(AIS[args.a]);
-  const aiB = timers.b.wrap(AIS[args.b]);
+  const aiA = timers.a.wrap(AIS[args.a]());
+  const aiB = timers.b.wrap(AIS[args.b]());
   const label = (who: 'A' | 'B') => `${who}=${who === 'A' ? args.a : args.b}`;
   console.log(`${label('A')} 对 ${label('B')}，每个职业组合 ${args.games} 局，种子 ${args.seed} 起，回合上限 ${args.maxTurn}`);
 

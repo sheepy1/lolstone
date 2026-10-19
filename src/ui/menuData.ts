@@ -15,11 +15,12 @@ export const CLASS_BLURBS: Record<HeroClass, ClassBlurb> = {
   freljord: { hero: '艾希', heroPower: '寒冰箭', pitch: '冻住对手的攻势，大块头接管后期', tags: ['冻结', '大体型'] },
 };
 
-export type Difficulty = 'l0' | 'l1';
+export type Difficulty = 'l0' | 'l1' | 'l2';
 
 export const DIFFICULTIES: { id: Difficulty; name: string; note: string }[] = [
   { id: 'l0', name: '新手', note: '对手随手出牌，适合熟悉规则' },
   { id: 'l1', name: '标准', note: '对手会算斩杀、会做交换' },
+  { id: 'l2', name: '困难', note: '对手会规划整个回合，防着你下回合反扑' },
 ];
 
 export function difficultyName(id: Difficulty): string {

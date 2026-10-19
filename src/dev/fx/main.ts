@@ -9,7 +9,7 @@ import GUI from 'lil-gui';
 import { l0ChooseAction } from '../../ai/l0';
 import { installDefaultPool, PRESET_DECKS } from '../../cards';
 import { applyAction, createGame, getCard, listLegalActions, maskEvents, seedRng, type Action, type Fx, type GameState, type RngState, type Side } from '../../engine';
-import { PLAY_MINION } from '../../presentation/animations/minionSummoned';
+import { PLAY_MINION, TOKEN_SUMMON } from '../../presentation/animations/minionSummoned';
 import { ATTACK, BUFF, DEATH, FREEZE, HEAL, HERO_HIT, HIT, SHIELD, STEALTH } from '../../presentation/animations/combat';
 import { FLOAT_TEXT } from '../../presentation/fx/combatText';
 import { CRACKS } from '../../presentation/fx/nexusCracks';
@@ -20,6 +20,7 @@ import { measureFrames, recordFrames } from '../recorder';
 import type { PresentationEvent } from '../../presentation/events';
 import { DRAG, Interaction } from '../../scene/interaction';
 import { END_TURN } from '../../scene/endTurnButton';
+import { ARROW } from '../../presentation/fx/arrow';
 import { NEXUS_LAMP } from '../../scene/nexusLamps';
 import { Director } from '../../presentation/director';
 import { PRESENTATION_EVENT_KINDS, type PresentationEventKind } from '../../presentation/events';
@@ -37,6 +38,10 @@ import { TURN_END } from '../../presentation/animations/turnEnd';
 import { FLOW } from '../../presentation/fx/flow';
 import { MANA_FX } from '../../scene/tableParts';
 import { AI_PACE } from '../../app/match';
+import { BOUNCE } from '../../presentation/animations/bounce';
+import { TRANSFORM } from '../../presentation/animations/transform';
+import { TRIGGER } from '../../presentation/animations/trigger';
+import { BEAM } from '../../presentation/fx/beam';
 import { SAMPLE, sampleEvents } from '../sampleEvents';
 
 gsap.registerPlugin(GSDevTools);
@@ -314,6 +319,19 @@ addAll(flow, AI_THINK, 'E27');
 addAll(flow, AI_PACE, 'E27 思考');
 addAll(flow, ENDGAME, 'E28/29');
 
+// 剩余事件（m4-storyboard E08、E20、E21、E22 和回合开始/结束的触发）：样例变体和时长
+const misc = gui.addFolder('召唤衍生物、回手、变形、触发');
+misc.close();
+misc.add(SAMPLE, 'tokens', 1, 3, 1).name('衍生物一次几个');
+misc.add(SAMPLE, 'bounceFull').name('回手时手牌已满');
+misc.add(SAMPLE, 'transformInto', ['松鼠', '艾尼维亚']).name('变成');
+misc.add(SAMPLE, 'trigger', ['战吼选目标', '回合结束', '亡语']).name('触发');
+addAll(misc, TOKEN_SUMMON, 'E20');
+addAll(misc, BOUNCE, 'E21');
+addAll(misc, TRANSFORM, 'E22');
+addAll(misc, BEAM, 'E08 光线');
+addAll(misc, TRIGGER, 'E08');
+
 // 方案 b 的小灯。"谁的回合""生命"只改画面，不改局面，"重置棋盘"后恢复
 const lamp = gui.addFolder('枢纽小灯 NEXUS_LAMP');
 lamp.add(NEXUS_LAMP, 'core', 0.5, 6, 0.1).name('灯芯亮度');
@@ -339,6 +357,32 @@ const applyLampView = () => {
 };
 lamp.add(lampView, 'turn', ['我方', '对方']).name('谁的回合').onChange(applyLampView);
 lamp.add(lampView, 'health', 0, 30, 1).name('双方生命').onChange(applyLampView);
+
+// 目标箭头（m4-storyboard 第 2 节）：拖我方随从、指向法术时实时生效；头部跟随的弹簧用上面"拿起手感"的频率和阻尼
+const arrow = gui.addFolder('目标箭头 ARROW');
+arrow.add(ARROW, 'archBase', 0, 3, 0.05).name('拱高基础');
+arrow.add(ARROW, 'archPerUnit', 0, 0.6, 0.01).name('拱高随距离');
+arrow.add(ARROW, 'archMax', 0.5, 6, 0.1).name('拱高上限');
+arrow.add(ARROW, 'width0', 0.05, 0.8, 0.01).name('来源端宽度');
+arrow.add(ARROW, 'width1', 0.02, 0.5, 0.01).name('头部端宽度');
+arrow.add(ARROW, 'diamonds', 0.3, 4, 0.05).name('菱形密度（节/单位长）');
+arrow.add(ARROW, 'flow', 0, 6, 0.05).name('流动速度（节/秒）');
+arrow.add(ARROW, 'glow', 0.5, 5, 0.05).name('亮度');
+arrow.add(ARROW, 'headLength', 0.2, 1.4, 0.01).name('箭头长');
+arrow.add(ARROW, 'headWidth', 0.2, 1.4, 0.01).name('箭头宽');
+arrow.add(ARROW, 'bodyLag', 0, 0.6, 0.01).name('身体后补（秒）');
+arrow.add(ARROW, 'pulse', 0.2, 3, 0.05).name('准星脉动周期');
+arrow.add(ARROW, 'pulseAmount', 0, 0.3, 0.01).name('准星脉动幅度');
+arrow.add(ARROW, 'snapScale', 1, 2.5, 0.05).name('吸附回弹起始大小');
+arrow.add(ARROW, 'snapTime', 0.05, 0.8, 0.01).name('吸附回弹时长');
+arrow.add(ARROW, 'reticleMinion', 0.8, 3, 0.05).name('准星直径（随从）');
+arrow.add(ARROW, 'reticleHero', 0.8, 3, 0.05).name('准星直径（英雄）');
+arrow.add(ARROW, 'spin', 0, 3, 0.05).name('准星转速');
+arrow.add(ARROW, 'dim', 0, 1, 0.01).name('非法目标亮度');
+arrow.add(ARROW, 'grey', 0, 1, 0.01).name('非法目标去色');
+arrow.add(ARROW, 'retractTime', 0.05, 0.8, 0.01).name('取消缩回（秒）');
+arrow.add(ARROW, 'shadow', 0, 1, 0.01).name('台面投影');
+arrow.add(ARROW, 'sourceGlow', 0, 3, 0.05).name('来源光团');
 
 // 结束回合按钮。"状态"只改画面（下一次局面同步会改回来），用来看四种状态和翻面动画
 const endTurn = gui.addFolder('结束回合按钮 END_TURN');
@@ -377,4 +421,6 @@ window.addEventListener('keydown', (e) => {
   fullBoardWipe,
   fullBoardFreeze,
   scenarios: COMBAT_SCENARIOS,
+  // 样例变体（胜负结果、衍生物个数、回手满手、变形目标、触发类型），自动化录屏时改它
+  sample: SAMPLE,
 };

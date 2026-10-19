@@ -7,7 +7,13 @@ import type { ViewMinion, ViewState } from '../presentation/viewState';
 let nextId = 50_000;
 
 // 调试台上可选的样例变体：胜负结果
-export const SAMPLE = { winner: '我方胜' as '我方胜' | '我方负' | '平局' };
+export const SAMPLE = {
+  winner: '我方胜' as '我方胜' | '我方负' | '平局',
+  tokens: 1, // minion_summoned（衍生物）一次召唤几个
+  bounceFull: false, // bounce：手牌满，回手的牌被烧掉
+  transformInto: '松鼠' as '松鼠' | '艾尼维亚',
+  trigger: '战吼选目标' as '战吼选目标' | '回合结束' | '亡语',
+};
 const freshId = () => nextId++;
 
 const hero = (side: Side): TargetRef => ({ side, kind: 'hero' });
@@ -58,15 +64,28 @@ export function sampleEvents(kind: PresentationEventKind, v: ViewState, fx: Fx =
       return one({ kind, group: g, side: opp, card, cardType: 'spell', handIndex: 0, cost: 6, position: null, target: null });
     }
     case 'minion_summoned': {
-      const id = freshId();
-      return one({ kind, group: g, side: me, target: { side: me, kind: 'minion', instanceId: id }, cardId: minionCard, position: v.players[me].board.length, via: 'effect', attack: 4, health: 6, source: { kind: 'hero', side: me }, fx: 'holy' });
+      // 衍生物：一次召唤 SAMPLE.tokens 个（同组，错开 80ms）
+      const n = v.players[me].board.length;
+      return Array.from({ length: Math.max(1, Math.min(7 - n, SAMPLE.tokens)) }, (_, i) => {
+        const id = freshId();
+        return { kind, group: g, side: me, target: { side: me, kind: 'minion', instanceId: id }, cardId: 'token.squirrel', position: n + i, via: 'effect', attack: 1, health: 1, source: { kind: 'hero', side: me }, fx: 'holy' } as PresentationEvent;
+      });
     }
     case 'spell_cast':
       return one({ kind, group: g, side: me, card: { instanceId: freshId(), cardId: 'freljord.crystal_arrow' }, target });
     case 'hero_power_used':
       return one({ kind, group: g, side: me, cardId: getHeroClass(v.players[me].heroClass).heroPower, target: null });
-    case 'trigger':
-      return mine ? one({ kind, group: g, source: minionSrc(me, mine), timing: 'battlecry', target, script: null }) : null;
+    case 'trigger': {
+      if (!mine) return null;
+      if (SAMPLE.trigger === '回合结束') return one({ kind, group: g, source: minionSrc(me, mine), timing: 'turn_end', target: null, script: null });
+      if (SAMPLE.trigger === '亡语') return one({ kind, group: g, source: minionSrc(me, mine), timing: 'deathrattle', target: null, script: null });
+      // 战吼选目标，后面接动作本身（2 点伤害），看光线命中和伤害的衔接
+      const before = healthOf(target);
+      return [
+        { kind, group: g, source: minionSrc(me, mine), timing: 'battlecry', target, script: null },
+        { kind: 'damage', group: g + 1, source: minionSrc(me, mine), target, amount: 2, shieldAbsorbed: 0, healthBefore: before, healthAfter: Math.max(1, before - 2), lethalPrevented: false, fx: 'physical' },
+      ];
+    }
     case 'attack': {
       if (!mine) return null;
       const t = theirs ? minionRef(opp, theirs) : hero(opp);
@@ -106,11 +125,12 @@ export function sampleEvents(kind: PresentationEventKind, v: ViewState, fx: Fx =
       return anyMinion ? one({ kind, group: g, target: minionRef(anyMinion.side, anyMinion.m) }) : null;
     case 'bounce': {
       if (!mine) return null;
-      return one({ kind, group: g, source: { kind: 'hero', side: me }, target: minionRef(me, mine), cardId: mine.cardId, position: 0, handIndex: v.players[me].hand.length, destroyed: false, card: { instanceId: mine.instanceId, cardId: mine.cardId }, fx: 'physical' });
+      const full = SAMPLE.bounceFull;
+      return one({ kind, group: g, source: { kind: 'hero', side: me }, target: minionRef(me, mine), cardId: mine.cardId, position: 0, handIndex: full ? null : v.players[me].hand.length, destroyed: full, card: full ? null : { instanceId: mine.instanceId, cardId: mine.cardId }, fx: 'physical' });
     }
     case 'transform': {
       if (!anyMinion) return null;
-      return one({ kind, group: g, source: { kind: 'hero', side: me }, target: minionRef(anyMinion.side, anyMinion.m), cardId: anyMinion.m.cardId, into: 'token.squirrel', newTarget: { side: anyMinion.side, kind: 'minion', instanceId: freshId() }, position: 0, attack: 1, health: 1, fx: 'shadow' });
+      return one({ kind, group: g, source: { kind: 'hero', side: me }, target: minionRef(anyMinion.side, anyMinion.m), cardId: anyMinion.m.cardId, into: SAMPLE.transformInto === '松鼠' ? 'token.squirrel' : 'freljord.anivia', newTarget: { side: anyMinion.side, kind: 'minion', instanceId: freshId() }, position: 0, attack: SAMPLE.transformInto === '松鼠' ? 1 : 4, health: SAMPLE.transformInto === '松鼠' ? 1 : 4, fx: 'shadow' });
     }
     case 'mana_changed': {
       const m = v.players[me].mana;

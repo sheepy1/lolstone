@@ -66,7 +66,13 @@ export function resolveDeaths(ctx: Ctx): void {
       state.players[side].board = state.players[side].board.filter((m) => !isDoomed(m));
     }
     for (const d of dead) {
-      emit(ctx, group, { kind: 'death', target: minionRef(d.side, d.minion), cardId: d.minion.cardId, position: d.index });
+      emit(ctx, group, {
+        kind: 'death',
+        target: minionRef(d.side, d.minion),
+        cardId: d.minion.cardId,
+        position: d.index,
+        ...ctx.destroyFx.get(d.minion.instanceId),
+      });
     }
 
     let tokenCounter = 0;

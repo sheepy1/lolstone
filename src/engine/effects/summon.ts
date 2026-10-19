@@ -1,10 +1,10 @@
-import { emit, findMinion, minionRef, type Ctx } from '../context';
+import { emit, findMinion, fxIdField, minionRef, type Ctx } from '../context';
 import { createMinion } from '../minion';
 import { MAX_BOARD, type Fx } from '../state';
 import type { EffectEnv } from './types';
 
 // 召唤衍生物到效果拥有者一方（spec 2.12）。场上满 7 个时剩下的不召唤，没有补偿（spec 2.9）。
-export function summonTokens(ctx: Ctx, group: number, env: EffectEnv, token: string, count: number, fx: Fx): void {
+export function summonTokens(ctx: Ctx, group: number, env: EffectEnv, token: string, count: number, fx: Fx, fxId?: string): void {
   const p = ctx.state.players[env.side];
   for (let i = 0; i < count; i++) {
     if (p.board.length >= MAX_BOARD) return;
@@ -24,6 +24,7 @@ export function summonTokens(ctx: Ctx, group: number, env: EffectEnv, token: str
       health: m.health,
       source: env.source,
       fx,
+      ...fxIdField(fxId),
     });
   }
 }

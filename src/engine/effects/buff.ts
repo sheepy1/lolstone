@@ -1,5 +1,5 @@
 import { getCard } from '../cardDb';
-import { emit, minionRef, type Ctx } from '../context';
+import { emit, fxIdField, minionRef, type Ctx } from '../context';
 import type { SourceRef } from '../events';
 import { staticEffects } from '../keywords';
 import type { Buff, Fx, Keyword, MinionState, Side } from '../state';
@@ -22,6 +22,7 @@ export function applyBuff(
   source: SourceRef | null,
   fx: Fx,
   reason: 'effect' | 'enrage' = 'effect',
+  fxId?: string,
 ): void {
   const attackBefore = m.attack;
   const healthBefore = m.health;
@@ -61,6 +62,7 @@ export function applyBuff(
     maxHealthBefore,
     maxHealthAfter: m.maxHealth,
     fx,
+    ...fxIdField(fxId),
   });
   if (reason !== 'enrage') updateEnrage(ctx, group, side, m);
 }

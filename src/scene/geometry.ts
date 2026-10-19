@@ -55,6 +55,29 @@ export const CARD_FRAME = shared((() => {
   const b = 0.01;
   return new THREE.ExtrudeGeometry(outer, { depth: 0.012, bevelEnabled: true, bevelThickness: b, bevelSize: b * 0.8, bevelSegments: 2, curveSegments: 6 });
 })());
+// 英雄卡的 3D 饰件（和底图 cardFrameArt.ts 上画的对齐）：顶边正中的冠饰（切角金属件，中间一颗六边形宝石），
+// 边框内侧一圈细框。凸出卡面，斜着看有厚度和反光
+export const CARD_HERO_CREST = (() => {
+  const px = CARD_W / 512; // 底图一像素在卡面上多大
+  const cy = CARD_H / 2 - 32 * px;
+  const s = new THREE.Shape();
+  const pts: [number, number][] = [[-92, -6], [-40, -14], [-22, -26], [22, -26], [40, -14], [92, -6], [40, 14], [22, 30], [-22, 30], [-40, 14]];
+  pts.forEach(([x, y], i) => (i ? s.lineTo(x * px, cy - y * px) : s.moveTo(x * px, cy - y * px)));
+  s.closePath();
+  const metal = new THREE.ExtrudeGeometry(s, { depth: 0.012, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.005, bevelSegments: 2 });
+  const gem = new THREE.CylinderGeometry(15 * px, 17 * px, 0.016, 6);
+  gem.rotateX(Math.PI / 2);
+  gem.rotateZ(Math.PI / 6);
+  gem.translate(0, cy - 2 * px, 0.022);
+  metal.translate(0, 0, CARD_T / 2 - 0.002);
+  gem.translate(0, 0, CARD_T / 2 - 0.002);
+  // 边框内侧再一圈凸起的细框（地区色的金属），和外框之间隔一道缝，远看是双层边框
+  const rimShape = roundedRect(CARD_W - 0.115, CARD_H - 0.115, 0.08);
+  rimShape.holes.push(roundedRect(CARD_W - 0.16, CARD_H - 0.16, 0.06));
+  const rim = new THREE.ExtrudeGeometry(rimShape, { depth: 0.006, bevelEnabled: true, bevelThickness: 0.004, bevelSize: 0.003, bevelSegments: 1, curveSegments: 6 });
+  rim.translate(0, 0, CARD_T / 2 - 0.002);
+  return { metal: shared(metal), gem: shared(gem), rim: shared(rim) };
+})();
 export const CARD_FACE = shared(normalizeUv(new THREE.ShapeGeometry(cardShape, 6), CARD_W, CARD_H));
 // 发光边：比卡牌大一圈的圆角面片，放在卡牌背后
 export const CARD_GLOW = shared(new THREE.ShapeGeometry(roundedRect(CARD_W + 0.14, CARD_H + 0.14, 0.17), 6));

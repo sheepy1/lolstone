@@ -45,6 +45,14 @@ const covers = new WeakMap<HeroPowerView, Cover>();
 function coverOf(view: HeroPowerView, cls: HeroClass): Cover {
   let c = covers.get(view);
   if (c) return c;
+  c = makeCover(cls);
+  c.lit.visible = c.glow.visible = false;
+  view.body.add(c.lit, c.glow);
+  covers.set(view, c);
+  return c;
+}
+
+function makeCover(cls: HeroClass): Cover {
   const cut = { value: -TOP_R - 0.01 };
   const litMat = new THREE.MeshStandardMaterial({ map: heroPowerTexture(cls), roughness: 0.5, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   litMat.onBeforeCompile = (sh) => {
@@ -88,11 +96,7 @@ function coverOf(view: HeroPowerView, cls: HeroClass): Cover {
   const glow = new THREE.Mesh(hexGeo, glowMat);
   glow.rotation.x = -Math.PI / 2;
   glow.position.y = TOP_Y + 0.006;
-  lit.visible = glow.visible = false;
-  view.body.add(lit, glow);
-  c = { lit, litMat, glow, cut };
-  covers.set(view, c);
-  return c;
+  return { lit, litMat, glow, cut };
 }
 
 // 按下：缩到 0.92（起 80ms）再弹回（弹 120ms），顶面亮一下；同时盖上亮图标、把技能设成已用过
@@ -320,4 +324,10 @@ export function heroPowerCast(o: HeroPowerCastOptions): gsap.core.Timeline {
       return t;
     }
   }
+}
+
+// 预热用（fx/warm.ts）：亮图标、发光层、斧刃、冰晶箭各建一份，着色器和真正用到时的同一组，开局第一帧先编译好
+export function heroPowerWarmMeshes(): THREE.Object3D[] {
+  const c = makeCover('ionia');
+  return [c.lit, c.glow, makeAxe(), makeIceArrow()];
 }

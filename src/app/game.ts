@@ -22,6 +22,7 @@ import { getSettings, onSettingsChange } from '../ui/settings';
 import { deckForMatch, isPreset } from '../ui/decks';
 import { l0ChooseAction } from '../ai/l0';
 import { l2Async } from '../ai/l2Worker';
+import { warmCardFaces } from '../presentation/fx/warm';
 import { Match } from './match';
 import { getUi, setUi, type Panel } from './store';
 
@@ -153,6 +154,8 @@ export class GameApp {
     setUi((s) => ({ loading: { ...s.loading, label: '载入卡面字体' } }));
     const chars = [...decks[0], ...decks[1]].map((id) => getCard(id)).map((d) => d.name + d.text).join('') + '0123456789';
     await preloadCardFont(chars);
+    // 两套卡组的卡面和随从头像先画好、传到显卡，第一次抽到、第一次上场时不用现画（fx/warm.ts）
+    if (this.stage) warmCardFaces(this.stage.renderer, [...decks[0], ...decks[1]]);
     setUi((s) => ({ loading: { ...s.loading, progress: 1, label: '准备就绪' } }));
     // 资源已在缓存里时加载只要几十毫秒，加载页至少停留一小段，双方英雄对峙的画面和进度条走完都看得见
     await waitUntil(loadStart + MIN_LOADING_MS);

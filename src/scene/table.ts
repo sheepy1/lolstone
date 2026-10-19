@@ -26,6 +26,7 @@ import {
   type Slot,
 } from '../presentation/layout';
 import { ParticleSystem } from '../presentation/fx/particles';
+import { warmCombatFx } from '../presentation/fx/warm';
 import type { ViewState } from '../presentation/viewState';
 import { CardView } from './cardView';
 import type { CardStats } from './cardText';
@@ -170,6 +171,7 @@ export class TableScene {
       this.endTurn.tick(t);
     });
     this.sync(view, 0);
+    warmCombatFx(this); // 战斗特效（全屏泛红和白闪、枢纽裂纹）的着色器先在后台编译好
   }
 
   // 一盏投影的方向光加半球光（spec 5.4）。阴影贴图 2048，范围只罩住台面（spec 5.10）。

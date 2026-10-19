@@ -5,10 +5,12 @@
 import gsap from 'gsap';
 import { playSfx, playVoice } from '../../audio';
 import { championOf } from '../../assets/manifest';
-import { getCard } from '../../engine';
+import { getCard, type Side } from '../../engine';
 import { dispose } from '../../scene/dispose';
 import { ring } from '../fx/effects';
 import { boardSlot } from '../layout';
+import type { ViewState } from '../viewState';
+import { statusEnter } from './combat';
 import type { AnimModule } from './types';
 import { flash, pointOf, syncTo, tl } from './util';
 
@@ -28,6 +30,8 @@ export const PLAY_MINION = {
 
 const dustCount = (cost: number) => (cost <= 3 ? 8 : cost <= 6 ? 14 : 20);
 
+const keywordsOf = (v: ViewState, side: Side, id: number) => v.players[side].board.find((m) => m.instanceId === id)?.keywords ?? [];
+
 export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before, after }) => {
   const t = tl();
   const where = pointOf(scene, e.target);
@@ -39,6 +43,7 @@ export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before
     t.call(() => {
       const m = e.target.kind === 'minion' ? scene.minion(e.target.instanceId) : undefined;
       if (m) flash(m.flash, 0xffffff, 0.9, 0.35);
+      if (m) statusEnter(scene, m.instanceId, keywordsOf(after, e.side, m.instanceId));
     }, undefined, 0.05);
     return { tl: t };
   }
@@ -65,6 +70,7 @@ export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before
     const m = scene.minion(id);
     if (!m) return;
     m.body.visible = true;
+    statusEnter(scene, id, keywordsOf(after, e.side, id)); // 带潜行、圣盾、嘲讽入场时各自的进入表现（战斗事件 E18、E19）
     m.body.position.y = hoverY + P.chargeLift;
     m.body.scale.set(0.95, 0.95, 0.95);
     gsap.to(m.body.position, { y: 0, duration: P.smash, ease: 'expo.in' });

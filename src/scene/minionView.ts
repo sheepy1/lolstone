@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { getCard, type Keyword } from '../engine';
 import { MINION_HEIGHT, MINION_SIZE } from '../presentation/layout';
+import { STEALTH_OPACITY } from '../presentation/fx/statusFx';
 import { EDGE_GLOW, flashMaterial, fresnelMaterial, glowMaterial, hdr, markBloom } from '../presentation/fx/materials';
 import type { ViewMinion } from '../presentation/viewState';
 import { makeLabelCanvas, portraitTexture } from './canvasArt';
@@ -68,11 +69,12 @@ export class MinionView extends THREE.Group {
   readonly flash: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
   private readonly baseMat: THREE.MeshStandardMaterial;
   private readonly topMat: THREE.MeshStandardMaterial;
-  private readonly tauntRim: THREE.Mesh;
   private readonly stateRim: THREE.Mesh;
-  private readonly ice: THREE.Mesh;
-  private readonly shell: THREE.Mesh;
-  private readonly smoke: THREE.Sprite;
+  // 冰层、圣盾外壳、潜行烟：可见性按显示局面，进入和退出的动画由动画模块直接改它们（m4 战斗事件）
+  readonly tauntRim: THREE.Mesh;
+  readonly ice: THREE.Mesh;
+  readonly shell: THREE.Mesh;
+  readonly smoke: THREE.Sprite;
   readonly badges: Record<BadgeKind, StatBadge> = { attack: new StatBadge('attack'), health: new StatBadge('health') };
   private readonly icons = makeLabelCanvas(ICON_W, ICON_H);
   private readonly iconPlane: THREE.Mesh;
@@ -136,13 +138,15 @@ export class MinionView extends THREE.Group {
     const has = (k: Keyword) => m.keywords.includes(k);
     this.tauntRim.visible = has('taunt');
     this.ice.visible = m.frozen;
+    this.badges.attack.setFrost(m.frozen);
+    this.badges.health.setFrost(m.frozen);
     this.shell.visible = has('divine_shield');
     const stealth = has('stealth');
     if (stealth !== this.stealthed) {
       this.stealthed = stealth;
       for (const mat of [this.baseMat, this.topMat]) {
         mat.transparent = stealth;
-        mat.opacity = stealth ? 0.45 : 1;
+        mat.opacity = stealth ? STEALTH_OPACITY : 1;
         mat.needsUpdate = true;
       }
     }

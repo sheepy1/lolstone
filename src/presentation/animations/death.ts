@@ -1,25 +1,56 @@
-// 随从死亡：变灰、沉下缩小、碎片散开，然后相邻随从合拢。英雄随从说一句禁用语音。
-import { playSfx, playVoice } from '../../audio';
+// 随从死亡（m4-storyboard E14，700ms，中档）：
+// 定格 80ms：头像去饱和、亮度 0.6，两个徽章消失；
+// 碎裂 350ms（线）：底座连同头像碎成 9 块，带重力散开、落到台面、淡出；碎裂帧 spark_light 和 death_shards 碎屑；
+// 合拢 270ms（落）：从碎裂的 250ms 处开始，相邻随从滑到新槽位。
+// 声音：碎裂声在碎裂帧；死亡台词再晚 120ms。同组多个死亡错开 50ms，碎裂声和台词都只放一条，台词放最后死的那个。
+import { playVoice } from '../../audio';
 import { championOf } from '../../assets/manifest';
-import { burst } from '../fx/effects';
-import type { AnimModule } from './types';
-import { pointOf, syncTo, tl } from './util';
+import { greyOut, shatterMinion } from '../fx/shatter';
+import { DEATH, hold, sfxAt, targetX } from './combat';
+import type { AnimModule, Cue } from './types';
+import { syncTo, tl } from './util';
 
 export const death: AnimModule<'death'> = (e, { scene, after }) => {
+  const D = DEATH;
   const t = tl();
   const m = e.target.kind === 'minion' ? scene.minion(e.target.instanceId) : undefined;
-  const where = pointOf(scene, e.target);
+  const x = targetX(scene, e.target);
+  const shatterAt = D.freeze;
+  // 定格
   t.call(() => {
-    playSfx('combat.death');
-    const champ = championOf(e.cardId);
-    if (champ) playVoice(champ, 'ban');
-    m?.setDead();
+    if (!m) return;
+    m.setHighlight('none');
+    greyOut(m, D.greyBrightness);
+    m.badges.attack.visible = false;
+    m.badges.health.visible = false;
   });
-  if (m) {
-    t.to(m.body.scale, { x: 0.3, y: 0.05, z: 0.3, duration: 0.45, ease: 'power2.in' }, 0.1);
-    t.to(m.body.rotation, { y: 0.6, duration: 0.45, ease: 'power2.in' }, 0.1);
-  }
-  t.add(burst(scene.layers.fx, where, 0xa0a0a0, 26, 0.5), 0.2);
-  t.add(syncTo(scene, after, 0.3), 0.5);
-  return { tl: t };
+  // 碎裂
+  t.call(
+    () => {
+      if (!m) return;
+      const p = scene.pointOf(e.target);
+      m.body.visible = false;
+      shatterMinion(scene.layers.fx, m, {
+        pieces: D.pieces,
+        speed: D.pieceSpeed,
+        up: D.pieceUp,
+        gravity: D.gravity,
+        spin: D.spin,
+        duration: D.shatter,
+        fade: D.fade,
+        brightness: D.greyBrightness,
+      });
+      scene.particles.emit('spark_light', { at: { x: p.x, y: 0.35, z: p.z }, count: D.sparks });
+      scene.particles.emit('death_shards', { at: { x: p.x, y: 0.2, z: p.z }, count: 8, color: 0x8a8f99 });
+    },
+    undefined,
+    shatterAt,
+  );
+  // 合拢
+  t.add(syncTo(scene, after, D.close), shatterAt + D.closeAt);
+  hold(t, D.freeze + D.shatter + D.close, 0);
+  const cues: Cue[] = [{ channel: 'impact:death', at: shatterAt, weight: 1, run: () => sfxAt('combat.death', x) }];
+  const champ = championOf(e.cardId);
+  if (champ) cues.push({ channel: 'voice', at: shatterAt + D.voiceDelay, weight: 1, run: () => playVoice(champ, 'ban') });
+  return { tl: t, cues, order: x, stagger: D.stagger };
 };

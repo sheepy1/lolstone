@@ -66,8 +66,8 @@ export const glacialStorm: SignatureModule = (c) => {
   // 压暗、冰雾、薄霜
   at(t, 0, () => {
     dimLights(scene, G.light, G.dim, EASE.land);
+    // magic 层"风雪持续到收尾"。冰霜施法音（spell.frost）在起手那一步出手时已经放过，这里不再放
     sfx('spell.big', mid);
-    sfx('spell.frost', mid);
   });
   const sheet = temp(scene, t, 0, tEnd + 0.3, () => makeFrostSheet(16, 4.2, COLOR.ice, 1.1), (m) => {
     m.position.set(0, 0.02, row - 0.3);

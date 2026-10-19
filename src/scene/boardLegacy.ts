@@ -4,7 +4,7 @@
 // 都是几何体加程序生成的贴图，不需要外部建模素材。卡牌和随从的影子落在真实的起伏上。
 import * as THREE from 'three';
 import { boardSlot, endTurnSlot, heroSlot, TABLE } from '../presentation/layout';
-import { riverCenter, terrainHeight, valueNoise, WATER_LEVEL } from './terrain';
+import { END_TURN_PIER, riverCenter, terrainHeight, valueNoise, WATER_LEVEL } from './terrain';
 
 const SEG_X = 176;
 const SEG_Z = 116;
@@ -160,9 +160,10 @@ export class LegacyBoardView extends THREE.Group {
     }
     // 结束回合按钮立在河中的石墩上：石墩是和按钮底座同向的六棱石台，比底座宽一圈，像按钮的基座
     const e = endTurnSlot().pos;
-    const pier = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.75, 0.6, 6), stone);
-    pier.scale.x = 1.25;
-    pier.position.set(e.x, -0.28, e.z);
+    const P = END_TURN_PIER;
+    const pier = new THREE.Mesh(new THREE.CylinderGeometry(P.rTop, P.rBottom, P.height, 6), stone);
+    pier.scale.x = P.scaleX;
+    pier.position.set(e.x, P.top - P.height / 2, e.z);
     pier.castShadow = true;
     pier.receiveShadow = true;
     this.add(pier);

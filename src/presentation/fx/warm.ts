@@ -43,6 +43,7 @@ export const WARM_COVERAGE: Record<string, string> = {
   'src/presentation/fx/statusFx.ts': 'rehearsal:minion (shield shards)',
   'src/presentation/signature/meshes.ts': 'warmSignatureFx (signature/meshes.ts)',
   'src/scene/boardProps.ts': 'in-scene',
+  'src/scene/cardView.ts': 'rehearsal:cards (metal env reflections)',
   'src/scene/groundMaterial.ts': 'in-scene',
   'src/scene/minionView.ts': 'rehearsal:minion',
   'src/scene/nexusLamps.ts': 'in-scene',

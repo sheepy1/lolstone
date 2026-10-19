@@ -1,6 +1,7 @@
 // 随从入场（spec 5.6 v0.6.2、m4-storyboard E07）：
 // 从手牌打出的：牌悬在落点上方，蓄力再抬一点，然后变成随从底座快速砸到台面；落地时底座压扁再回弹，脚下扬起尘土，
 // 相邻随从同时让位；高费随从加一圈冲击波和很轻的镜头震动。尘土是粒子预设 dust_land（分镜表 1.5）。英雄随从落地后说登场台词。
+// 落地声分轻重：费用 ≤ 3 用 card.land，≥ 4 用 card.land_heavy。
 // 效果和英雄技能召唤的衍生物（m4-storyboard E20，500ms，比出随从轻一档：没有砸落，没有语音）：
 // 凝聚 250ms（summon_gather 20 粒在槽位向内聚，相邻随从同时让位）→ 成形 200ms（底座 0 到 1.1 到 1，dust_land 4 粒）。
 // 声音：combat.summon 在 t=0，轻落地 card.land 在成形帧。同一步召唤多个时错开 80ms。
@@ -74,6 +75,9 @@ function tokenSummon(
   return { tl: t, tail: P.form };
 }
 
+// 落地声分轻重：费用 ≤ 3 轻、≥ 4 重（E07）
+const HEAVY_LAND_COST = 4;
+
 const dustCount = (cost: number) => (cost <= 3 ? 8 : cost <= 6 ? 14 : 20);
 
 const keywordsOf = (v: ViewState, side: Side, id: number) => v.players[side].board.find((m) => m.instanceId === id)?.keywords ?? [];
@@ -116,7 +120,7 @@ export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before
   t.to({}, { duration: P.smash });
   // 落地：压扁回弹、扬尘、落地声、高费冲击波和镜头轻震，然后登场台词
   t.call(() => {
-    playSfx('card.land');
+    playSfx(cost >= HEAVY_LAND_COST ? 'card.land_heavy' : 'card.land');
     const m = scene.minion(id);
     if (!m) return;
     gsap.fromTo(

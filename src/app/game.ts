@@ -21,6 +21,7 @@ import type { Difficulty } from '../ui/menuData';
 import { getSettings, onSettingsChange } from '../ui/settings';
 import { deckForMatch, isPreset } from '../ui/decks';
 import { l0ChooseAction } from '../ai/l0';
+import { l2Async } from '../ai/l2Worker';
 import { Match } from './match';
 import { getUi, setUi, type Panel } from './store';
 
@@ -128,7 +129,7 @@ export class GameApp {
 
   // 开一局：先在加载页预载两套卡组的美术和语音，再进对局。
   // seed 不给时随机；给了就能复现同一局（调试、自动化验证用，自动驾驶的随机数也从头开始）。
-  // difficulty 是 AI 难度（spec 4.1）：l0 随机，l1 贪心。humanDeck 是我方的自组卡组 id，null 或不能用时用预组。
+  // difficulty 是 AI 难度（spec 4.1）：l0 随机，l1 贪心，l2 回合内搜索。humanDeck 是我方的自组卡组 id，null 或不能用时用预组。
   async startMatch(humanClass: HeroClass, aiClass: HeroClass, seed?: number, difficulty: Difficulty = 'l1', humanDeck: string | null = null): Promise<void> {
     initAudio();
     this.teardown();
@@ -159,8 +160,10 @@ export class GameApp {
     const matchSeed = seed ?? Math.floor(Math.random() * 1_000_000);
     if (seed !== undefined) this.autoRng = seedRng(seed);
     console.info(`[match] seed ${matchSeed}`);
+    // l0 随机、l1 贪心（同步，主线程）、l2 回合内搜索（Web Worker）
     const ai = difficulty === 'l0' ? l0ChooseAction : undefined;
-    const match = new Match({ seed: matchSeed, classes: [humanClass, aiClass], decks, human: 0, ai });
+    const aiAsync = difficulty === 'l2' ? l2Async() : undefined;
+    const match = new Match({ seed: matchSeed, classes: [humanClass, aiClass], decks, human: 0, ai, aiAsync });
     this.names = new LogNames();
     match.onBatch = (events) => this.log(events, 0);
     this.open(match.initial, match);
@@ -215,6 +218,7 @@ export class GameApp {
   private teardown(): void {
     const s = this.session;
     if (!s) return;
+    s.match?.stop();
     s.unsubscribe();
     s.interaction.destroy();
     s.keywordHover.destroy();

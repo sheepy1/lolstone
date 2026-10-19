@@ -4,6 +4,7 @@
 //   ai_thinking 等待事件。
 // - 表现层只吃 maskEvents 遮过的事件。
 import { l1ChooseAction } from '../ai/l1';
+import type { AsyncChooseAction } from '../ai/l2Worker';
 import {
   applyAction,
   checkAction,
@@ -34,6 +35,8 @@ export type MatchConfig = {
   decks: [string[], string[]];
   human: Side;
   ai?: AiPolicy;
+  // 异步的 AI（L2 放在 Web Worker 里算）。给了就用它，不用 ai
+  aiAsync?: AsyncChooseAction;
   thinkSeconds?: number;
 };
 
@@ -119,6 +122,14 @@ export class Match {
     this.push([{ kind: 'game_over', group: 0, winner: this.aiSide }]);
   }
 
+  // 离开这一局（回主菜单、开新局）时调用：Worker 里还没算完的 L2 结果回来后直接丢掉，
+  // 不再往已经销毁的场景和下一局的战斗日志里推事件。
+  stop(): void {
+    this.stopped = true;
+    this.director = null;
+    this.onBatch = null;
+  }
+
   private push(events: GameEvent[]): void {
     const masked = maskEvents(events, this.human);
     this.onBatch?.(masked, this.state);
@@ -148,23 +159,57 @@ export class Match {
 
   // AI 连续行动直到轮到玩家或对局结束。AI 瞬间算完，事件全部进队列，由导演按节奏播。
   private runAi(): void {
+    if (this.config.aiAsync) {
+      void this.runAiAsync().catch((e) => console.error('[ai]', e));
+      return;
+    }
     let n = 0;
-    let k = 0; // 这一回合里已经思考过几次
-    const first = AI_PACE.first + this.rand() * (AI_PACE.firstMax - AI_PACE.first);
+    const turn = this.newAiTurn();
     while (this.aiToAct()) {
       if (n++ > MAX_AI_ACTIONS_PER_TURN) throw new Error('AI did not end its turn');
       const choice = this.ai(maskHidden(this.state, this.aiSide), this.aiSide, this.aiRng);
-      if (!choice) throw new Error('AI has no legal action');
-      this.aiRng = choice.rng;
-      const r = applyAction(this.state, choice.action);
-      if (!r.ok) throw new Error(`AI action rejected: ${r.error}`);
-      if (this.state.phase === 'playing') {
-        const wait: PresentationEvent = { kind: 'ai_thinking', group: 0, side: this.aiSide, seconds: choice.action.kind === 'end_turn' ? AI_PACE.endTurn : this.nextThink(k++, first) };
-        this.onBatch?.([wait], this.state);
-        this.director?.enqueue([wait]);
-      }
-      this.state = r.state;
-      this.push(r.events);
+      this.applyAi(choice, turn);
     }
+  }
+
+  // 异步的 AI（Worker 里的 L2）：每一步等它算完再执行。等的时候导演照常播上一步的动画，
+  // 算的时间藏在动画和思考停顿里。等待期间局面被换掉（认输）就作废这次结果
+  private aiRunning = false;
+  private stopped = false;
+  private async runAiAsync(): Promise<void> {
+    if (this.aiRunning) return;
+    this.aiRunning = true;
+    try {
+      let n = 0;
+      const turn = this.newAiTurn();
+      while (this.aiToAct()) {
+        if (n++ > MAX_AI_ACTIONS_PER_TURN) throw new Error('AI did not end its turn');
+        const asked = this.state;
+        const choice = await this.config.aiAsync!(maskHidden(asked, this.aiSide), this.aiSide, this.aiRng);
+        if (this.stopped || this.state !== asked) return;
+        this.applyAi(choice, turn);
+      }
+    } finally {
+      this.aiRunning = false;
+    }
+  }
+
+  // 一个 AI 回合的思考节奏：第一个动作前的思考时间，和这一回合已经思考过几次
+  private newAiTurn(): { k: number; first: number } {
+    return { k: 0, first: AI_PACE.first + this.rand() * (AI_PACE.firstMax - AI_PACE.first) };
+  }
+
+  private applyAi(choice: { action: Action; rng: RngState } | null, turn: { k: number; first: number }): void {
+    if (!choice) throw new Error('AI has no legal action');
+    this.aiRng = choice.rng;
+    const r = applyAction(this.state, choice.action);
+    if (!r.ok) throw new Error(`AI action rejected: ${r.error}`);
+    if (this.state.phase === 'playing') {
+      const wait: PresentationEvent = { kind: 'ai_thinking', group: 0, side: this.aiSide, seconds: choice.action.kind === 'end_turn' ? AI_PACE.endTurn : this.nextThink(turn.k++, turn.first) };
+      this.onBatch?.([wait], this.state);
+      this.director?.enqueue([wait]);
+    }
+    this.state = r.state;
+    this.push(r.events);
   }
 }

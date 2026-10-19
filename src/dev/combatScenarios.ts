@@ -216,3 +216,9 @@ export function fullBoardWipe(v: ViewState): PresentationEvent[] {
     ...all.map(({ side, m, i }) => deathEv(2, side, m, i)),
   ];
 }
+
+// 满场：14 个随从同时冻结（一组，按横坐标错开成波）
+export function fullBoardFreeze(v: ViewState): PresentationEvent[] {
+  const all = ([0, 1] as Side[]).flatMap((side) => v.players[side].board.map((m) => ({ side, m })));
+  return all.map(({ side, m }) => ({ kind: 'freeze', group: 1, source: heroSrc(v.viewer), target: ref(side, m), frozenAt: v.turn, fx: 'frost' }) as PresentationEvent);
+}

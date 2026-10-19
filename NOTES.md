@@ -908,7 +908,7 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
   `stealthLost.ts`、`buff.ts`（增益、减益、获得关键词）、`silence.ts`。`combat.ts` 放参数和共用小工具（声像、命中声、
   头像自发光、抖动、飘字位置、`statusEnter`）。
 - 特效：`fx/screen.ts`（震屏 S1 到 S3 和 S3 白闪、边缘泛红、棋盘闪）、`fx/combatText.ts`（飘字）、`fx/shatter.ts`（随从碎裂）、
-  `fx/nexusCracks.ts`（枢纽裂纹）、`fx/statusFx.ts`（冰层、圣盾外壳、潜行、沉默的进出过程）、`fx/warm.ts`（预编译着色器）。
+  `fx/nexusCracks.ts`（枢纽裂纹）、`fx/statusFx.ts`（圣盾外壳、潜行、沉默的进出过程）、`fx/iceShell.ts`（冻结的冰壳）、`fx/warm.ts`（预编译着色器）。
 - 调试台：`src/dev/combatScenarios.ts`（25 个战斗场景、满场 14 随从）、`src/dev/recorder.ts`（录帧、测帧耗时）。
 
 ### 同组并行和每步只一次的反馈（分镜 1.4、1.6、1.7）
@@ -939,8 +939,8 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
 - 死亡：定格时头像换成去饱和、亮度 0.6 的贴图（canvas 滤镜生成，按原贴图缓存），两个徽章消失；碎裂是真的 3D 碎块
   （底座连同头像切 3 × 3，顶面贴对应那片头像），落到台面滑一小段，随后缩小消失，不靠透明度淡出。
 - 圣盾打破：外壳切 6 瓣飞散（和外壳同一组菲涅尔着色器参数），护盾环放大熄灭，随从白闪 60ms，"吸收"白字由受伤事件弹。
-- 冻结：冰层按高度从 0 长到满（裁切用缩放加位移做），覆冰时闪一层冰色；两个徽章蒙淡蓝（`StatBadge.setFrost`，
-  MinionView 按显示局面设）。
+- 冻结：见下面"冻结的冰壳"（第一版是套在底座上的半透明方块，用户试玩后说单调，重做了）。两个徽章蒙一层薄霜
+  （`StatBadge.setFrost`，MinionView 按显示局面设，数字不受影响）。
 - 潜行：常驻透明度改成分镜的 0.55（`STEALTH_OPACITY`）。分镜说的"视野遮蔽图标"没有单独做，用原来的那团烟当遮蔽标记，
   进入时淡入、失去时淡出。带潜行、圣盾、嘲讽入场的随从（提莫、卡兹克、泰隆、阿卡丽、劫和影分身等）在 `minionSummoned.ts` 里
   调 `statusEnter` 播一遍进入表现。
@@ -948,6 +948,34 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
   那一级退掉。生命低于 10 的小灯规则不变，受伤的命中帧调 `setHealth`，灯在同一帧灭。
 - 边缘泛红：全屏四边形画在色调映射之前的线性 HDR 缓冲里，台面亮度只有 0.05 左右，直接叠 35% 纯红经过 ACES 是满屏通红。
   现在透明度主要用来压暗边缘，红色按 `SCREEN.edgeGain` 压低；白闪、棋盘闪按 `flashGain` 压低。
+
+### 冻结的冰壳（2026-10-20 按用户反馈重做）
+
+用户原话"现在就一个方砖有点单调"。代码在 `fx/iceShell.ts`，参数在 `ICE`（材质、反光、雾、雪）和 `FREEZE`（进入和解冻的时序），
+/dev/fx 的"冰壳 ICE"面板能现场调（每帧从 `ICE` 抄进着色器）。
+
+- 造型：两种组合。冰棱是十五根多面体冰晶，从底座四周和上沿长出来，粗细、高矮、倾角都不一样；远侧几根高出头像，
+  左右中等，近侧只有矮的、避开两个徽章。头像上盖一层边缘参差的冰面。冰棱的摆放按随从的实例 id 生成，群体冻结时
+  一排各不相同。一个随从的冰棱合成一个几何体，冰面、冷雾、雪点各一个，冻住时每个随从多画 4 次。
+- 材质：冰棱是半透明的物理材质（清漆、平面着色、反射舞台的环境贴图），`onBeforeCompile` 加了菲涅尔亮边、按位置取的
+  细裂纹和气泡、偶尔闪过的反光（每根冰棱自己的节奏）。冰面是自定义着色器：把头像按晶格偏移着重采一遍当假折射，
+  蒙冰蓝、边缘结霜，叠裂纹和气泡，每 4.5 秒左右斜着扫过一道反光。没有用真折射（transmission 每帧要多画一遍场景）。
+  冰芯没有单独进泛光：试过的效果容易把一排冰糊成一团白光，只留了很淡的自发光。
+- 常驻的微动态：反光、贴地一圈缓慢流动的冷雾（噪声贴图滚动，加色，很淡）、七粒绕着底座落下的雪点（点精灵，
+  位置在着色器里按时间算）。全部在着色器里，不占粒子池。
+- 进入（700ms，分镜原来 500ms）：0ms frost_spread 加台面上一圈霜纹扩散（程序生成的冰花贴图，700ms）；100ms 结冰声，
+  冰棱绕底座一根根长出来（450ms，生长在顶点着色器里按每根的开始时刻算），冰面从边缘往里结，雾和雪淡入，底座抖两下；
+  550ms 冰晶闪光（220ms）加几粒冰色火花。
+- 解冻（650ms，分镜原来 250ms）：0ms 裂纹亮起（150ms）、底座轻抖；150ms 碎冰声，冰棱向外飞出、落到台面缩小消融
+  （顶点着色器里算抛物线和消融），冰面按晶格一块块消失，ice_shatter 14 粒，雾和雪淡出（500ms）。显示局面在 150ms
+  同步成解冻（徽章上的霜去掉），冰壳等碎完再藏（`IceShell` 记着正在解冻，`setFrozen(false)` 不打断）。
+- 预编译：冰棱、冰面、雾、雪的着色器在 `warmCombatFx` 里用一个样本冰壳 `compileAsync`，细节和噪声贴图用
+  `initTexture` 先传上去（不传的话第一个冻住的随从那一帧多 13ms）。
+- 着色器字符串（模板字符串）里不要写中文注释：`src/dev/fontChars.ts` 扫 `src/presentation` 的字符串收集界面用字，
+  注释会被当成界面文字，`tests/presentation-font.test.ts` 报缺字。说明写在字符串外面。
+- 性能：建一个冰壳 0.5ms（JS）。满场 14 个随从全部冻住和都不冻、同一时段交替量了三轮，中位数 23.4 / 24.2、
+  24.2 / 18.1、19.6 / 19.8ms，差别落在噪声里。这次测的时候本机内存很紧（可用 133MB、压缩 7.7GB、负载 10 左右），
+  空场也要 20ms 上下，绝对值和前面"性能"一节的 6ms 不可比，要在空闲的机器上再测一次。
 
 ### 没做的（分镜里有、这次没有）
 
@@ -960,7 +988,7 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
 - `player.ts`：给动画模块多传一个 `step`。
 - `animations/types.ts`：`Anim` 的 `order`、`stagger`、`cues`，`AnimContext.step`。
 - `minionSummoned.ts`：入场后调 `statusEnter`（两行）。
-- `scene/minionView.ts`：`ice`、`shell`、`smoke`、`tauntRim` 改成只读公开；冻结时徽章蒙蓝；潜行透明度用 `STEALTH_OPACITY`。贴图部分没动。
+- `scene/minionView.ts`：冰块换成第一次冻住时才建的 `IceShell`（`ice` 取它）；`shell`、`smoke`、`tauntRim` 改成只读公开；冻结时徽章蒙蓝；潜行透明度用 `STEALTH_OPACITY`。贴图部分没动。
 - `scene/statBadge.ts`：`pop` 按分镜（1.25 倍、180ms、闪色 120ms），加 `setFrost`、`flashShield`。
 - `scene/table.ts`：构造时调 `warmCombatFx`（一行）；删掉旧的 `shake()`。
 - `fx/flow.ts`、`animations/gameOver.ts`：震屏改用 `fx/screen.ts`（见上）。

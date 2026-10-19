@@ -13,8 +13,9 @@ import { PLAY_MINION } from '../../presentation/animations/minionSummoned';
 import { ATTACK, BUFF, DEATH, FREEZE, HEAL, HERO_HIT, HIT, SHIELD, STEALTH } from '../../presentation/animations/combat';
 import { FLOAT_TEXT } from '../../presentation/fx/combatText';
 import { CRACKS } from '../../presentation/fx/nexusCracks';
+import { ICE } from '../../presentation/fx/iceShell';
 import { SCREEN } from '../../presentation/fx/screen';
-import { COMBAT_SCENARIOS, combatEvents, fullBoard, fullBoardWipe, type CombatScenario } from '../combatScenarios';
+import { COMBAT_SCENARIOS, combatEvents, fullBoard, fullBoardFreeze, fullBoardWipe, type CombatScenario } from '../combatScenarios';
 import { measureFrames, recordFrames } from '../recorder';
 import type { PresentationEvent } from '../../presentation/events';
 import { DRAG, Interaction } from '../../scene/interaction';
@@ -86,6 +87,7 @@ const settings = {
   playCombat: () => playCombat(),
   fullBoard: () => build(fullBoard(base, BOARD_CARDS)),
   wipe: () => playEvents(fullBoardWipe(bench!.director.displayed)),
+  freezeAll: () => playEvents(fullBoardFreeze(bench!.director.displayed)),
 };
 
 // 满场压力测试用的随从：两套预组里的随从牌
@@ -169,7 +171,7 @@ function playCombat(): boolean {
 }
 
 // 录一个战斗场景的逐帧画面：先重置棋盘，原速和 slow 倍慢放各录一份。返回帧数
-async function recordCombat(scenario: CombatScenario, name: string, opts: { amount?: number; slow?: number; everyNth?: number; view?: ViewState; events?: () => PresentationEvent[] } = {}) {
+async function recordCombat(scenario: CombatScenario, name: string, opts: { amount?: number; slow?: number; everyNth?: number; view?: ViewState; events?: () => PresentationEvent[]; tail?: number } = {}) {
   build(opts.view ?? base);
   settings.combat = scenario;
   settings.amount = opts.amount ?? settings.amount;
@@ -187,8 +189,8 @@ async function recordCombat(scenario: CombatScenario, name: string, opts: { amou
       started = opts.events ? (playEvents(opts.events()), true) : playCombat();
     },
     done: () => !started || !bench!.director.busy,
-    tail: 0.5,
-    maxSeconds: 8,
+    tail: opts.tail ?? 0.5,
+    maxSeconds: 8 + (opts.tail ?? 0),
   });
   gsap.globalTimeline.timeScale(settings.timeScale);
   return r;
@@ -222,6 +224,7 @@ combat.add(settings, 'amount', 0, 10, 1).name('伤害 / 治疗 / 增益量');
 combat.add(settings, 'playCombat').name('播放场景（C）');
 combat.add(settings, 'fullBoard').name('满场 14 个随从');
 combat.add(settings, 'wipe').name('满场同时受伤加死亡');
+combat.add(settings, 'freezeAll').name('满场同时冻结');
 type Params = { [k: string]: number | Params | number[] };
 const tune = (title: string, obj: Params, ranges: Record<string, [number, number, number]> = {}, parent: GUI = combat) => {
   const f = parent.addFolder(title);
@@ -244,6 +247,7 @@ tune('死亡 DEATH', DEATH);
 tune('治疗 HEAL', HEAL);
 tune('圣盾 SHIELD', SHIELD);
 tune('冻结 FREEZE', FREEZE);
+tune('冰壳 ICE', ICE as unknown as Params);
 tune('潜行 STEALTH', STEALTH);
 tune('增益减益 BUFF', BUFF);
 tune('飘字 FLOAT_TEXT', FLOAT_TEXT as unknown as Params);
@@ -371,5 +375,6 @@ window.addEventListener('keydown', (e) => {
   stage, settings, play, build, gsap, base, playEvents, playCombat, recordCombat, benchCombat,
   fullBoard: () => fullBoard(base, BOARD_CARDS),
   fullBoardWipe,
+  fullBoardFreeze,
   scenarios: COMBAT_SCENARIOS,
 };

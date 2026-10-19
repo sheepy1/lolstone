@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { getCard, type Keyword } from '../engine';
 import { MINION_HEIGHT, MINION_SIZE } from '../presentation/layout';
+import { IceShell } from '../presentation/fx/iceShell';
 import { STEALTH_OPACITY } from '../presentation/fx/statusFx';
 import { EDGE_GLOW, flashMaterial, fresnelMaterial, glowMaterial, hdr, markBloom } from '../presentation/fx/materials';
 import type { ViewMinion } from '../presentation/viewState';
@@ -43,15 +44,6 @@ const tauntMat = shared(glowMaterial(COLORS.taunt, 1.4));
 // 描边亮度低于 bloom 阈值：描边本身亮，不往头像上泛光
 export const attackRimMat = shared(glowMaterial(COLORS.playable, EDGE_GLOW));
 const targetRimMat = shared(glowMaterial(COLORS.target, EDGE_GLOW * 1.3));
-const iceMat = shared(new THREE.MeshStandardMaterial({
-  color: 0x9fd8ff,
-  transparent: true,
-  opacity: 0.32,
-  roughness: 0.08,
-  metalness: 0.1,
-  emissive: 0x1a4a6a,
-  depthWrite: false,
-}));
 // 圣盾外壳：只有边缘亮（菲涅尔），正中几乎透明，头像和两个徽章透过外壳看得清。
 // 不写深度、不进泛光：写深度会把壳里后画的徽章数字挡掉，整个壳泛光会把底座洗成一片白（发光的是生命徽章外圈的护盾环）
 const shellMat = shared(fresnelMaterial(hdr(0xfff2b0, 1.6)));
@@ -81,7 +73,8 @@ export class MinionView extends THREE.Group {
   private readonly stateRim: THREE.Mesh;
   // 冰层、圣盾外壳、潜行烟：可见性按显示局面，进入和退出的动画由动画模块直接改它们（m4 战斗事件）
   readonly tauntRim: THREE.Mesh;
-  readonly ice: THREE.Mesh;
+  // 冻结的冰壳：第一次冻住时才建（fx/iceShell.ts），之后跟着显示局面显示或隐藏
+  private iceShell: IceShell | null = null;
   readonly shell: THREE.Mesh;
   readonly smoke: THREE.Sprite;
   readonly badges: Record<BadgeKind, StatBadge> = { attack: new StatBadge('attack'), health: new StatBadge('health') };
@@ -112,9 +105,6 @@ export class MinionView extends THREE.Group {
     this.stateRim = new THREE.Mesh(MINION_RIM, attackRimMat);
     this.stateRim.scale.set(1.12, 1.4, 1.12);
     this.stateRim.visible = false;
-    this.ice = new THREE.Mesh(UNIT_BOX, iceMat);
-    this.ice.scale.set(MINION_SIZE + 0.1, MINION_HEIGHT + 0.22, MINION_SIZE + 0.1);
-    this.ice.position.y = (MINION_HEIGHT + 0.22) / 2;
     this.shell = new THREE.Mesh(UNIT_SPHERE, shellMat);
     this.shell.scale.set(1.15, 0.7, 1.15);
     this.shell.position.y = 0.15;
@@ -140,10 +130,18 @@ export class MinionView extends THREE.Group {
       THREE.Mesh.prototype.raycast.call(plane, ray, hits);
       for (const h of hits) if (h.uv && this.keywordAtUv(h.uv.x)) out.push(h);
     };
-    this.body.add(base, top, this.tauntRim, this.stateRim, this.ice, this.shell, this.smoke, this.flash, this.badges.attack, this.badges.health, this.iconPlane);
+    this.body.add(base, top, this.tauntRim, this.stateRim, this.shell, this.smoke, this.flash, this.badges.attack, this.badges.health, this.iconPlane);
     this.add(this.body);
     this.userData.pick = { kind: 'minion', id: m.instanceId, side };
     this.update(m);
+  }
+
+  get ice(): IceShell {
+    if (!this.iceShell) {
+      this.iceShell = new IceShell(this.instanceId, this.topMat.map);
+      this.body.add(this.iceShell);
+    }
+    return this.iceShell;
   }
 
   // 按显示局面刷新数值和状态。
@@ -156,7 +154,10 @@ export class MinionView extends THREE.Group {
     }
     const has = (k: Keyword) => m.keywords.includes(k);
     this.tauntRim.visible = has('taunt');
-    this.ice.visible = m.frozen;
+    if (m.frozen || this.iceShell) {
+      this.ice.setPortrait(tex);
+      this.ice.setFrozen(m.frozen);
+    }
     this.badges.attack.setFrost(m.frozen);
     this.badges.health.setFrost(m.frozen);
     this.shell.visible = has('divine_shield');

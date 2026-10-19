@@ -182,7 +182,7 @@ describe('L1 往后多看一步的动作', () => {
   });
 
   it('手里有连击牌时先出别的牌，让连击生效', () => {
-    // 单看一步阿卡丽（+3.9）比近战小兵（+2.4）高；先出小兵再出阿卡丽，阿卡丽是 4/2
+    // 单看一步阿卡丽（+4.7）比近战小兵（+2.4）高；先出小兵再出阿卡丽，阿卡丽是 4/3
     const g = scenario().classes('ionia', 'demacia').mana(0, 4).hand(0, ['阿卡丽', '近战小兵']).build();
     const { actions, state } = playTurn(g.state);
     expect(actions[0]).toMatchObject({ kind: 'play_card', handIndex: 1 });

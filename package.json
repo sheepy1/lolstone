@@ -5,16 +5,33 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.web.json",
     "play": "tsx src/cli/play.ts",
     "smoke": "tsx src/cli/play.ts --auto --games 200",
     "fetch:art": "node scripts/fetch-art.ts",
-    "fetch:voice": "node scripts/fetch-voice.ts"
+    "fetch:voice": "node scripts/fetch-voice.ts",
+    "dev": "vite",
+    "build": "tsc --noEmit -p tsconfig.web.json && vite build",
+    "preview": "vite preview",
+    "fixture:record": "MELOL_RECORD_FIXTURE=1 vitest run tests/presentation-fixture.test.ts"
   },
   "devDependencies": {
+    "@types/howler": "^2.2.13",
     "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
+    "vite": "^8.3.4",
     "vitest": "^5.0.5"
+  },
+  "dependencies": {
+    "gsap": "^3.15.0",
+    "howler": "^2.2.4",
+    "pixi-filters": "^6.1.5",
+    "pixi.js": "^8.22.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   }
 }

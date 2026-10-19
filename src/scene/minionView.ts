@@ -10,7 +10,7 @@ import { STEALTH_OPACITY } from '../presentation/fx/statusFx';
 import { EDGE_GLOW, flashMaterial, fresnelMaterial, glowMaterial, hdr, markBloom } from '../presentation/fx/materials';
 import type { ViewMinion } from '../presentation/viewState';
 import { drawKeywordIcon, makeLabelCanvas, portraitTexture, strokeText } from './canvasArt';
-import { MINION_BASE, MINION_RIM, MINION_TOP, UNIT_BOX, UNIT_SPHERE } from './geometry';
+import { MINION_BASE, MINION_RIM, MINION_TARGET_RIM, MINION_TOP, UNIT_BOX, UNIT_SPHERE } from './geometry';
 import { StatBadge, type BadgeKind } from './statBadge';
 import { COLORS, FONT_CN, FONT_NUM } from './theme';
 import { shared } from './dispose';
@@ -43,7 +43,6 @@ const iconGeo = shared(new THREE.PlaneGeometry(ICON_SLOTS * ICON_CELL, ICON_CELL
 const tauntMat = shared(glowMaterial(COLORS.taunt, 1.4));
 // 描边亮度低于 bloom 阈值：描边本身亮，不往头像上泛光
 export const attackRimMat = shared(glowMaterial(COLORS.playable, EDGE_GLOW));
-const targetRimMat = shared(glowMaterial(COLORS.target, EDGE_GLOW * 1.3));
 // 圣盾外壳：只有边缘亮（菲涅尔），正中几乎透明，头像和两个徽章透过外壳看得清。
 // 不写深度、不进泛光：写深度会把壳里后画的徽章数字挡掉，整个壳泛光会把底座洗成一片白（发光的是生命徽章外圈的护盾环）
 const shellMat = shared(fresnelMaterial(hdr(0xfff2b0, 1.6)));
@@ -71,6 +70,8 @@ export class MinionView extends THREE.Group {
   private readonly baseMat: THREE.MeshStandardMaterial;
   private readonly topMat: THREE.MeshStandardMaterial;
   private readonly stateRim: THREE.Mesh;
+  // 选目标时合法目标的细边，材质由场景给（颜色跟箭头、全场一起脉动，指着的那个更亮）
+  private readonly targetRim: THREE.Mesh;
   // 冰层、圣盾外壳、潜行烟：可见性按显示局面，进入和退出的动画由动画模块直接改它们（m4 战斗事件）
   readonly tauntRim: THREE.Mesh;
   // 冻结的冰壳：第一次冻住时才建（fx/iceShell.ts），之后跟着显示局面显示或隐藏
@@ -105,6 +106,9 @@ export class MinionView extends THREE.Group {
     this.stateRim = new THREE.Mesh(MINION_RIM, attackRimMat);
     this.stateRim.scale.set(1.12, 1.4, 1.12);
     this.stateRim.visible = false;
+    this.targetRim = new THREE.Mesh(MINION_TARGET_RIM);
+    this.targetRim.position.y = 0.012;
+    this.targetRim.visible = false;
     this.shell = new THREE.Mesh(UNIT_SPHERE, shellMat);
     this.shell.scale.set(1.15, 0.7, 1.15);
     this.shell.position.y = 0.15;
@@ -114,6 +118,7 @@ export class MinionView extends THREE.Group {
     this.smoke.position.set(0, 0.75, -0.15);
     markBloom(this.tauntRim);
     markBloom(this.stateRim);
+    markBloom(this.targetRim);
     this.flash = new THREE.Mesh(UNIT_BOX, flashMaterial());
     this.flash.scale.set(MINION_SIZE + 0.04, MINION_HEIGHT + 0.04, MINION_SIZE + 0.04);
     this.flash.position.y = MINION_HEIGHT / 2;
@@ -130,7 +135,7 @@ export class MinionView extends THREE.Group {
       THREE.Mesh.prototype.raycast.call(plane, ray, hits);
       for (const h of hits) if (h.uv && this.keywordAtUv(h.uv.x)) out.push(h);
     };
-    this.body.add(base, top, this.tauntRim, this.stateRim, this.shell, this.smoke, this.flash, this.badges.attack, this.badges.health, this.iconPlane);
+    this.body.add(base, top, this.tauntRim, this.stateRim, this.targetRim, this.shell, this.smoke, this.flash, this.badges.attack, this.badges.health, this.iconPlane);
     this.add(this.body);
     this.userData.pick = { kind: 'minion', id: m.instanceId, side };
     this.update(m);
@@ -276,10 +281,11 @@ export class MinionView extends THREE.Group {
     this.shell.visible = false;
   }
 
-  // 高亮：attack 能攻击（绿边），target 是当前可选的目标（红边），dim 是当前不可选（变暗）。
-  setHighlight(mode: 'none' | 'attack' | 'target' | 'dim'): void {
-    this.stateRim.visible = mode === 'attack' || mode === 'target';
-    this.stateRim.material = mode === 'target' ? targetRimMat : attackRimMat;
+  // 高亮：attack 能攻击（绿边），target 是当前可选的目标（细边，材质 targetMat 由场景给），dim 是当前不可选（变暗）。
+  setHighlight(mode: 'none' | 'attack' | 'target' | 'dim', targetMat?: THREE.Material): void {
+    this.stateRim.visible = mode === 'attack';
+    this.targetRim.visible = mode === 'target' && !!targetMat;
+    if (targetMat) this.targetRim.material = targetMat;
     this.tone.dim = mode === 'dim';
     this.applyTone();
   }

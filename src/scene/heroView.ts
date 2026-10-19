@@ -25,7 +25,8 @@ export function nexusStyle(): NexusStyle {
 
 const discGeo = shared(new THREE.CircleGeometry(NEXUS.discRadius, 40));
 const discRimGeo = shared(new THREE.TorusGeometry(NEXUS.discRadius + 0.02, 0.05, 8, 40));
-const targetRingGeo = shared(new THREE.TorusGeometry(1.32, 0.07, 8, 48));
+// 选目标时英雄是合法目标：台座顶面金属沿的外缘亮一圈细的六边形边（6 段的圆环就是六边形）
+const targetEdgeGeo = shared(new THREE.TorusGeometry(1.02, 0.028, 6, 6));
 
 export class HeroView extends THREE.Group {
   readonly body = new THREE.Group();
@@ -33,7 +34,7 @@ export class HeroView extends THREE.Group {
   // 会发光、会闪烁、输掉时碎掉的水晶部分
   private readonly crystalMat: THREE.MeshStandardMaterial;
   private readonly crystals: THREE.Object3D[] = [];
-  private readonly targetRing: THREE.Mesh;
+  private readonly targetEdge: THREE.Mesh;
   private readonly hp = new StatBadge('health');
   private low: gsap.core.Tween | null = null;
   private dimmed = false;
@@ -113,12 +114,13 @@ export class HeroView extends THREE.Group {
     this.hp.position.set(NEXUS.hpPos.x, NEXUS.hpPos.y - 0.05, NEXUS.hpPos.z);
     this.hp.scale.setScalar(NEXUS.hpScale);
     this.body.add(this.hp);
-    this.targetRing = new THREE.Mesh(targetRingGeo, glowMaterial(COLORS.target, 2.0));
-    this.targetRing.rotation.x = -Math.PI / 2;
-    this.targetRing.position.y = 0.05;
-    this.targetRing.visible = false;
-    markBloom(this.targetRing);
-    this.body.add(this.targetRing);
+    // 圆环转平，再绕竖轴转 30°，六个角对上台座的六个角（CylinderGeometry 的角在 ±z 方向）
+    this.targetEdge = new THREE.Mesh(targetEdgeGeo);
+    this.targetEdge.rotation.set(-Math.PI / 2, 0, Math.PI / 6);
+    this.targetEdge.position.y = style === 'a' ? 0.41 : style === 'b' ? 0.39 : 0.23;
+    this.targetEdge.visible = false;
+    markBloom(this.targetEdge);
+    this.body.add(this.targetEdge);
     this.add(this.body);
     this.userData.pick = { kind: 'hero', side };
   }
@@ -153,8 +155,10 @@ export class HeroView extends THREE.Group {
     this.hp.pop(tint);
   }
 
-  setTargetable(mode: 'none' | 'target' | 'dim'): void {
-    this.targetRing.visible = mode === 'target';
+  // 选目标：target 时台座边缘亮细边（材质 targetMat 由场景给，颜色跟箭头），dim 时压暗
+  setTargetable(mode: 'none' | 'target' | 'dim', targetMat?: THREE.Material): void {
+    this.targetEdge.visible = mode === 'target' && !!targetMat;
+    if (targetMat) this.targetEdge.material = targetMat;
     const dim = mode === 'dim';
     if (dim !== this.dimmed) {
       this.dimmed = dim;

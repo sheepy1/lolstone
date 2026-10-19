@@ -128,3 +128,22 @@ M1 实现时按字面理解、会影响对局结果的四处，用户已经拍�
 2. 换牌改为先补抽、再把换掉的牌洗回牌库，不会抽回刚换掉的牌（原来是先洗回再补抽）。已改。
 3. 死亡结算以"一个效果执行完"为单位（见上面"结算顺序"）。暴风雪打死虚空幼虫时，召唤出来的蠕虫不会被同一张暴风雪冻结。接受。
 4. 剧毒、吸血对随从自己效果里的伤害也生效。接受。
+
+## M2 卡牌（诺克萨斯、艾欧尼亚）
+
+- 两个职业的卡全部用 3.4 的效果模型写成数据，没有新脚本，引擎没改。易是 on_kill 加 extra_attack，阿卡丽、李青是 combo，
+  李青、传送回城是 bounce，处决用 `where: { damaged: true }`，血怒是 duration 为 turn 的 buff。
+- 非英雄卡的英文 id：`noxus.flying_axe`（飞斧）、`noxus.blood_rage`（血怒）、`noxus.execute`（处决）、`noxus.decimate`（大杀四方）、
+  `noxus.might_of_noxus`（诺克萨斯之力）、`ionia.ghostblade`（鬼切）、`ionia.recall`（传送回城）、`ionia.spirit_rush`（灵魄突袭）、
+  `ionia.meditate`（冥想）、`ionia.last_breath`（狂风绝息斩）。
+- 目标范围按 cards-v1 的读法定：只写"造成 N 点伤害"的（飞斧、诺克萨斯之力、辛德拉战吼）是 any_character，和魔法水晶箭、维克兹一致；
+  "一个随从"（安妮、灵魄突袭）是 any_minion；"一个敌方随从"（永恩、李青、处决）是 enemy_minion；血怒、鬼切、传送回城是
+  friendly_minion；慎是 other_friendly_minion。
+- 鬼切给的潜行是永久的（卡面没写"本回合"），攻击之后照常失去。
+- 传送回城不会碰到手牌已满：打出它本身就空出了一格。所以"回手时手牌已满直接销毁"只用李青测。
+- `PRESET_DECKS` 的类型从 `Partial<Record<HeroClass, …>>` 改成了 `Record<HeroClass, …>`，四个职业都有预组了。
+- `pnpm smoke` 的自动对局按 4×4 共 16 种先后手组合轮换（第 g 局用第 g % 16 种），默认 200 局时每种组合只有 12～13 局；
+  要每种组合 200 局，跑 `MELOL_INVARIANTS=1 npx tsx src/cli/play.ts --auto --games 3200`。
+  `tests/smoke.test.ts` 也是 16 种组合各 200 局（共 3200 局，打开不变量检查），整套测试的耗时从约 1 秒涨到约 10 秒。
+- L0 随机对打的胜率差得很多（3200 局，种子 1..3200，按职业计胜场，镜像局的胜场也算给该职业）：德玛西亚 1130、弗雷尔卓德 1145、
+  诺克萨斯 539、艾欧尼亚 386。L0 是随机出牌，不代表平衡，L1 有数据后再看。

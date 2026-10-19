@@ -1,7 +1,8 @@
 // 命令行对局。
 //   pnpm play                         人（玩家0）对 L0，输入编号选择动作
 //   pnpm play --auto --games 200      L0 对 L0 自动对局，冒烟用
-// 选项：--seed N  --class demacia|freljord  --ai-class demacia|freljord  --log（自动对局时打印事件）
+// 选项：--seed N  --class <职业>  --ai-class <职业>  --log（自动对局时打印事件）
+// 职业：demacia、noxus、ionia、freljord。自动对局按 4×4 个先后手组合轮换。
 import { createInterface } from 'node:readline';
 import { l0ChooseAction } from '../ai/l0';
 import { playL0Game } from '../ai/selfplay';
@@ -16,6 +17,7 @@ import type { GameState, HeroClass, Side } from '../engine/state';
 import { describeAction, describeEvent, formatState, NameBook } from './format';
 
 const MAX_TURN = 120;
+const CLASSES: HeroClass[] = ['demacia', 'noxus', 'ionia', 'freljord'];
 
 type Args = {
   auto: boolean;
@@ -33,7 +35,7 @@ function parseArgs(argv: string[]): Args {
   };
   const cls = (v: string | undefined, fallback: HeroClass): HeroClass => {
     if (v === undefined) return fallback;
-    if (!PRESET_DECKS[v as HeroClass]) throw new Error(`没有 ${v} 的预组卡组，M1 可选 demacia、freljord`);
+    if (!PRESET_DECKS[v as HeroClass]) throw new Error(`没有 ${v} 的预组卡组，可选 ${CLASSES.join('、')}`);
     return v as HeroClass;
   };
   return {
@@ -51,7 +53,7 @@ function deckOf(cls: HeroClass): string[] {
 }
 
 function runAuto(args: Args): void {
-  const classes: HeroClass[] = ['demacia', 'freljord'];
+  const pairs = CLASSES.flatMap((a) => CLASSES.map((b): [HeroClass, HeroClass] => [a, b]));
   const wins = { 0: 0, 1: 0, draw: 0 } as Record<string, number>;
   const classWins: Record<string, number> = {};
   let maxTurn = 0;
@@ -59,7 +61,7 @@ function runAuto(args: Args): void {
   let failures = 0;
   for (let g = 0; g < args.games; g++) {
     const seed = args.seed + g;
-    const pair: [HeroClass, HeroClass] = [classes[g % 2], classes[(g + 1) % 2]];
+    const pair = pairs[g % pairs.length];
     const book = new NameBook();
     try {
       const result = playL0Game({

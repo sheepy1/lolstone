@@ -57,8 +57,8 @@ export const NEUTRAL_CARDS: CardDef[] = [
     }],
   },
   {
-    id: 'neutral.reksai', name: '雷克塞', type: 'minion', class: 'neutral', cost: 5, attack: 3, health: 6,
-    keywords: ['taunt'], text: '嘲讽', champion: 'RekSai',
+    id: 'neutral.reksai', name: '雷克塞', type: 'minion', class: 'neutral', cost: 5, attack: 4, health: 5,
+    keywords: ['rush'], text: '突袭', champion: 'RekSai',
   },
   {
     id: 'neutral.rift_herald', name: '峡谷先锋', type: 'minion', class: 'neutral', cost: 5, attack: 5, health: 4,
@@ -102,7 +102,7 @@ export const NEUTRAL_CARDS: CardDef[] = [
     effects: [{ trigger: 'battlecry', actions: [{ kind: 'draw', count: 1 }] }],
   },
   {
-    id: 'neutral.chogath', name: '科加斯', type: 'minion', class: 'neutral', cost: 6, attack: 5, health: 6,
+    id: 'neutral.chogath', name: '科加斯', type: 'minion', class: 'neutral', cost: 6, attack: 4, health: 7,
     text: '每当本随从消灭一个随从，便获得 +1/+1', champion: 'Chogath',
     effects: [{
       trigger: 'on_kill',

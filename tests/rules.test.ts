@@ -340,23 +340,23 @@ describe('消灭触发 on_kill（3.4）', () => {
   it('攻击时消灭对方随从触发，被攻击时反杀也触发', () => {
     const g = scenario().board(0, ['科加斯']).board(1, ['魔狼', '远程小兵']).build();
     g.attack(g.m(0, '科加斯'), g.m(1, '魔狼'));
-    expect(g.minion(0, '科加斯').attack).toBe(6);
+    expect(g.minion(0, '科加斯').attack).toBe(5);
     expect(g.eventsOf('trigger')[0].timing).toBe('on_kill');
     g.endTurn();
     g.attack(g.m(1, '远程小兵'), g.m(0, '科加斯'));
-    expect(g.minion(0, '科加斯').attack).toBe(7);
+    expect(g.minion(0, '科加斯').attack).toBe(6);
   });
 
   it('剧毒导致的死亡也算', () => {
     const g = scenario().board(0, [{ card: '科加斯', keywords: ['poisonous'] }]).board(1, [{ card: '超级兵', attack: 0 }]).build();
     g.attack(g.m(0, '科加斯'), g.m(1, '超级兵'));
-    expect(g.minion(0, '科加斯').attack).toBe(6);
+    expect(g.minion(0, '科加斯').attack).toBe(5);
   });
 
   it('法术造成的死亡不算', () => {
     const g = scenario().board(0, ['科加斯']).board(1, ['远程小兵']).hand(0, ['测试飞弹']).build();
     g.play('测试飞弹', { target: g.m(1, '远程小兵') });
-    expect(g.minion(0, '科加斯').attack).toBe(5);
+    expect(g.minion(0, '科加斯').attack).toBe(4);
   });
 
   it('同归于尽时不触发', () => {
@@ -387,8 +387,8 @@ describe('再次攻击 extra_attack（测试卡）', () => {
   });
 
   it('没有消灭就只能攻击一次', () => {
-    const g = scenario().board(0, ['测试再次攻击']).board(1, ['雷克塞']).build();
-    g.attack(g.m(0, '测试再次攻击'), g.m(1, '雷克塞'));
+    const g = scenario().board(0, ['测试再次攻击']).board(1, ['布隆']).build();
+    g.attack(g.m(0, '测试再次攻击'), g.m(1, '布隆'));
     expectIllegal(g.try({ kind: 'attack', attacker: g.m(0, '测试再次攻击'), target: g.hero(1) }));
   });
 

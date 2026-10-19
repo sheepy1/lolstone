@@ -47,8 +47,8 @@ describe('评估函数', () => {
     const [wolf, frozenWolf, poppy, teemo] = g.p(0).board;
     expect(minionValue(wolf)).toBeCloseTo(3 + 2 * 0.8 + 0.5);
     expect(minionValue(frozenWolf)).toBeCloseTo(0 + 2 * 0.8 + 0.5);
-    // 波比 2/3 嘲讽圣盾
-    expect(minionValue(poppy)).toBeCloseTo(2 + 3 * 0.8 + 0.5 + 1 + 2 * 0.5);
+    // 波比 1/4 嘲讽圣盾
+    expect(minionValue(poppy)).toBeCloseTo(1 + 4 * 0.8 + 0.5 + 1 + 1 * 0.5);
     // 提莫 1/1 潜行剧毒
     expect(minionValue(teemo)).toBeCloseTo(1 + 0.8 + 0.5 + 0.5 + 2);
   });
@@ -182,12 +182,12 @@ describe('L1 往后多看一步的动作', () => {
   });
 
   it('手里有连击牌时先出别的牌，让连击生效', () => {
-    // 单看一步阿卡丽（+4.7）比近战小兵（+2.4）高；先出小兵再出阿卡丽，阿卡丽是 4/3
+    // 单看一步阿卡丽（+4.9）比近战小兵（+2.4）高；先出小兵再出阿卡丽，阿卡丽是 5/2
     const g = scenario().classes('ionia', 'demacia').mana(0, 4).hand(0, ['阿卡丽', '近战小兵']).build();
     const { actions, state } = playTurn(g.state);
     expect(actions[0]).toMatchObject({ kind: 'play_card', handIndex: 1 });
     const akali = state.players[0].board.find((m) => m.cardId === 'ionia.akali');
-    expect(akali?.attack).toBe(4);
+    expect(akali?.attack).toBe(5);
   });
 
   it('用传送回城收回受伤的永恩，重新打出再触发战吼', () => {
@@ -201,7 +201,7 @@ describe('L1 往后多看一步的动作', () => {
     const { actions, state } = playTurn(g.state);
     expect(actions[0]).toEqual({ kind: 'play_card', handIndex: 0, target: g.m(0, '永恩') });
     expect(state.players[1].board).toHaveLength(0);
-    expect(state.players[0].board.map((m) => [m.cardId, m.health])).toEqual([['ionia.yone', 5]]);
+    expect(state.players[0].board.map((m) => [m.cardId, m.health])).toEqual([['ionia.yone', 4]]);
   });
 
   it('易先消灭随从再用多出来的攻击打脸', () => {

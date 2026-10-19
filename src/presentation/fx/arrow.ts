@@ -2,7 +2,7 @@
 // 指到合法目标上时头部套一个准星环。几何体每次移动重建，段数少，开销很小。
 import * as THREE from 'three';
 import type { Vec3 } from '../layout';
-import { glowMaterial } from './materials';
+import { glowMaterial, markBloom } from './materials';
 
 export type Point = Vec3;
 
@@ -10,7 +10,7 @@ export class TargetArrow extends THREE.Group {
   private tube: THREE.Mesh<THREE.TubeGeometry, THREE.MeshBasicMaterial> | null = null;
   private readonly head: THREE.Mesh;
   private readonly reticle: THREE.Mesh;
-  private readonly mat = glowMaterial(0xff3b3b, 3.7);
+  private readonly mat = glowMaterial(0xff3b3b, 2.0);
   private from = new THREE.Vector3();
 
   constructor() {
@@ -19,12 +19,13 @@ export class TargetArrow extends THREE.Group {
     this.reticle = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.06, 8, 40), this.mat);
     this.reticle.rotation.x = -Math.PI / 2;
     this.add(this.head, this.reticle);
+    markBloom(this);
     this.visible = false;
     this.renderOrder = 10;
   }
 
   start(from: Vec3, color = 0xff3b3b): void {
-    this.mat.color.setHex(color).multiplyScalar(3.7);
+    this.mat.color.setHex(color).multiplyScalar(2.0);
     this.from.set(from.x, from.y, from.z);
     this.visible = true;
     this.update(from, false);
@@ -49,6 +50,7 @@ export class TargetArrow extends THREE.Group {
     mid.y += 1.2 + len * 0.25;
     const curve = new THREE.QuadraticBezierCurve3(a.clone(), mid, b);
     this.tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 28, 0.07, 6, false), this.mat);
+    markBloom(this.tube);
     this.add(this.tube);
     const tangent = curve.getTangent(1).normalize();
     this.head.position.copy(b);

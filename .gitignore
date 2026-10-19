@@ -6,3 +6,6 @@ dist/
 # 抓取脚本下载的英雄素材和清单，用 scripts/fetch-*.ts 重新生成
 public/art/
 public/audio/voice/
+
+# 开发服务器存的截图（/__dev/screenshot）
+.dev-output/

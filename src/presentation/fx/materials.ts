@@ -1,6 +1,17 @@
-// 发光材质预设（spec 5.4）：发光的东西靠超过 bloom 阈值（stage.ts 的 BLOOM_THRESHOLD = 2.2）的亮度做，
-// 不靠描边贴图。toneMapped 关掉，颜色乘上强度后直接进 bloom 的高亮提取。强度 1 到 2 不泛光，4 以上泛光。
+// 发光材质预设（spec 5.4、6.1）。哪些东西泛光由图层决定，不靠亮度阈值：打开 BLOOM_LAYER 的物件进选择性泛光
+// （stage.ts），其余一律不泛光。泛光是按深度对上选中物件的像素来取的，所以要泛光的材质必须写深度。
 import * as THREE from 'three';
+
+// 选择性泛光用的图层（0 是普通渲染层，物件同时开着 0 和这一层）
+export const BLOOM_LAYER = 11;
+
+// 打开或关掉一棵物件树的泛光（图层不继承，要逐个网格设置）
+export function markBloom(obj: THREE.Object3D, on = true): void {
+  obj.traverse((o) => {
+    if (on) o.layers.enable(BLOOM_LAYER);
+    else o.layers.disable(BLOOM_LAYER);
+  });
+}
 
 // 颜色乘强度后的 HDR 颜色
 export function hdr(hex: number, intensity: number): THREE.Color {
@@ -8,18 +19,12 @@ export function hdr(hex: number, intensity: number): THREE.Color {
 }
 
 // 发光边、准星、箭头用的不受光照材质
-export function glowMaterial(hex: number, intensity = 4, opacity = 1): THREE.MeshBasicMaterial {
-  return new THREE.MeshBasicMaterial({
-    color: hdr(hex, intensity),
-    toneMapped: false,
-    transparent: opacity < 1,
-    opacity,
-    depthWrite: opacity >= 1,
-  });
+export function glowMaterial(hex: number, intensity = EDGE_GLOW): THREE.MeshBasicMaterial {
+  return new THREE.MeshBasicMaterial({ color: hdr(hex, intensity), toneMapped: false });
 }
 
-// 描边、发光边用的亮度：绿色乘 2 后亮度约 1.2，低于 bloom 阈值，边框本身很亮但不往周围泛光
-export const EDGE_GLOW = 2.0;
+// 发光边的亮度。泛光只认图层，这里只决定边框本身多亮
+export const EDGE_GLOW = 1.6;
 
 // 叠加的闪光层：默认透明，动画把 opacity 拉上去再降下来
 export function flashMaterial(): THREE.MeshBasicMaterial {

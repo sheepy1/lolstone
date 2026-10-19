@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import * as THREE from 'three';
 import { FONT_CN, FONT_NUM } from '../../scene/theme';
 import type { Vec3 } from '../layout';
-import { hdr } from './materials';
+import { hdr, markBloom } from './materials';
 import { shared } from '../../scene/dispose';
 
 const MAX_PARTICLES = 2000; // spec 5.10
@@ -92,15 +92,16 @@ export function ring(layer: THREE.Object3D, at: () => Vec3, color: number, radiu
   const r1 = radius / 80;
   tl.call(() => {
     const mat = new THREE.MeshBasicMaterial({
-      color: hdr(color, 4),
+      color: hdr(color, 2),
       transparent: true,
       blending: THREE.AdditiveBlending,
-      depthWrite: false,
+      depthWrite: true, // 写深度才能进选择性泛光
       toneMapped: false,
       side: THREE.DoubleSide,
     });
     m = new THREE.Mesh(ringGeo, mat);
     m.rotation.x = -Math.PI / 2;
+    markBloom(m);
     layer.add(m);
   });
   tl.to(st, {
@@ -131,9 +132,10 @@ export function projectile(layer: THREE.Object3D, from: () => Vec3, to: () => Ve
   let m: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
   const st = { t: 0 };
   tl.call(() => {
-    m = new THREE.Mesh(ballGeo, new THREE.MeshBasicMaterial({ color: hdr(color, 6), toneMapped: false }));
+    m = new THREE.Mesh(ballGeo, new THREE.MeshBasicMaterial({ color: hdr(color, 2.5), toneMapped: false }));
     const p = from();
     m.position.set(p.x, p.y + 0.6, p.z);
+    markBloom(m);
     layer.add(m);
   });
   tl.to(st, {
@@ -201,14 +203,15 @@ export function burst(layer: THREE.Object3D, at: () => Vec3, color: number, n = 
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     const mat = new THREE.PointsMaterial({
-      color: hdr(color, 3.5),
+      color: hdr(color, 2),
       size: 0.14,
       transparent: true,
-      depthWrite: false,
+      depthWrite: true,
       blending: THREE.AdditiveBlending,
       toneMapped: false,
     });
     points = new THREE.Points(geo, mat);
+    markBloom(points);
     layer.add(points);
   });
   tl.to(st, {

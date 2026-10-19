@@ -3,8 +3,9 @@
 import * as THREE from 'three';
 import { getCard, HIDDEN_CARD_ID } from '../engine';
 import { CARD_T } from '../presentation/layout';
-import { EDGE_GLOW, glowMaterial } from '../presentation/fx/materials';
+import { EDGE_GLOW, glowMaterial, markBloom } from '../presentation/fx/materials';
 import { cardBackTexture, cardFaceTexture } from './canvasArt';
+import { CardTexts, type CardStats } from './cardText';
 import { CARD_BODY, CARD_FACE, CARD_GLOW } from './geometry';
 import { COLORS } from './theme';
 import { shared } from './dispose';
@@ -45,6 +46,7 @@ export class CardView extends THREE.Group {
   private readonly glow: THREE.Mesh;
   private readonly mark: THREE.Mesh;
   private dimmed = false;
+  private readonly texts: CardTexts;
 
   constructor(instanceId: number, cardId: string) {
     super();
@@ -60,10 +62,12 @@ export class CardView extends THREE.Group {
     this.glow = new THREE.Mesh(CARD_GLOW, glowMat);
     this.glow.position.z = -CARD_T / 2 - 0.006;
     this.glow.visible = false;
+    markBloom(this.glow);
     this.mark = new THREE.Mesh(markGeo, markMat);
     this.mark.position.set(0, 0.3, CARD_T / 2 + 0.01);
     this.mark.visible = false;
     this.body.add(this.glow, slab, this.front, back, this.mark);
+    this.texts = new CardTexts(this.body);
     this.add(this.body);
     this.userData.pick = { kind: 'hand', id: instanceId };
     this.setCard(cardId);
@@ -79,6 +83,7 @@ export class CardView extends THREE.Group {
     if (cardId !== HIDDEN_CARD_ID) getCard(cardId);
     this.front.material.map = cardId === HIDDEN_CARD_ID ? cardBackTexture() : cardFaceTexture(cardId);
     this.front.material.needsUpdate = true;
+    this.texts.setCard(cardId === HIDDEN_CARD_ID ? null : cardId);
   }
 
   setHighlight(on: boolean): void {
@@ -90,10 +95,16 @@ export class CardView extends THREE.Group {
     if (on === this.dimmed) return;
     this.dimmed = on;
     this.front.material.color.setScalar(on ? 0.45 : 1);
+    this.texts.setDim(on);
   }
 
   setMarked(on: boolean): void {
     this.mark.visible = on;
+  }
+
+  // 场上随从的当前数值（悬停大卡用）
+  setStats(stats: CardStats | null): void {
+    this.texts.setStats(stats);
   }
 
   // 爆牌时烧红

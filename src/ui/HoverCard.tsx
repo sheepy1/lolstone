@@ -1,54 +1,24 @@
-// 悬停放大卡面（spec 5.3）：悬停场上随从、手牌或英雄技能时，左侧显示完整卡面，带关键词解释。
-import { championOf, loadingArtUrl } from '../assets/manifest';
+// 悬停时的关键词解释（spec 5.3）。放大的卡面在场景里（TableScene.showInspect），这里只用 DOM 画说明文字，
+// 贴在放大卡下面；悬停手牌时（手牌自己抬起放大）贴在画面左侧。
 import { getCard } from '../engine';
 import { useUi } from '../app/store';
 import { KEYWORD_HELP } from '../presentation/keywordText';
-
-const CLASS_NAMES: Record<string, string> = {
-  neutral: '中立',
-  demacia: '德玛西亚',
-  noxus: '诺克萨斯',
-  ionia: '艾欧尼亚',
-  freljord: '弗雷尔卓德',
-};
 
 export function HoverCardPanel() {
   const hover = useUi((s) => s.hover);
   if (!hover || hover.cardId === 'hidden') return null;
   const def = getCard(hover.cardId);
-  const champ = championOf(hover.cardId);
   const stats = hover.stats;
   const help = Object.entries(KEYWORD_HELP).filter(
     ([k]) => def.text.includes(k) || stats?.keywords.includes(k) || (k === '冻结' && stats?.frozen) || (k === '沉默' && stats?.silenced),
   );
-  const atk = stats?.attack ?? def.attack;
-  const hp = stats?.health ?? def.health;
-  const cls = (cur: number | undefined, base: number | undefined, damaged = false) =>
-    cur === undefined || base === undefined ? '' : damaged ? 'down' : cur > base ? 'up' : cur < base ? 'down' : '';
+  const status = stats ? [...stats.keywords, stats.frozen ? '冻结' : '', stats.silenced ? '已沉默' : ''].filter(Boolean) : [];
+  if (help.length === 0 && status.length === 0) return null;
+  const a = hover.anchor;
+  const style = a ? { left: a.left, top: a.top + 8, width: Math.max(240, a.width) } : undefined;
   return (
-    <div className="hover-panel">
-      <div className={`big-card region-${def.class} ${champ ? 'champion' : ''}`}>
-        <div className="big-cost">{def.cost}</div>
-        <div className="big-art">
-          {champ ? <img src={loadingArtUrl(champ)} alt="" onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')} /> : null}
-        </div>
-        <div className="big-name">{def.name}</div>
-        <div className="big-type">
-          {CLASS_NAMES[def.class]} · {def.type === 'minion' ? '随从' : def.type === 'spell' ? '法术' : '英雄技能'}
-        </div>
-        <div className="big-text">{def.text || ' '}</div>
-        {def.type === 'minion' && (
-          <>
-            <div className={`big-atk ${cls(atk, def.attack)}`}>{atk}</div>
-            <div className={`big-hp ${cls(hp, def.health, !!stats && stats.health < stats.maxHealth)}`}>{hp}</div>
-          </>
-        )}
-      </div>
-      {stats && (stats.keywords.length > 0 || stats.frozen || stats.silenced) && (
-        <div className="big-status">
-          当前：{[...stats.keywords, stats.frozen ? '冻结' : '', stats.silenced ? '已沉默' : ''].filter(Boolean).join('、')}
-        </div>
-      )}
+    <div className="keyword-panel" style={style}>
+      {status.length > 0 && <div className="keyword-help">当前：{status.join('、')}</div>}
       {help.map(([k, v]) => (
         <div key={k} className="keyword-help">
           <b>{k}</b>：{v}

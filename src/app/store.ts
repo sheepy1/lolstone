@@ -8,6 +8,8 @@ export type HoverCard = {
   cardId: string;
   // 场上随从的当前数值（和卡面不同时显示）
   stats?: { attack: number; health: number; maxHealth: number; keywords: string[]; frozen: boolean; silenced: boolean };
+  // 场景里放大卡左下角的页面坐标；关键词解释贴在它下面。null 时贴在画面左侧
+  anchor?: { left: number; top: number; width: number } | null;
 };
 
 export type UiState = {

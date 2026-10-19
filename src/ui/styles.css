@@ -40,7 +40,6 @@ body {
 
 #ui button,
 #ui a,
-.hover-panel,
 .game-log.open,
 .result-backdrop,
 .screen {
@@ -230,109 +229,15 @@ body {
   }
 }
 
-/* 悬停卡面：左侧 */
-.hover-panel {
+/* 悬停时的关键词解释：贴在场景里放大卡的下面（位置由 JS 给出），没有放大卡时在左侧 */
+.keyword-panel {
   position: absolute;
   left: 18px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 58%;
   width: 280px;
   pointer-events: none !important;
 }
 
-.big-card {
-  position: relative;
-  width: 280px;
-  height: 400px;
-  padding: 10px;
-  background: #2d2d2a;
-  border: 6px solid #8a8a80;
-  clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-}
-
-.region-demacia { background: #f3ecd6; border-color: #d8c27a; color: #2a2418; }
-.region-noxus { background: #2a1416; border-color: #8e1f24; }
-.region-ionia { background: #3a2440; border-color: #c77dbb; }
-.region-freljord { background: #1c3446; border-color: #7fc4e8; }
-.region-neutral { background: #2d2d2a; border-color: #8a8a80; }
-
-.big-cost {
-  position: absolute;
-  left: 8px;
-  top: 8px;
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-num);
-  font-size: 30px;
-  color: #fff;
-  background: #2f8cff;
-  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
-  -webkit-text-stroke: 1px #000;
-  z-index: 2;
-}
-
-.big-art {
-  height: 200px;
-  background: rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-  border: 2px solid rgba(200, 170, 110, 0.6);
-}
-
-.big-art img {
-  width: 100%;
-  margin-top: -30px;
-  display: block;
-}
-
-.big-name {
-  margin-top: 8px;
-  padding: 4px;
-  font-size: 24px;
-  font-weight: 900;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.55);
-  color: #f4f0e6;
-}
-
-.big-type {
-  font-size: 13px;
-  text-align: center;
-  opacity: 0.75;
-  margin: 4px 0;
-}
-
-.big-text {
-  font-size: 18px;
-  text-align: center;
-  padding: 4px 10px;
-}
-
-.big-atk,
-.big-hp {
-  position: absolute;
-  bottom: 8px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-num);
-  font-size: 26px;
-  color: #fff;
-  -webkit-text-stroke: 1px #000;
-}
-
-.big-atk { left: 8px; background: #d9a024; }
-.big-hp { right: 8px; background: #c8302c; }
-.big-atk.up, .big-hp.up { color: #5cff6a; }
-.big-atk.down, .big-hp.down { color: #ff9a9a; }
-
-.big-status,
 .keyword-help {
   margin-top: 8px;
   padding: 8px 10px;

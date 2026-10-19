@@ -4,7 +4,7 @@
 import gsap from 'gsap';
 
 export type PlacedCue = { channel: string; at: number; weight: number; run: () => void; many?: () => void };
-export type Placed = { tl: gsap.core.Timeline; impact?: number; cues?: PlacedCue[]; order?: number; stagger?: number; tail?: number };
+export type Placed = { tl: gsap.core.Timeline; impact?: number; cues?: PlacedCue[]; order?: number; stagger?: number; tail?: number; readyAt?: number };
 
 // 组间重叠（m4-storyboard 1.7）：上一组最后结束的那个事件，收尾进行到 OVERLAP 时，下一组可以开始。
 // 收尾可以重叠，命中帧不能：所以这个时刻不早于这一步里任何一个命中帧。
@@ -30,7 +30,11 @@ export function readyTime(anims: readonly Placed[], starts: readonly number[]): 
   }
   const a = anims[last];
   const tail = Math.max(0, Math.min(a.tl.duration(), a.tail ?? 0));
-  return end - tail * (1 - OVERLAP);
+  const byTail = end - tail * (1 - OVERLAP);
+  // 事件可以直接指定下一组最早开始的时刻（readyAt，相对它自己的时间线）：死亡后紧跟亡语时，分镜 E14 要亡语在相邻随从
+  // 开始合拢时起，比 60% 的规则早。取所有指定值里最晚的那个，再和按 tail 算的取早的
+  const asked = anims.map((x, i) => (x.readyAt !== undefined ? starts[i] + x.readyAt : -1)).filter((x) => x >= 0);
+  return asked.length > 0 ? Math.min(byTail, Math.max(...asked)) : byTail;
 }
 
 // 每条事件时间线在整步里的开始时刻

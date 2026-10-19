@@ -50,7 +50,8 @@ export const damage: AnimModule<'damage'> = (e, ctx) => {
     hold(t, 0.5, 0);
     cues.push(hitCue(0, e.amount, x, true));
     if (e.amount >= H.midAt) cues.push(shakeCue(scene, 0, heavy ? 2 : 1));
-    return { tl: t, cues, order: x(), stagger: HIT.stagger };
+    // 收尾：枢纽抖完之后（飘字上升、头像泛红消退）
+    return { tl: t, cues, order: x(), stagger: HIT.stagger, tail: 0.5 - H.jitterTime };
   }
 
   const id = e.target.instanceId;
@@ -64,7 +65,7 @@ export const damage: AnimModule<'damage'> = (e, ctx) => {
       if (v) jitter(v.body, HIT.shakeAmp * UNIT.base * 0.6, 3, HIT.shakeTime * 0.6);
     });
     hold(t, 0.4, 0);
-    return { tl: t, cues, order: x(), stagger: HIT.stagger };
+    return { tl: t, cues, order: x(), stagger: HIT.stagger, tail: 0.4 - HIT.shakeTime };
   }
   t.call(() => {
     const v = m();
@@ -85,5 +86,6 @@ export const damage: AnimModule<'damage'> = (e, ctx) => {
   }
   hold(t, 0.4, 0);
   if (e.amount > 0) cues.push(hitCue(0, e.amount, x));
-  return { tl: t, cues, order: x(), stagger: HIT.stagger };
+  // 收尾：分镜 E12 抖动之后的飘字和泛红消退
+  return { tl: t, cues, order: x(), stagger: HIT.stagger, tail: 0.4 - HIT.shakeTime };
 };

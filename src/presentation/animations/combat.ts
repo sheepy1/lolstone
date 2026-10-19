@@ -73,6 +73,7 @@ export const HEAL = {
   glowFade: 0.3,
   motes: 12,
   stagger: 0.04,
+  tail: 0.28, // 收尾时长（分镜 1.7 组间重叠）：命中帧之后 120ms 以外都算
 };
 
 // E14 随从死亡
@@ -146,6 +147,8 @@ export const BUFF = {
   gatherTime: 0.2,
   strip: 0.1, // 沉默时状态收缩消失
   stagger: 0.04,
+  tail: 0.28, // 增益的收尾时长（分镜 1.7 组间重叠）：命中帧之后 120ms 以外都算
+  silenceTail: 0.25,
 };
 
 // ---------- 声音 ----------

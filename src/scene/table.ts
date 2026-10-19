@@ -25,6 +25,7 @@ import {
   type Placement,
   type Slot,
 } from '../presentation/layout';
+import { ParticleSystem } from '../presentation/fx/particles';
 import type { ViewState } from '../presentation/viewState';
 import { CardView } from './cardView';
 import type { CardStats } from './cardText';
@@ -116,6 +117,9 @@ export class TableScene {
   private highlights: LegalHighlights | null = null;
   private targetMarks: TargetMarks = null;
   private readonly unhook: () => void;
+  // 事件动画用的粒子（presentation/fx/particles）。挂在场景根上，位置都是世界坐标；每帧跟着渲染推进，
+  // 乘全局时间线的 timeScale，导演快进、调试台慢放时粒子一起快、一起慢
+  readonly particles: ParticleSystem;
   // 换牌阶段压暗棋盘：一块朝镜头的半透明黑板，挡在台面前、起手牌后
   private readonly shade = new THREE.Mesh(
     new THREE.PlaneGeometry(60, 40),
@@ -151,8 +155,11 @@ export class TableScene {
     this.shade.renderOrder = 1;
     L.fx.add(this.shade);
     this.root.add(L.board, L.heroes, L.minions, L.handFar, L.fx, L.handNear, L.drag, L.top);
+    this.particles = new ParticleSystem({ camera: stage.camera });
+    this.root.add(this.particles.object);
     stage.scene.add(this.root);
-    this.unhook = stage.onFrame((_dt, t) => {
+    this.unhook = stage.onFrame((dt, t) => {
+      this.particles.update(dt * gsap.globalTimeline.timeScale());
       this.board.tick(t);
       for (const h of this.heroes) h.tick(t);
       for (const m of this.mana) m.tick(t);
@@ -187,6 +194,9 @@ export class TableScene {
   dispose(): void {
     this.unhook();
     this.root.removeFromParent();
+    // 粒子系统的资源归它自己放（releaseGpu 不认 ShaderMaterial 里的贴图），先摘下来
+    this.particles.object.removeFromParent();
+    this.particles.dispose();
     releaseGpu(this.root);
   }
 

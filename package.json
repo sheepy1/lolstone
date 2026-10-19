@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "play": "tsx src/cli/play.ts",
     "smoke": "tsx src/cli/play.ts --auto --games 200",
+    "arena": "tsx src/cli/arena.ts",
     "fetch:art": "node scripts/fetch-art.ts",
     "fetch:voice": "node scripts/fetch-voice.ts"
   },

@@ -23,6 +23,17 @@ function killTree(o: THREE.Object3D): void {
 
 const TEXTURE_KEYS = ['map', 'emissiveMap', 'alphaMap'] as const;
 
+// 释放贴图；canvas 贴图顺手把 canvas 缩成 0×0。canvas 的像素内存不在 JS 堆里，垃圾回收按堆的压力触发，
+// 飘字、横幅、血条这类一次性 canvas 只靠回收会越积越多，连续自动对局几分钟后页面就崩了。
+export function releaseTexture(t: THREE.Texture): void {
+  t.dispose();
+  const img = t.image as { width?: number; height?: number; getContext?: unknown } | null;
+  if (img && typeof img.getContext === 'function') {
+    img.width = 0;
+    img.height = 0;
+  }
+}
+
 // 释放一棵物件树里不共用的几何体、材质、贴图（不改场景结构）。
 export function releaseGpu(root: THREE.Object3D): void {
   root.traverse((o) => {
@@ -34,7 +45,7 @@ export function releaseGpu(root: THREE.Object3D): void {
       if (isShared(m)) continue;
       for (const k of TEXTURE_KEYS) {
         const t = (m as unknown as Record<string, THREE.Texture | null>)[k];
-        if (t && !isShared(t)) t.dispose();
+        if (t && !isShared(t)) releaseTexture(t);
       }
       m.dispose();
     }

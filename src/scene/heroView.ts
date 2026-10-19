@@ -5,7 +5,7 @@ import gsap from 'gsap';
 import * as THREE from 'three';
 import { getCard, getHeroClass, type HeroClass } from '../engine';
 import { NEXUS } from '../presentation/layout';
-import { EDGE_GLOW, flashMaterial, glowMaterial } from '../presentation/fx/materials';
+import { EDGE_GLOW, flashMaterial, glowMaterial, markBloom } from '../presentation/fx/materials';
 import { makeLabelCanvas, portraitTexture, strokeText, hexPath } from './canvasArt';
 import { COLORS, FONT_CN, FONT_NUM, REGION_COLORS } from './theme';
 import { shared } from './dispose';
@@ -36,11 +36,12 @@ export class HeroView extends THREE.Group {
     this.crystal = new THREE.Mesh(
       crystalGeo,
       new THREE.MeshStandardMaterial({
-        color: enemy ? 0xff6a6a : 0x6ab8ff,
-        emissive: col.frame,
-        emissiveIntensity: 2.4,
-        roughness: 0.15,
-        metalness: 0.2,
+        // 我方蓝、对方红，自发光用同一种颜色，泛光后仍是饱和的蓝红，不会白成一片
+        color: enemy ? 0xb02828 : 0x1f5fd0,
+        emissive: enemy ? 0xff3030 : 0x3a8cff,
+        emissiveIntensity: 0.55,
+        roughness: 0.25,
+        metalness: 0.3,
         flatShading: true,
       }),
     );
@@ -61,10 +62,12 @@ export class HeroView extends THREE.Group {
     hpSprite.position.set(NEXUS.hpOffset.x, NEXUS.hpOffset.y, NEXUS.hpOffset.z);
     hpSprite.renderOrder = 4;
     disc.add(portrait, rim, this.flash, hpSprite);
-    this.targetRing = new THREE.Mesh(targetRingGeo, glowMaterial(COLORS.target, 4.4));
+    this.targetRing = new THREE.Mesh(targetRingGeo, glowMaterial(COLORS.target, 2.0));
     this.targetRing.rotation.x = -Math.PI / 2;
     this.targetRing.position.y = 0.05;
     this.targetRing.visible = false;
+    markBloom(this.crystal);
+    markBloom(this.targetRing);
     this.body.add(pedestal, this.crystal, disc, this.targetRing);
     this.add(this.body);
     this.userData.pick = { kind: 'hero', side };
@@ -96,11 +99,11 @@ export class HeroView extends THREE.Group {
     }
     const lowNow = health < 10;
     if (lowNow && !this.low) {
-      this.low = gsap.to(this.crystal.material, { emissiveIntensity: 0.3, duration: 0.6, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+      this.low = gsap.to(this.crystal.material, { emissiveIntensity: 0.12, duration: 0.6, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     } else if (!lowNow && this.low) {
       this.low.kill();
       this.low = null;
-      this.crystal.material.emissiveIntensity = 2.4;
+      this.crystal.material.emissiveIntensity = 0.55;
     }
   }
 
@@ -116,7 +119,7 @@ export class HeroView extends THREE.Group {
   // 输掉时晶体熄灭碎裂（胜负动画用）
   shatter(): gsap.core.Timeline {
     const t = gsap.timeline();
-    t.to(this.crystal.material, { emissiveIntensity: 4, duration: 0.25 });
+    t.to(this.crystal.material, { emissiveIntensity: 2.5, duration: 0.25 });
     t.to(this.crystal.scale, { x: 0.01, y: 0.01, z: 0.01, duration: 0.35, ease: 'power3.in' });
     return t;
   }
@@ -146,7 +149,8 @@ export class HeroPowerView extends THREE.Group {
     g.lineWidth = 8;
     g.strokeStyle = `#${col.accent.toString(16).padStart(6, '0')}`;
     g.stroke();
-    strokeText(g, def.name, 128, 140, 64, '#ffffff', FONT_CN, 0.12);
+    // 名字长的（诺克萨斯断头台）缩小字号，放得进六边形
+    strokeText(g, def.name, 128, 140, def.name.length > 3 ? Math.floor(190 / def.name.length) : 64, '#ffffff', FONT_CN, 0.12);
     g.beginPath();
     g.arc(128, 48, 30, 0, Math.PI * 2);
     g.fillStyle = '#2f8cff';
@@ -159,12 +163,12 @@ export class HeroPowerView extends THREE.Group {
     this.topMat = new THREE.MeshStandardMaterial({ map: label.texture, roughness: 0.5 });
     const top = new THREE.Mesh(powerTopGeo, this.topMat);
     top.rotation.x = -Math.PI / 2;
-    top.rotation.z = Math.PI / 2;
     top.position.y = 0.245;
     this.ring = new THREE.Mesh(powerRingGeo, glowMaterial(COLORS.playable, EDGE_GLOW));
     this.ring.rotation.x = -Math.PI / 2;
     this.ring.position.y = 0.05;
     this.ring.visible = false;
+    markBloom(this.ring);
     this.body.add(prism, top, this.ring);
     this.add(this.body);
     this.userData.pick = { kind: 'hero_power', side };

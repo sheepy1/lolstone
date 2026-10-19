@@ -8,6 +8,8 @@ import { TargetArrow, type Point } from '../presentation/fx/arrow';
 import {
   above,
   boardSlot,
+  CARD_H,
+  CARD_W,
   CAMERA_PITCH,
   deckSlot,
   endTurnSlot,
@@ -16,6 +18,7 @@ import {
   handSlot,
   heroPowerSlot,
   heroSlot,
+  inspectSlot,
   manaSlot,
   mulliganSlot,
   placementOf,
@@ -24,11 +27,13 @@ import {
 } from '../presentation/layout';
 import type { ViewState } from '../presentation/viewState';
 import { CardView } from './cardView';
+import type { CardStats } from './cardText';
 import { fadeOutAndDispose, releaseGpu } from './dispose';
 import { HeroPowerView, HeroView } from './heroView';
 import { MinionView } from './minionView';
 import type { Stage } from './stage';
-import { BoardView, DeckView, EndTurnButton, ManaBarView, ThinkingView } from './tableParts';
+import { BoardView } from './board';
+import { DeckView, EndTurnButton, ManaBarView, ThinkingView } from './tableParts';
 
 export type LegalHighlights = {
   playable: Set<number>; // 能打出的手牌实例 id
@@ -101,6 +106,8 @@ export class TableScene {
   readonly handSpawn = new Map<number, Point>();
   // 随从最后所在的位置，离场后的事件（亡语）用它定位
   private lastMinionPos = new Map<number, Point>();
+  // 悬停场上随从、英雄技能时左侧放大的卡（场景里的卡牌网格，和场上同一套光照）
+  private inspect: CardView | null = null;
   private highlights: LegalHighlights | null = null;
   private targetMarks: TargetMarks = null;
   private readonly unhook: () => void;
@@ -149,6 +156,8 @@ export class TableScene {
   }
 
   // 一盏投影的方向光加半球光（spec 5.4）。阴影贴图 2048，范围只罩住台面（spec 5.10）。
+  readonly lights: { hemi: THREE.HemisphereLight; sun: THREE.DirectionalLight } = {} as never;
+
   private addLights(): void {
     const hemi = new THREE.HemisphereLight(0xcfe3ff, 0x2a2418, 0.85);
     const sun = new THREE.DirectionalLight(0xfff0d8, 1.9);
@@ -166,6 +175,7 @@ export class TableScene {
     sun.shadow.bias = -0.0004;
     sun.shadow.normalBias = 0.03;
     this.root.add(hemi, sun, sun.target);
+    Object.assign(this.lights, { hemi, sun });
   }
 
   // 一局结束：从舞台上拿走，释放这一局自己的几何体、材质、贴图（共用的不动）。
@@ -228,6 +238,50 @@ export class TableScene {
     put(c, at);
     this.layers.drag.add(c);
     return c;
+  }
+
+  // 左侧放大显示一张卡；stats 是场上随从的当前数值。cardId 为 null 时收起。
+  showInspect(cardId: string | null, stats: CardStats | null = null): void {
+    if (!cardId) {
+      if (this.inspect) this.inspect.visible = false;
+      return;
+    }
+    if (!this.inspect) {
+      this.inspect = new CardView(-1, cardId);
+      this.inspect.userData.pick = undefined; // 不参与拾取
+      this.inspect.traverse((o) => (o.castShadow = false)); // 浮在镜头前的大卡不往棋盘上投影
+      this.layers.top.add(this.inspect);
+    }
+    const c = this.inspect;
+    const wasHidden = !c.visible || c.cardId !== cardId;
+    c.setCard(cardId);
+    c.setStats(stats);
+    c.visible = true;
+    const s = inspectSlot();
+    put(c, s);
+    if (wasHidden) {
+      c.scale.setScalar(s.scale * 0.85);
+      gsap.to(c.scale, { x: s.scale, y: s.scale, z: s.scale, duration: 0.12, ease: 'back.out(2)', overwrite: 'auto' });
+    }
+  }
+
+  // 放大卡左下角在画面（页面坐标）上的位置，关键词解释的 DOM 提示贴在它下面
+  inspectAnchor(): { left: number; top: number; width: number } | null {
+    if (!this.inspect?.visible) return null;
+    const s = inspectSlot();
+    const m = new THREE.Matrix4().compose(
+      new THREE.Vector3(s.pos.x, s.pos.y, s.pos.z),
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(s.rot.x, s.rot.y, s.rot.z)),
+      new THREE.Vector3(s.scale, s.scale, s.scale),
+    );
+    const rect = this.stage.canvas.getBoundingClientRect();
+    const toPage = (x: number, y: number) => {
+      const p = new THREE.Vector3(x, y, 0).applyMatrix4(m).project(this.stage.camera);
+      return { x: rect.left + ((p.x + 1) / 2) * rect.width, y: rect.top + ((1 - p.y) / 2) * rect.height };
+    };
+    const bl = toPage(-CARD_W / 2, -CARD_H / 2);
+    const br = toPage(CARD_W / 2, -CARD_H / 2);
+    return { left: bl.x, top: bl.y, width: br.x - bl.x };
   }
 
   // 镜头轻震（英雄受重伤）。幅度要小（spec 5.5）。

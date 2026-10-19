@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { getCard, type Keyword } from '../engine';
 import { MINION_HEIGHT, MINION_SIZE } from '../presentation/layout';
-import { EDGE_GLOW, flashMaterial, glowMaterial, hdr } from '../presentation/fx/materials';
+import { EDGE_GLOW, flashMaterial, glowMaterial, hdr, markBloom } from '../presentation/fx/materials';
 import type { ViewMinion } from '../presentation/viewState';
 import { makeLabelCanvas, portraitTexture, strokeText, type Label } from './canvasArt';
 import { MINION_BASE, MINION_RIM, MINION_TOP, UNIT_BOX, UNIT_SPHERE } from './geometry';
@@ -21,14 +21,14 @@ const ICONS: { k: Keyword; label: string; color: string }[] = [
   { k: 'rush', label: '突', color: '#e8c860' },
 ];
 
-const tauntMat = shared(glowMaterial(COLORS.taunt, 2.7));
+const tauntMat = shared(glowMaterial(COLORS.taunt, 1.4));
 // 描边亮度低于 bloom 阈值：描边本身亮，不往头像上泛光
 const attackRimMat = shared(glowMaterial(COLORS.playable, EDGE_GLOW));
-const targetRimMat = shared(glowMaterial(COLORS.target, EDGE_GLOW * 1.6));
+const targetRimMat = shared(glowMaterial(COLORS.target, EDGE_GLOW * 1.3));
 const iceMat = shared(new THREE.MeshStandardMaterial({
-  color: 0xbfe9ff,
+  color: 0x9fd8ff,
   transparent: true,
-  opacity: 0.5,
+  opacity: 0.32,
   roughness: 0.08,
   metalness: 0.1,
   emissive: 0x1a4a6a,
@@ -39,7 +39,7 @@ const shellMat = shared(new THREE.MeshBasicMaterial({
   transparent: true,
   opacity: 0.22,
   blending: THREE.AdditiveBlending,
-  depthWrite: false,
+  depthWrite: true, // 要写深度才能进选择性泛光
   toneMapped: false,
 }));
 const smokeTex = shared((() => {
@@ -116,6 +116,9 @@ export class MinionView extends THREE.Group {
     this.smoke = new THREE.Sprite(new THREE.SpriteMaterial({ map: smokeTex, transparent: true, opacity: 0.55, depthWrite: false }));
     this.smoke.scale.set(2.2, 1.4, 1);
     this.smoke.position.y = 0.6;
+    markBloom(this.tauntRim);
+    markBloom(this.stateRim);
+    markBloom(this.shell);
     this.flash = new THREE.Mesh(UNIT_BOX, flashMaterial());
     this.flash.scale.set(MINION_SIZE + 0.04, MINION_HEIGHT + 0.04, MINION_SIZE + 0.04);
     this.flash.position.y = MINION_HEIGHT / 2;

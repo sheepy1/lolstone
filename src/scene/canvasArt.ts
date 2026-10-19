@@ -1,4 +1,5 @@
-// 用 canvas 合成贴图：卡面、卡背、方形头像、文字标签。中文都在 canvas 里画（spec 5.4）。
+// 用 canvas 合成贴图：卡面底图（边框、原画、费用六边形、名字横幅、文本框）、卡背、方形头像、文字标签。
+// 卡面上的文字不在这里画，由 cardText.ts 用 SDF 文本叠上去（spec 5.4）。
 // 同一张卡的卡面和头像贴图共用一份缓存；头像图稍后才加载好时重画并标记 needsUpdate。
 import * as THREE from 'three';
 import { findCard, getCard, type CardDef } from '../engine';
@@ -137,14 +138,9 @@ function paintFace(g: CanvasRenderingContext2D, def: CardDef, img: HTMLImageElem
   g.fillStyle = css(col.accent);
   g.fillRect(30, by, CW - 60, 4);
   g.fillRect(30, by + 62, CW - 60, 4);
-  strokeText(g, def.name, CW / 2, by + 34, def.name.length > 6 ? 40 : 48, '#f4f0e6');
-  // 文本框
-  g.font = `700 30px ${FONT_CN}`;
-  g.textAlign = 'center';
-  g.textBaseline = 'top';
-  g.fillStyle = def.class === 'demacia' ? '#2a2418' : '#ece6d4';
-  const lines = wrap(g, def.text, CW - 120).slice(0, 4);
-  lines.forEach((l, i) => g.fillText(l, CW / 2, by + 84 + i * 38));
+  // 文本框（文字由 cardText.ts 用 SDF 文本叠在上面，不烧进贴图）
+  g.fillStyle = def.class === 'demacia' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.25)';
+  g.fillRect(48, by + 76, CW - 96, CH - by - 76 - 60);
   // 费用六边形
   hexPath(g, 70, 70, 54);
   g.fillStyle = '#2f8cff';
@@ -152,11 +148,10 @@ function paintFace(g: CanvasRenderingContext2D, def: CardDef, img: HTMLImageElem
   g.lineWidth = 7;
   g.strokeStyle = '#c8aa6e';
   g.stroke();
-  strokeText(g, String(def.cost), 70, 74, 64, '#fff', FONT_NUM);
   if (def.type === 'minion') {
-    for (const [x, fill, value] of [
-      [72, '#d9a024', def.attack ?? 0],
-      [CW - 72, '#c8302c', def.health ?? 0],
+    for (const [x, fill] of [
+      [72, '#d9a024'],
+      [CW - 72, '#c8302c'],
     ] as const) {
       g.beginPath();
       g.arc(x, CH - 72, 50, 0, Math.PI * 2);
@@ -165,7 +160,6 @@ function paintFace(g: CanvasRenderingContext2D, def: CardDef, img: HTMLImageElem
       g.lineWidth = 7;
       g.strokeStyle = '#1a1208';
       g.stroke();
-      strokeText(g, String(value), x, CH - 68, 62, '#fff', FONT_NUM);
     }
   }
 }

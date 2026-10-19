@@ -4,13 +4,14 @@ import { matchManifest } from '../assets/manifest';
 import { loadManifest } from '../assets/loader';
 import { initAudio } from '../audio';
 import { PRESET_DECKS } from '../cards';
-import { getHeroClass, maskEvents, maskHidden, seedRng, type Action, type HeroClass, type Side } from '../engine';
+import { getCard, getHeroClass, maskEvents, maskHidden, seedRng, type Action, type HeroClass, type Side } from '../engine';
 import { Director } from '../presentation/director';
 import type { PresentationEvent } from '../presentation/events';
 import { createGsapPlayer, type GsapPlayer } from '../presentation/player';
 import type { ViewState } from '../presentation/viewState';
 import type { ReplayFixture } from '../presentation/fixture';
 import { Interaction, type HoverInfo } from '../scene/interaction';
+import { preloadCardFont } from '../scene/cardText';
 import { Stage } from '../scene/stage';
 import { TableScene } from '../scene/table';
 import { KEYWORD_NAMES } from '../presentation/keywordText';
@@ -54,6 +55,15 @@ export class GameApp {
     this.stage?.frame();
   }
 
+  // 开发环境：渲染一帧，把画布原尺寸存成 PNG（开发服务器写到 .dev-output/<name>.png），返回文件路径
+  async saveScreenshot(name: string): Promise<string> {
+    if (!import.meta.env.DEV || !this.stage) throw new Error('只在开发环境可用');
+    this.stage.frame();
+    const url = this.stage.canvas.toDataURL('image/png');
+    const r = await fetch(`/__dev/screenshot?name=${encodeURIComponent(name)}`, { method: 'POST', body: url });
+    return r.text();
+  }
+
   // 应用自己用的 GSAP 实例。自动化验证时页面不可见，要手动推进它的时钟（gsap.ticker.tick()）。
   get gsap(): typeof gsap {
     return gsap;
@@ -69,6 +79,10 @@ export class GameApp {
     const report = await loadManifest(matchManifest(decks, [humanClass, aiClass]), (p) =>
       setUi((s) => ({ loading: { ...s.loading, progress: p } })),
     );
+    // 卡面 SDF 字体和本局两套卡组用到的字，开局时不用临时排版
+    setUi((s) => ({ loading: { ...s.loading, label: '载入卡面字体' } }));
+    const chars = [...decks[0], ...decks[1]].map((id) => getCard(id)).map((d) => d.name + d.text).join('') + '0123456789';
+    await preloadCardFont(chars);
     if (report.missing.length > 0) console.info(`[assets] ${report.missing.length} 个资源缺失，用纯色兜底`, report.missing.slice(0, 5));
     const matchSeed = seed ?? Math.floor(Math.random() * 1_000_000);
     if (seed !== undefined) this.autoRng = seedRng(seed);
@@ -107,7 +121,7 @@ export class GameApp {
         player.fastForward();
         setUi((s) => ({ status: { ...s.status, speed: player.speed } }));
       },
-      hover: (h) => setUi({ hover: this.hoverCard(h) }),
+      hover: (h) => this.onHover(h),
       mulliganChanged: (marked) => setUi({ mulligan: { open: getUi().mulligan.open, marked: marked.size } }),
       waiting: () => !!match && !match.over && !match.humanToAct(),
     });
@@ -199,6 +213,16 @@ export class GameApp {
       patch.result = { winner, won: winner === view.viewer, turns: view.turn };
     }
     if (Object.keys(patch).length > 0) setUi(patch);
+  }
+
+  // 悬停：场上随从和英雄技能在场景左侧放大显示（场景里的卡牌网格）；手牌本身会抬起放大，不另外显示。
+  // 关键词解释走 DOM，贴在放大卡下面（手牌悬停时贴在画面左侧）。
+  private onHover(h: HoverInfo | null): void {
+    const s = this.session;
+    const card = this.hoverCard(h);
+    if (s) s.scene.showInspect(card && h?.kind !== 'hand' ? card.cardId : null, card?.stats ?? null);
+    const anchor = s?.scene.inspectAnchor() ?? null;
+    setUi({ hover: card ? { ...card, anchor } : null });
   }
 
   private hoverCard(h: HoverInfo | null) {

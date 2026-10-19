@@ -60,7 +60,7 @@ export function handSlot(p: Placement, index: number, count: number): Slot {
     const step = Math.min(1.3, count > 1 ? 8.6 / (count - 1) : 0);
     const sag = offset * offset * 0.045;
     return {
-      pos: v(offset * step, 2.0 - sag + index * 0.004, 8.4 + Math.abs(offset) * 0.02),
+      pos: v(offset * step, 2.2 - sag + index * 0.004, 8.4 + Math.abs(offset) * 0.02),
       rot: { x: -CAMERA_PITCH + 0.12, y: 0, z: -offset * 0.05 },
       scale: 1.3,
     };
@@ -147,6 +147,11 @@ export function endTurnSlot(): Slot {
 // 对手出牌、自己出法术时展示的位置：台面中央上方，朝镜头。
 export function showcaseSlot(): Slot {
   return { pos: v(0, 4.2, 3.2), rot: facing(0), scale: 1.7 };
+}
+
+// 悬停场上随从、英雄技能时，左侧放大显示的完整卡面（spec 5.3）：场景里的卡牌网格，正对镜头。
+export function inspectSlot(): Slot {
+  return { pos: v(-7.5, 4.6, 3.0), rot: facing(0), scale: 1.95 };
 }
 
 // 拖法术进入施法状态后牌停的位置（箭头从这里出发）。

@@ -1,16 +1,22 @@
-// 渲染舞台（spec 5.4、5.10、6.1）：WebGL2 渲染器、固定透视镜头、阴影、ACES 色调映射、sRGB 输出、bloom。
+// 渲染舞台（spec 5.4、5.10、6.1）：WebGL2 渲染器、固定透视镜头、阴影、ACES 色调映射、sRGB 输出、选择性泛光。
 // 画布按 16:9 等比缩放到窗口里最大的矩形，居中；设备像素比上限 2。
+// 后处理用 pmndrs 的 postprocessing：只有打开了 BLOOM_LAYER 图层的物件泛光（发光边、准星、水晶、法力宝石、特效），
+// 受光照的表面、白色的血条和数字不参与，不管它们有多亮。
+import {
+  EffectComposer,
+  EffectPass,
+  RenderPass,
+  SelectiveBloomEffect,
+  ToneMappingEffect,
+  ToneMappingMode,
+} from 'postprocessing';
 import * as THREE from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ASPECT, CAMERA } from '../presentation/layout';
+import { BLOOM_LAYER } from '../presentation/fx/materials';
 
 export type FrameHook = (dt: number, t: number) => void;
 
 const MAX_DPR = 2;
-export const BLOOM_THRESHOLD = 2.2;
 const MIN_WIDTH = 1280;
 
 export class Stage {
@@ -18,7 +24,7 @@ export class Stage {
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
   readonly composer: EffectComposer;
-  readonly bloom: UnrealBloomPass;
+  readonly bloom: SelectiveBloomEffect;
   private hooks = new Set<FrameHook>();
   private clock = new THREE.Clock();
   // 镜头的基准位置；震屏在它上面加偏移
@@ -26,12 +32,12 @@ export class Stage {
   readonly cameraShake = new THREE.Vector3();
 
   constructor(private readonly host: HTMLElement) {
-    const r = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+    // postprocessing 自己做抗锯齿（多重采样）和色调映射，渲染器本身关掉这两样
+    const r = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', stencil: false, depth: false });
     r.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
     r.shadowMap.enabled = true;
     r.shadowMap.type = THREE.PCFSoftShadowMap;
-    r.toneMapping = THREE.ACESFilmicToneMapping;
-    r.toneMappingExposure = 1.0;
+    r.toneMapping = THREE.NoToneMapping;
     r.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer = r;
     host.appendChild(r.domElement);
@@ -42,14 +48,20 @@ export class Stage {
     this.camera.position.copy(this.cameraBase);
     this.camera.lookAt(CAMERA.target.x, CAMERA.target.y, CAMERA.target.z);
 
-    // 后处理用多重采样的半精度渲染目标：抗锯齿 + bloom 需要超过 1 的亮度
-    const target = new THREE.WebGLRenderTarget(1, 1, { samples: 4, type: THREE.HalfFloatType });
-    this.composer = new EffectComposer(r, target);
+    // 设备像素比 2 时画面本身已经是超采样，不再开多重采样：4K 的半精度缓冲开 4 倍采样会吃掉几百 MB 显存
+    const msaa = r.getPixelRatio() >= 1.5 ? 0 : 4;
+    this.composer = new EffectComposer(r, { frameBufferType: THREE.HalfFloatType, multisampling: msaa });
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    // 阈值高于受光照最亮的表面（约 1.9），只有自发光材质（发光边、准星、水晶、法力宝石）超过它、产生泛光
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.32, 0.15, BLOOM_THRESHOLD);
-    this.composer.addPass(this.bloom);
-    this.composer.addPass(new OutputPass());
+    this.bloom = new SelectiveBloomEffect(this.scene, this.camera, {
+      intensity: 1.0,
+      luminanceThreshold: 0, // 选中的物件全部参与，没选中的一律不参与
+      luminanceSmoothing: 0.1,
+      mipmapBlur: true,
+      radius: 0.55,
+    });
+    this.bloom.selection.layer = BLOOM_LAYER;
+    this.bloom.ignoreBackground = true;
+    this.composer.addPass(new EffectPass(this.camera, this.bloom, new ToneMappingEffect({ mode: ToneMappingMode.ACES_FILMIC })));
 
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -74,8 +86,6 @@ export class Stage {
     h = Math.floor(h);
     this.renderer.setSize(w, h);
     this.composer.setSize(w, h);
-    // bloom 在半分辨率上算，省帧预算
-    this.bloom.resolution.set(w / 2, h / 2);
     const c = this.renderer.domElement;
     c.style.position = 'absolute';
     c.style.left = `${Math.floor((ww - w) / 2)}px`;
@@ -93,7 +103,7 @@ export class Stage {
     const t = this.clock.elapsedTime;
     for (const fn of this.hooks) fn(dt, t);
     this.camera.position.copy(this.cameraBase).add(this.cameraShake);
-    this.composer.render();
+    this.composer.render(dt);
   }
 
   get rendererName(): string {
@@ -102,6 +112,7 @@ export class Stage {
 
   dispose(): void {
     this.renderer.setAnimationLoop(null);
+    this.composer.dispose();
     this.host.removeChild(this.renderer.domElement);
     this.renderer.dispose();
   }

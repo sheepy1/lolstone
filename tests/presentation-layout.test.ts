@@ -140,3 +140,34 @@ describe('布局', () => {
     }
   });
 });
+
+describe('地形', () => {
+  it('随从行、枢纽、英雄技能、牌库、法力条、结束回合按钮脚下是平的', async () => {
+    const { terrainHeight } = await import('../src/scene/terrain');
+    const { boardSlot, deckSlot, endTurnSlot } = await import('../src/presentation/layout');
+    const flatAt = (x: number, z: number, what: string) => expect(Math.abs(terrainHeight(x, z)), `${what} (${x.toFixed(2)}, ${z.toFixed(2)})`).toBeLessThan(0.03);
+    for (const p of ['near', 'far'] as Placement[]) {
+      const rz = boardSlot(p, 0, 1).pos.z;
+      for (let x = -7; x <= 7; x += 0.25) for (const dz of [-0.8, 0, 0.8]) flatAt(x, rz + dz, `${p} 随从行`);
+      for (const [name, s, r] of [
+        ['枢纽', heroSlot(p).pos, 1.3],
+        ['英雄技能', heroPowerSlot(p).pos, 0.6],
+        ['牌库', deckSlot(p).pos, 1.0],
+      ] as const) {
+        for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) flatAt(s.x + Math.cos(a) * r, s.z + Math.sin(a) * r, `${p} ${name}`);
+      }
+      const m = manaSlot(p).pos;
+      for (let i = 0; i < 10; i++) flatAt(m.x + i * MANA_STEP, m.z, `${p} 法力条`);
+    }
+    const e = endTurnSlot().pos;
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) flatAt(e.x + Math.cos(a) * 1.0, e.z + Math.sin(a) * 1.0, '结束回合按钮');
+  });
+
+  it('河道是挖下去的，左侧野区有起伏', async () => {
+    const { terrainHeight, riverCenter, RIVER_DEPTH } = await import('../src/scene/terrain');
+    expect(terrainHeight(0, riverCenter(0))).toBeLessThan(-RIVER_DEPTH * 0.8);
+    let max = 0;
+    for (let z = -5; z <= 5; z += 0.5) max = Math.max(max, terrainHeight(-9.6, z));
+    expect(max).toBeGreaterThan(0.3);
+  });
+});

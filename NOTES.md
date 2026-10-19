@@ -1097,6 +1097,10 @@ M1 基准机上没测，合并后要在 M1 上用 `bench.benchCombat(bench.fullB
   攻击动画），录箭头截图和帧序列用；面板隐藏时 rAF 不跑，录帧要停掉动画循环、`gsap.ticker.sleep()`，再手动
   `gsap.updateRoot(t)` 加 `stage.frame(dt)` 逐帧推进。
 - 着色器字符串里不要写中文注释：字体子集测试会把 src 里字符串中的字算成界面文字。
+- 造型（拱弧控制点、能量带、头部、投影、来源光团）抽在 `presentation/fx/arc.ts` 的 `ArcVisual`，目标箭头和触发光线
+  （`fx/beam.ts`，战吼、连击选目标时的演示）共用；arrow.ts 只管瞄准状态、弹簧、准星和禁止标记。触发光线细一点（`BEAM_STYLE`），
+  头部沿弧线 0.15 秒走到目标、身体紧跟在后面，命中后淡出，用完 `release()`；颜色按来源卡牌作用在选中目标上的动作
+  （`beamColor`，和箭头同一套 `arrowTone`），没有对应颜色时用海克斯金。共用的贴图和头部几何体是模块级的（`shared`）。
 
 ## M4 剩余事件：召唤衍生物、回手、变形、触发（m4-storyboard E08、E20、E21、E22）
 

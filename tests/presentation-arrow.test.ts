@@ -2,7 +2,8 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { getCard } from '../src/engine';
-import { arcControls, arrowTone, bezier } from '../src/presentation/fx/arrow';
+import { arcControls, ARROW_COLORS, arrowTone, bezier } from '../src/presentation/fx/arrow';
+import { BEAM_GOLD, beamColor } from '../src/presentation/fx/beam';
 import { boardRowZ, boardSlot, heroSlot, MINION_HEIGHT, MINION_SIZE } from '../src/presentation/layout';
 
 describe('箭头颜色', () => {
@@ -23,6 +24,19 @@ describe('箭头颜色', () => {
 
   it('没有作用在选中目标上的动作时用默认红', () => {
     expect(arrowTone('card', null)).toBe('default');
+  });
+});
+
+describe('触发光线的颜色', () => {
+  const src = (cardId: string) => ({ kind: 'minion' as const, side: 0 as const, instanceId: 1, cardId });
+  it('按来源卡牌作用在选中目标上的动作', () => {
+    expect(beamColor(src('demacia.lux'))).toBe(ARROW_COLORS.damage); // 战吼：造成 2 点伤害
+    expect(beamColor(src('demacia.kayle'))).toBe(ARROW_COLORS.buff); // 战吼：获得圣盾
+    expect(beamColor(src('freljord.sejuani'))).toBe(ARROW_COLORS.frost); // 战吼：冻结
+  });
+  it('没有卡牌的来源、没有对应颜色的动作用海克斯金', () => {
+    expect(beamColor({ kind: 'hero', side: 0 })).toBe(BEAM_GOLD);
+    expect(beamColor(src('demacia.lucian'))).toBe(BEAM_GOLD); // 战吼：沉默
   });
 });
 

@@ -1635,3 +1635,336 @@ export function presetParticleCount(name: PresetName, count?: number): number {
   const ratio = (count ?? def.count) / def.count;
   return def.layers.reduce((n, l) => n + (l.fixed ? l.count : Math.round(l.count * ratio)), 0);
 }
+
+// ---------- 招牌卡专属特效用的变体（docs/m4-signature-fx.md） ----------
+// 分镜里写成"某预设的变体"的几种：参数照 1.5 的约定（count、dir、color、scale），默认值按分镜写。
+// 不进 PRESET_NAMES：那 18 个名字由分镜表 1.5 固定、测试逐个核对。发射时直接传定义：
+//   scene.particles.emit(SIGNATURE_PRESETS.wind_spiral, { at, follow: () => tornado.position })
+
+// 旋风（stealth_smoke 的变体，狂风绝息斩）：白青色的风团绕竖轴卷着上升，夹着几道发亮的风痕和脚下扬起的尘。
+// 跟着移动的发射点（follow）走，发射 0.3 秒，正好是"起风"那一段
+const wind_spiral: PresetDef = {
+  count: 60,
+  dir: 'out',
+  color: 0xd8fbff,
+  layers: [
+    {
+      name: 'gust',
+      count: 60,
+      followDir: true,
+      duration: 0.3,
+      life: [0.35, 0.6],
+      shape: { kind: 'disc', radius: 0.55, edge: true, height: [0.1, 1.7] },
+      dir: 'out',
+      lift: 2.2,
+      speed: [0.4, 1.1],
+      swirl: 14,
+      drag: 1.2,
+      local: true,
+      size: [0.45, 0.8],
+      sizeCurve: [
+        [0, 0.5],
+        [1, 1.6],
+      ],
+      alphaCurve: [
+        [0, 0],
+        [0.2, 0.55],
+        [1, 0],
+      ],
+      gradient: [
+        [0, 'hot', 1.15],
+        [1, 'main', 0.85],
+      ],
+      cell: 'smoke',
+      blend: 'alpha',
+      align: 'billboard',
+      spin: [1, 3],
+      soft: true,
+    },
+    {
+      name: 'streaks',
+      count: 30,
+      followDir: true,
+      duration: 0.3,
+      life: [0.2, 0.35],
+      shape: { kind: 'disc', radius: 0.5, edge: true, height: [0.2, 1.9] },
+      dir: 'up',
+      speed: [1, 2.6],
+      swirl: 16,
+      local: true,
+      size: 0.06,
+      stretch: 0.06,
+      alphaCurve: fadeOut,
+      gradient: [
+        [0, WHITE, 2.6],
+        [1, 'main', 1.6],
+      ],
+      cell: 'ember',
+      blend: 'add',
+      bloom: true,
+      align: 'velocity',
+    },
+    {
+      name: 'dust',
+      count: 10,
+      duration: 0.3,
+      life: [0.4, 0.6],
+      shape: { kind: 'disc', radius: 0.7, edge: true, height: [0.05, 0.25] },
+      dir: 'out',
+      lift: 0.3,
+      speed: [0.6, 1.2],
+      swirl: 8,
+      drag: 2,
+      size: [0.5, 0.8],
+      alphaCurve: [
+        [0, 0],
+        [0.25, 0.45],
+        [1, 0],
+      ],
+      gradient: [[0, 0xb8ab8c, 0.9]],
+      cell: 'smoke',
+      blend: 'alpha',
+      align: 'billboard',
+      spin: [0.5, 1.5],
+      soft: true,
+    },
+  ],
+};
+
+// 暴风雪（frost_spread 的变体，dir down，暴风雪）：敌方半场上空一整片雪片和冰针持续落下 0.6 秒，顶上一层冰雾。
+// 发射区按 7 个随从的一整排设计（10 × 3.2），at 是敌方随从行中心上空约 3.2 高的点
+const blizzard_fall: PresetDef = {
+  count: 80,
+  dir: 'up',
+  color: FX_PALETTE.ice,
+  layers: [
+    {
+      name: 'flakes',
+      count: 80,
+      followDir: true,
+      duration: 0.6,
+      life: [0.55, 0.8],
+      shape: { kind: 'box', size: [10, 0.4, 3.2] },
+      dir: 'down',
+      spread: 0.3,
+      speed: [3.6, 5.4],
+      turbulence: 4,
+      size: [0.08, 0.16],
+      alphaCurve: fadeInOut,
+      gradient: [
+        [0, WHITE, 2.2],
+        [0.5, 'main', 1.8],
+        [1, 'main', 1.2],
+      ],
+      cell: 'flake',
+      blend: 'add',
+      bloom: true,
+      align: 'billboard',
+      spin: [2, 6],
+    },
+    {
+      name: 'needles',
+      count: 30,
+      followDir: true,
+      duration: 0.6,
+      life: [0.3, 0.4],
+      shape: { kind: 'box', size: [10, 0.4, 3.2] },
+      dir: 'down',
+      spread: 0.12,
+      speed: [7, 9.5],
+      size: 0.05,
+      stretch: 0.07,
+      alphaCurve: fadeOut,
+      gradient: [
+        [0, 'hot', 2.6],
+        [1, 'main', 1.4],
+      ],
+      cell: 'ember',
+      blend: 'add',
+      align: 'velocity',
+    },
+    {
+      name: 'cloud',
+      count: 14,
+      duration: 0.25,
+      life: [1.0, 1.3],
+      shape: { kind: 'box', size: [10, 0.5, 2.6] },
+      offset: { x: 0, y: 0.7, z: -0.4 },
+      dir: 'out',
+      speed: [0.1, 0.3],
+      size: [1.8, 2.6],
+      alphaCurve: [
+        [0, 0],
+        [0.25, 0.42],
+        [0.75, 0.3],
+        [1, 0],
+      ],
+      gradient: [[0, 0x8aa6c4, 0.95]],
+      cell: 'smoke',
+      blend: 'alpha',
+      align: 'billboard',
+      spin: [0.1, 0.4],
+    },
+  ],
+};
+
+// 刀环（slash_trail 的环形变体，卡特琳娜）：一圈刀光从随从四周向外甩出，0.45 秒内连续发射，带火星
+const slash_ring: PresetDef = {
+  count: 48,
+  dir: 'out',
+  color: FX_PALETTE.physical,
+  layers: [
+    {
+      name: 'blades',
+      count: 48,
+      followDir: true,
+      duration: 0.45,
+      life: [0.12, 0.2],
+      shape: { kind: 'disc', radius: 0.95, edge: true, height: [0.3, 0.5] },
+      dir: 'out',
+      speed: [3, 5],
+      swirl: 7,
+      size: 0.45,
+      aspect: 1.6,
+      sizeCurve: [
+        [0, 1],
+        [1, 0.6],
+      ],
+      alphaCurve: [
+        [0, 0.95],
+        [1, 0],
+      ],
+      gradient: [
+        [0, WHITE, 3],
+        [0.4, 'main', 2],
+        [1, 0x9a2a2a, 1],
+      ],
+      cell: 'arc',
+      blend: 'add',
+      bloom: true,
+      align: 'velocity',
+    },
+    {
+      name: 'sparks',
+      count: 18,
+      followDir: true,
+      duration: 0.45,
+      life: [0.12, 0.25],
+      shape: { kind: 'disc', radius: 0.9, edge: true, height: [0.3, 0.5] },
+      dir: 'out',
+      speed: [2, 4],
+      size: 0.04,
+      stretch: 0.03,
+      alphaCurve: fadeOut,
+      gradient: [
+        [0, WHITE, 3],
+        [1, 'main', 1.5],
+      ],
+      cell: 'ember',
+      blend: 'add',
+      align: 'velocity',
+    },
+  ],
+};
+
+// 残影（slash_trail 的迸发变体，易）：一下子向四周散开的刀光，0.08 秒发完
+const slash_burst: PresetDef = {
+  count: 24,
+  dir: 'out',
+  color: 0xbfe6ff,
+  layers: [
+    {
+      name: 'blades',
+      count: 24,
+      followDir: true,
+      duration: 0.08,
+      life: [0.14, 0.22],
+      shape: { kind: 'disc', radius: 0.5, edge: true, height: [0.3, 0.6] },
+      dir: 'out',
+      speed: [4, 6.5],
+      drag: 3,
+      size: 0.42,
+      aspect: 1.6,
+      alphaCurve: [
+        [0, 0.95],
+        [1, 0],
+      ],
+      gradient: [
+        [0, WHITE, 3],
+        [0.4, 'main', 2],
+        [1, 0x4a7aa8, 1],
+      ],
+      cell: 'arc',
+      blend: 'add',
+      bloom: true,
+      align: 'velocity',
+    },
+    glints(6, { shape: { kind: 'sphere', radius: 0.6 }, duration: 0.1, gradient: [[0, 'hot', 3]] }),
+  ],
+};
+
+// 冰的蔓延（frost_spread 的连续变体，丽桑卓）：跟着地面冰的前沿走，一路从地上冒出冰晶和寒雾，发射 0.35 秒
+const frost_creep: PresetDef = {
+  count: 30,
+  dir: 'up',
+  color: FX_PALETTE.ice,
+  layers: [
+    {
+      name: 'crystals',
+      count: 30,
+      followDir: true,
+      duration: 0.35,
+      life: [0.4, 0.65],
+      shape: { kind: 'disc', radius: 0.9, height: [0, 0.12] },
+      dir: 'up',
+      spread: 0.4,
+      speed: [0.8, 1.8],
+      drag: 2.5,
+      size: [0.12, 0.2],
+      alphaCurve: [
+        [0, 0],
+        [0.1, 1],
+        [0.7, 0.8],
+        [1, 0],
+      ],
+      gradient: [
+        [0, WHITE, 2],
+        [0.3, 'main', 1.8],
+        [1, 'deep', 1.2],
+      ],
+      cell: 'shard',
+      blend: 'add',
+      align: 'tumble',
+      spin: [2, 6],
+      flip: [6, 12],
+    },
+    {
+      name: 'mist',
+      count: 10,
+      duration: 0.35,
+      life: [0.5, 0.75],
+      shape: { kind: 'disc', radius: 0.8, height: [0.2, 0.35] },
+      dir: 'out',
+      lift: 0.15,
+      speed: [0.4, 0.9],
+      drag: 3,
+      size: [0.7, 1],
+      alphaCurve: [
+        [0, 0],
+        [0.2, 0.5],
+        [1, 0],
+      ],
+      gradient: [
+        [0, 'main', 0.8],
+        [1, 'deep', 0.5],
+      ],
+      cell: 'smoke',
+      blend: 'add',
+      align: 'billboard',
+      spin: [0.3, 1],
+      soft: true,
+    },
+  ],
+};
+
+export const SIGNATURE_PRESETS = { wind_spiral, blizzard_fall, slash_ring, slash_burst, frost_creep } satisfies Record<string, PresetDef>;

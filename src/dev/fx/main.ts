@@ -37,6 +37,7 @@ import { FLOW } from '../../presentation/fx/flow';
 import { MANA_FX } from '../../scene/tableParts';
 import { AI_PACE } from '../../app/match';
 import { SAMPLE, sampleEvents } from '../sampleEvents';
+import { SIGNATURE_CARDS, signatureScenario } from '../signatureScenarios';
 
 gsap.registerPlugin(GSDevTools);
 installDefaultPool();
@@ -86,12 +87,17 @@ const settings = {
   playCombat: () => playCombat(),
   fullBoard: () => build(fullBoard(base, BOARD_CARDS)),
   wipe: () => playEvents(fullBoardWipe(bench!.director.displayed)),
+  sig: SIGNATURE_CARDS[0]!.fxId,
+  foes: 3,
+  setupSig: () => setupSignature(),
+  playSig: () => playSignature(),
+  playAllSig: () => void playAllSignatures(),
 };
 
 // 满场压力测试用的随从：两套预组里的随从牌
 const BOARD_CARDS = [...new Set([...PRESET_DECKS.ionia!, ...PRESET_DECKS.noxus!])].filter((id) => getCard(id).type === 'minion');
 
-function build(view: ViewState = base): void {
+function build(view: ViewState = base, state: GameState = baseState): void {
   if (bench) {
     for (const t of gsap.globalTimeline.getChildren(false, true, true)) t.kill();
     bench.interaction.destroy();
@@ -106,7 +112,7 @@ function build(view: ViewState = base): void {
   };
   const director = new Director(view, player.play);
   // 改过场面的棋盘（满场压力测试）和真实局面对不上，不接受拖牌
-  const b: Bench = { scene, director, player, interaction: null as never, state: baseState, dirty: view !== base };
+  const b: Bench = { scene, director, player, interaction: null as never, state, dirty: view !== base && state === baseState };
   const legal = (): Action[] | null => (director.busy || b.dirty || b.state.current !== 0 ? null : listLegalActions(b.state, 0));
   b.interaction = new Interaction(scene, {
     legal,
@@ -166,6 +172,80 @@ function playCombat(): boolean {
   }
   playEvents(events);
   return true;
+}
+
+// 招牌卡（m4-signature-fx）：按卡搭一个真实局面（棋盘可以直接玩，手动打出那张卡也行），"播放"时动作交给引擎执行，
+// 事件是引擎真发出来的
+function setupSignature(fxId = settings.sig, foes = settings.foes): ReturnType<typeof signatureScenario> {
+  const setup = signatureScenario(fxId, baseState, foes);
+  build(viewFromState(setup.state, 0), setup.state);
+  log.textContent = `${SIGNATURE_CARDS.find((c) => c.fxId === fxId)?.name ?? fxId}：棋盘已布置，可以手动打出，或点"播放"`;
+  return setup;
+}
+
+function signatureEvents(setup: ReturnType<typeof signatureScenario>): PresentationEvent[] {
+  let state = setup.state;
+  const events: PresentationEvent[] = [];
+  for (const a of setup.actions) {
+    const r = applyAction(state, a);
+    if (!r.ok) throw new Error(`招牌卡场景的动作被引擎拒绝：${r.error}`);
+    state = r.state;
+    events.push(...maskEvents(r.events, 0));
+  }
+  if (bench) bench.state = state;
+  return events;
+}
+
+function playSignature(fxId = settings.sig, foes = settings.foes): void {
+  const setup = setupSignature(fxId, foes);
+  const events = signatureEvents(setup);
+  playEvents(events);
+  log.textContent = `${SIGNATURE_CARDS.find((c) => c.fxId === fxId)?.name}：${events.map((e) => e.kind).join(' + ')}`;
+}
+
+async function playAllSignatures(): Promise<void> {
+  for (const c of SIGNATURE_CARDS) {
+    playSignature(c.fxId);
+    await new Promise((r) => setTimeout(r, 300));
+    while (bench?.director.busy) await new Promise((r) => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 600));
+  }
+}
+
+// 录一张招牌卡的逐帧画面（原速 slow = 1，四倍慢放 slow = 4）。先布置棋盘、渲染稳定，再从出牌那一刻开始录
+async function recordSignature(fxId: string, name: string, opts: { slow?: number; foes?: number; everyNth?: number; maxSeconds?: number } = {}) {
+  const setup = setupSignature(fxId, opts.foes ?? settings.foes);
+  gsap.globalTimeline.timeScale(1);
+  for (let i = 0; i < 3; i++) stage.frame(1 / 60);
+  await new Promise((r) => setTimeout(r, 500));
+  let started = false;
+  const r = await recordFrames({
+    stage,
+    name,
+    slow: opts.slow ?? 1,
+    everyNth: opts.everyNth ?? 1,
+    start: () => {
+      playEvents(signatureEvents(setup));
+      started = true;
+    },
+    done: () => started && !bench!.director.busy,
+    tail: 0.3,
+    maxSeconds: opts.maxSeconds ?? 8,
+  });
+  gsap.globalTimeline.timeScale(settings.timeScale);
+  return r;
+}
+
+// 量一张招牌卡的每帧耗时（固定步长推进，渲染后读回像素等 GPU）
+async function benchSignature(fxId: string, foes = 7, seconds = 4) {
+  const setup = setupSignature(fxId, foes);
+  for (let i = 0; i < 3; i++) stage.frame(1 / 60);
+  await new Promise((r) => setTimeout(r, 400));
+  let peak = 0;
+  const stop = stage.onFrame(() => (peak = Math.max(peak, bench?.scene.particles.stats.live ?? 0)));
+  const r = await measureFrames({ stage, start: () => playEvents(signatureEvents(setup)), done: () => false, maxSeconds: seconds });
+  stop();
+  return { ...r, particlePeak: peak, dropped: bench?.scene.particles.stats.dropped ?? 0 };
 }
 
 // 录一个战斗场景的逐帧画面：先重置棋盘，原速和 slow 倍慢放各录一份。返回帧数
@@ -250,6 +330,12 @@ tune('飘字 FLOAT_TEXT', FLOAT_TEXT as unknown as Params);
 tune('裂纹 CRACKS', CRACKS as unknown as Params);
 tune('画面反馈 SCREEN', SCREEN as unknown as Params);
 combat.close();
+const sigFolder = gui.addFolder('招牌卡专属特效（m4-signature-fx）');
+sigFolder.add(settings, 'sig', Object.fromEntries(SIGNATURE_CARDS.map((c) => [`${c.name}（${c.trigger}）`, c.fxId]))).name('卡');
+sigFolder.add(settings, 'foes', 1, 7, 1).name('敌方随从数');
+sigFolder.add(settings, 'setupSig').name('布置棋盘（可手动打出）');
+sigFolder.add(settings, 'playSig').name('布置并播放（G）');
+sigFolder.add(settings, 'playAllSig').name('依次播放全部');
 const pace = gui.addFolder('节奏');
 pace.add(settings, 'timeScale', 0.05, 2, 0.05).name('全局速度（慢放）').onChange(applySettings);
 pace.add(settings, 'duration', 0.25, 3, 0.05).name('整步时长倍数').onChange(applySettings);
@@ -361,6 +447,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyP') play();
   if (e.code === 'KeyR') build();
   if (e.code === 'KeyC') playCombat();
+  if (e.code === 'KeyG') playSignature();
 });
 
 // 控制台调试入口
@@ -369,6 +456,7 @@ window.addEventListener('keydown', (e) => {
     return bench;
   },
   stage, settings, play, build, gsap, base, playEvents, playCombat, recordCombat, benchCombat,
+  playSignature, setupSignature, recordSignature, benchSignature, signatures: SIGNATURE_CARDS,
   fullBoard: () => fullBoard(base, BOARD_CARDS),
   fullBoardWipe,
   scenarios: COMBAT_SCENARIOS,

@@ -382,8 +382,8 @@ export function makeTomb(scene: TableScene): THREE.Group {
   }
   tombMats ??= {
     // 反射贴图压得很低：光滑的冰面正对 RoomEnvironment 的灯板时会整面反成白色（两侧的冰棺最明显）
-    body: shared(new THREE.MeshStandardMaterial({ color: 0xa8dcff, transparent: true, opacity: 0.3, roughness: 0.35, metalness: 0, envMap: scene.stage.reflections, envMapIntensity: 0.35, emissive: 0x1d5a86, emissiveIntensity: 0.5, depthWrite: false })),
-    rim: shared(fresnelMaterial(hdr(0xbfeaff, 1.1), 0.02, 0.8, 2.6)),
+    body: shared(new THREE.MeshStandardMaterial({ color: 0xa8dcff, transparent: true, opacity: 0.16, roughness: 0.35, metalness: 0, envMap: scene.stage.reflections, envMapIntensity: 0.35, emissive: 0x1d5a86, emissiveIntensity: 0.5, depthWrite: false })),
+    rim: shared(fresnelMaterial(hdr(0xbfeaff, 0.9), 0.0, 0.8, 2.8)),
   };
   const group = new THREE.Group();
   const body = new THREE.Mesh(geo.tomb, tombMats.body);

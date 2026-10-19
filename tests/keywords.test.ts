@@ -87,7 +87,7 @@ describe('圣盾', () => {
     const g = scenario().board(0, ['魔狼']).board(1, ['波比']).build();
     g.attack(g.m(0, '魔狼'), g.m(1, '波比'));
     const poppy = g.minion(1, '波比');
-    expect(poppy.health).toBe(3);
+    expect(poppy.health).toBe(4);
     expect(poppy.keywords).not.toContain('divine_shield');
     expect(g.kinds()).toContain('shield_broken');
   });
@@ -95,9 +95,9 @@ describe('圣盾', () => {
   it('第二次伤害照常生效', () => {
     const g = scenario().board(1, ['波比']).hand(0, ['测试飞弹', '测试飞弹']).build();
     g.play('测试飞弹', { target: g.m(1, '波比') });
-    expect(g.minion(1, '波比').health).toBe(3);
+    expect(g.minion(1, '波比').health).toBe(4);
     g.play('测试飞弹', { target: g.m(1, '波比') });
-    expect(g.minion(1, '波比').health).toBe(2);
+    expect(g.minion(1, '波比').health).toBe(3);
   });
 
   it('伤害为 0 时不消耗圣盾', () => {
@@ -245,7 +245,7 @@ describe('法术伤害 +X', () => {
     const g = scenario().board(0, ['蓝色哨兵']).board(1, ['石甲虫', '雷克塞']).hand(0, ['审判']).build();
     g.play('审判');
     expect(g.minion(1, '石甲虫').health).toBe(1);
-    expect(g.minion(1, '雷克塞').health).toBe(3);
+    expect(g.minion(1, '雷克塞').health).toBe(2);
   });
 
   it('不影响英雄技能', () => {
@@ -257,7 +257,7 @@ describe('法术伤害 +X', () => {
   it('不影响战吼', () => {
     const g = scenario().board(0, ['蓝色哨兵']).hand(0, ['拉克丝']).board(1, ['雷克塞']).build();
     g.play('拉克丝', { target: g.m(1, '雷克塞') });
-    expect(g.minion(1, '雷克塞').health).toBe(4);
+    expect(g.minion(1, '雷克塞').health).toBe(3);
   });
 
   it('对方的法术伤害不算', () => {
@@ -507,10 +507,10 @@ describe('沉默', () => {
   it('移除关键词和所有增减益，攻击力和生命上限回到卡面', () => {
     const g = scenario().board(0, ['波比']).hand(0, ['铁誓', '卢锡安']).build();
     g.play('铁誓', { target: g.m(0, '波比') });
-    expect(g.minion(0, '波比').attack).toBe(4);
+    expect(g.minion(0, '波比').attack).toBe(3);
     g.play('卢锡安', { target: g.m(0, '波比') });
     const poppy = g.minion(0, '波比');
-    expect([poppy.attack, poppy.health, poppy.maxHealth]).toEqual([2, 3, 3]);
+    expect([poppy.attack, poppy.health, poppy.maxHealth]).toEqual([1, 4, 4]);
     expect(poppy.keywords).toEqual([]);
     expect(poppy.buffs).toEqual([]);
     expect(poppy.silenced).toBe(true);
@@ -533,7 +533,7 @@ describe('沉默', () => {
     g.play('测试群体沉默');
     expect(g.minion(1, '加里奥').health).toBe(7);
     expect(g.minion(1, '雷克塞').health).toBe(4);
-    expect(g.minion(1, '雷克塞').maxHealth).toBe(6);
+    expect(g.minion(1, '雷克塞').maxHealth).toBe(5);
   });
 
   it('沉默后还能获得新的增益和关键词', () => {
@@ -543,8 +543,8 @@ describe('沉默', () => {
   });
 
   it('沉默移除脚本效果（菲奥娜、泰达米尔）', () => {
-    const g = scenario().board(0, [{ card: '菲奥娜', silenced: true }]).board(1, ['魔狼']).build();
-    g.attack(g.m(0, '菲奥娜'), g.m(1, '魔狼'));
+    const g = scenario().board(0, [{ card: '菲奥娜', silenced: true }]).board(1, ['远程小兵']).build();
+    g.attack(g.m(0, '菲奥娜'), g.m(1, '远程小兵'));
     expect(g.minion(0, '菲奥娜').health).toBe(1);
   });
 });

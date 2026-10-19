@@ -8,7 +8,7 @@ export const NOXUS_CARDS: CardDef[] = [
     effects: [{ trigger: 'cast', actions: [{ kind: 'damage', amount: 2, target: 'enemy_hero', fx: 'physical' }] }],
   },
   {
-    id: 'noxus.annie', name: '安妮', type: 'minion', class: 'noxus', cost: 2, attack: 2, health: 1,
+    id: 'noxus.annie', name: '安妮', type: 'minion', class: 'noxus', cost: 2, attack: 1, health: 2,
     text: '战吼：对一个随从造成 1 点伤害', champion: 'Annie',
     effects: [{
       trigger: 'battlecry', target: { pick: 'any_minion' },
@@ -16,20 +16,20 @@ export const NOXUS_CARDS: CardDef[] = [
     }],
   },
   {
-    id: 'noxus.kled', name: '克烈', type: 'minion', class: 'noxus', cost: 3, attack: 2, health: 3,
+    id: 'noxus.kled', name: '克烈', type: 'minion', class: 'noxus', cost: 3, attack: 3, health: 2,
     text: '亡语：召唤一个 2/1 的失去坐骑的克烈', champion: 'Kled',
     effects: [{ trigger: 'deathrattle', actions: [{ kind: 'summon', token: 'token.kled_dismounted', count: 1, fx: 'physical' }] }],
   },
   {
-    id: 'noxus.talon', name: '泰隆', type: 'minion', class: 'noxus', cost: 3, attack: 3, health: 2,
+    id: 'noxus.talon', name: '泰隆', type: 'minion', class: 'noxus', cost: 3, attack: 4, health: 2,
     keywords: ['stealth'], text: '潜行', champion: 'Talon',
   },
   {
-    id: 'noxus.draven', name: '德莱文', type: 'minion', class: 'noxus', cost: 4, attack: 3, health: 3,
+    id: 'noxus.draven', name: '德莱文', type: 'minion', class: 'noxus', cost: 4, attack: 4, health: 2,
     keywords: ['windfury'], text: '风怒', champion: 'Draven',
   },
   {
-    id: 'noxus.katarina', name: '卡特琳娜', type: 'minion', class: 'noxus', cost: 4, attack: 3, health: 3,
+    id: 'noxus.katarina', name: '卡特琳娜', type: 'minion', class: 'noxus', cost: 4, attack: 4, health: 2,
     text: '战吼：对所有敌方随从造成 1 点伤害', champion: 'Katarina',
     effects: [{ trigger: 'battlecry', actions: [{ kind: 'damage', amount: 1, target: 'all_enemy_minions', fx: 'physical' }] }],
   },
@@ -38,11 +38,11 @@ export const NOXUS_CARDS: CardDef[] = [
     keywords: ['lifesteal'], text: '吸血', champion: 'Vladimir',
   },
   {
-    id: 'noxus.samira', name: '莎弥拉', type: 'minion', class: 'noxus', cost: 5, attack: 5, health: 4,
+    id: 'noxus.samira', name: '莎弥拉', type: 'minion', class: 'noxus', cost: 5, attack: 6, health: 4,
     keywords: ['rush'], text: '突袭', champion: 'Samira',
   },
   {
-    id: 'noxus.sion', name: '赛恩', type: 'minion', class: 'noxus', cost: 6, attack: 5, health: 5,
+    id: 'noxus.sion', name: '赛恩', type: 'minion', class: 'noxus', cost: 6, attack: 3, health: 7,
     keywords: ['taunt'], text: '嘲讽。亡语：召唤一个 3/2 的亡骨赛恩', champion: 'Sion',
     effects: [{ trigger: 'deathrattle', actions: [{ kind: 'summon', token: 'token.sion_undead', count: 1, fx: 'shadow' }] }],
   },

@@ -16,7 +16,7 @@ export const IONIA_CARDS: CardDef[] = [
     effects: [{ trigger: 'static', kind: 'spell_damage', amount: 1 }],
   },
   {
-    id: 'ionia.akali', name: '阿卡丽', type: 'minion', class: 'ionia', cost: 3, attack: 2, health: 3,
+    id: 'ionia.akali', name: '阿卡丽', type: 'minion', class: 'ionia', cost: 3, attack: 3, health: 2,
     keywords: ['stealth'], text: '潜行。连击：获得 +2 攻击力', champion: 'Akali',
     effects: [{ trigger: 'combo', actions: [{ kind: 'buff', target: 'self', attack: 2, duration: 'permanent', fx: 'shadow' }] }],
   },
@@ -55,12 +55,12 @@ export const IONIA_CARDS: CardDef[] = [
     keywords: ['rush'], text: '突袭', champion: 'Irelia',
   },
   {
-    id: 'ionia.masteryi', name: '易', type: 'minion', class: 'ionia', cost: 5, attack: 4, health: 4,
+    id: 'ionia.masteryi', name: '易', type: 'minion', class: 'ionia', cost: 5, attack: 5, health: 3,
     text: '每当本随从消灭一个随从，便可以再次攻击', champion: 'MasterYi',
     effects: [{ trigger: 'on_kill', actions: [{ kind: 'extra_attack', target: 'self' }] }],
   },
   {
-    id: 'ionia.yone', name: '永恩', type: 'minion', class: 'ionia', cost: 5, attack: 4, health: 5,
+    id: 'ionia.yone', name: '永恩', type: 'minion', class: 'ionia', cost: 5, attack: 5, health: 4,
     text: '战吼：对一个敌方随从造成 2 点伤害', champion: 'Yone',
     effects: [{
       trigger: 'battlecry', target: { pick: 'enemy_minion' },

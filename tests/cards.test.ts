@@ -86,7 +86,7 @@ describe('中立', () => {
     expectIllegal(g2.try(g2.playAction('猩红印记', { target: g2.m(1, '魔狼') })));
   });
 
-  card('雷克塞', () => expectStats('雷克塞', 5, 3, 6, ['taunt']));
+  card('雷克塞', () => expectStats('雷克塞', 5, 4, 5, ['rush']));
   card('峡谷先锋', () => expectStats('峡谷先锋', 5, 5, 4, ['rush']));
 
   card('维克兹', () => {
@@ -128,11 +128,11 @@ describe('中立', () => {
   });
 
   card('科加斯', () => {
-    expectStats('科加斯', 6, 5, 6);
+    expectStats('科加斯', 6, 4, 7);
     const g = scenario().board(0, ['科加斯']).board(1, ['魔狼']).build();
     g.attack(g.m(0, '科加斯'), g.m(1, '魔狼'));
     const m = g.minion(0, '科加斯');
-    expect([m.attack, m.health, m.maxHealth]).toEqual([6, 4, 7]);
+    expect([m.attack, m.health, m.maxHealth]).toEqual([5, 5, 8]);
   });
 
   card('超级兵', () => expectStats('超级兵', 6, 5, 6, ['taunt']));
@@ -176,13 +176,13 @@ describe('德玛西亚', () => {
   });
 
   card('薇恩', () => {
-    expectStats('薇恩', 2, 1, 3, ['poisonous']);
+    expectStats('薇恩', 2, 2, 1, ['poisonous']);
     const g = scenario().board(0, ['薇恩']).board(1, ['超级兵']).build();
     g.attack(g.m(0, '薇恩'), g.m(1, '超级兵'));
     expect(g.has(1, '超级兵')).toBe(false);
   });
 
-  card('波比', () => expectStats('波比', 3, 2, 3, ['taunt', 'divine_shield']));
+  card('波比', () => expectStats('波比', 3, 1, 4, ['taunt', 'divine_shield']));
 
   card('赵信', () => {
     expectStats('赵信', 3, 3, 2, ['charge']);
@@ -197,7 +197,7 @@ describe('德玛西亚', () => {
     g.play('奎因', { pos: 0 });
     expect(g.boardNames(0)).toEqual(['奎因', '瓦罗', '近战小兵']);
     const q = g.minion(0, '奎因');
-    expect([q.attack, q.health]).toEqual([2, 2]);
+    expect([q.attack, q.health]).toEqual([3, 2]);
     g.attack(g.m(0, '瓦罗'), g.m(1, '远程小兵'));
   });
 
@@ -206,24 +206,24 @@ describe('德玛西亚', () => {
     const targets = g.legal().flatMap((a) => (a.kind === 'play_card' && a.target ? [a.target] : []));
     expect(targets.every((t) => t.kind === 'minion')).toBe(true);
     g.play('拉克丝', { target: g.m(1, '雷克塞') });
-    expect(g.minion(1, '雷克塞').health).toBe(4);
+    expect(g.minion(1, '雷克塞').health).toBe(3);
     expect(g.minion(0, '拉克丝').attack).toBe(3);
   });
 
   card('菲奥娜', () => {
-    expectStats('菲奥娜', 4, 3, 4);
+    expectStats('菲奥娜', 4, 4, 3);
     // 攻击时不受反击伤害
     const g = scenario().board(0, ['菲奥娜']).board(1, ['超级兵']).build();
     g.attack(g.m(0, '菲奥娜'), g.m(1, '超级兵'));
-    expect(g.minion(0, '菲奥娜').health).toBe(4);
-    expect(g.minion(1, '超级兵').health).toBe(3);
+    expect(g.minion(0, '菲奥娜').health).toBe(3);
+    expect(g.minion(1, '超级兵').health).toBe(2);
     // 剧毒随从的反击也没有伤害，所以不会死
     const g2 = scenario().board(0, ['菲奥娜']).board(1, ['薇恩']).build();
     g2.attack(g2.m(0, '菲奥娜'), g2.m(1, '薇恩'));
     expect(g2.has(0, '菲奥娜')).toBe(true);
     // 被攻击时照常受伤
-    const g3 = scenario().board(0, ['魔狼']).board(1, ['菲奥娜']).build();
-    g3.attack(g3.m(0, '魔狼'), g3.m(1, '菲奥娜'));
+    const g3 = scenario().board(0, ['远程小兵']).board(1, ['菲奥娜']).build();
+    g3.attack(g3.m(0, '远程小兵'), g3.m(1, '菲奥娜'));
     expect(g3.minion(1, '菲奥娜').health).toBe(1);
   });
 
@@ -252,7 +252,7 @@ describe('德玛西亚', () => {
     const g = scenario().board(0, ['魔狼']).hand(0, ['凯尔']).build();
     g.play('凯尔', { target: g.m(0, '魔狼') });
     expect(g.minion(0, '魔狼').keywords).toContain('divine_shield');
-    expect(g.minion(0, '凯尔').attack).toBe(5);
+    expect(g.minion(0, '凯尔').attack).toBe(6);
   });
 
   card('光盾', () => {
@@ -282,7 +282,7 @@ describe('德玛西亚', () => {
     const g = scenario().board(0, ['魔狼']).board(1, ['魔狼', '雷克塞']).hand(0, ['审判']).build();
     g.play('审判');
     expect(g.boardNames(1)).toEqual(['雷克塞']);
-    expect(g.minion(1, '雷克塞').health).toBe(4);
+    expect(g.minion(1, '雷克塞').health).toBe(3);
     expect(g.minion(0, '魔狼').health).toBe(2);
   });
 
@@ -330,7 +330,7 @@ describe('弗雷尔卓德', () => {
     g.play('瑟庄妮', { target: g.m(1, '魔狼') });
     expect(g.minion(1, '魔狼').frozenAt).toBe(5);
     const m = g.minion(0, '瑟庄妮');
-    expect([m.attack, m.health]).toEqual([4, 5]);
+    expect([m.attack, m.health]).toEqual([3, 6]);
   });
 
   card('艾尼维亚', () => {
@@ -340,7 +340,7 @@ describe('弗雷尔卓德', () => {
     expect(g.boardNames(1)).toEqual(['近战小兵', '冰凤凰蛋', '远程小兵']);
   });
 
-  card('努努和威朗普', () => expectStats('努努和威朗普', 5, 4, 6, ['rush']));
+  card('努努和威朗普', () => expectStats('努努和威朗普', 5, 3, 7, ['rush']));
 
   card('泰达米尔', () => {
     expectStats('泰达米尔', 6, 6, 5);
@@ -361,7 +361,7 @@ describe('弗雷尔卓德', () => {
     const g = scenario().board(1, ['雷克塞']).hand(0, ['特朗德尔']).build();
     g.play('特朗德尔', { target: g.m(1, '雷克塞') });
     const enemy = g.minion(1, '雷克塞');
-    expect([enemy.attack, enemy.health, enemy.maxHealth]).toEqual([1, 4, 4]);
+    expect([enemy.attack, enemy.health, enemy.maxHealth]).toEqual([2, 3, 3]);
     const self = g.minion(0, '特朗德尔');
     expect([self.attack, self.health, self.maxHealth]).toEqual([5, 7, 7]);
     // -2/-2 能直接减死
@@ -415,7 +415,7 @@ describe('弗雷尔卓德', () => {
   card('魔法水晶箭', () => {
     const g = scenario().board(1, ['雷克塞']).hand(0, ['魔法水晶箭']).build();
     g.play('魔法水晶箭', { target: g.m(1, '雷克塞') });
-    expect(g.minion(1, '雷克塞').health).toBe(3);
+    expect(g.minion(1, '雷克塞').health).toBe(2);
     expect(g.minion(1, '雷克塞').frozenAt).toBe(5);
     expect(g.p(0).mana.current).toBe(6);
   });
@@ -423,7 +423,7 @@ describe('弗雷尔卓德', () => {
   card('暴风雪', () => {
     const g = scenario().board(1, ['雷克塞', '虚空幼虫']).hand(0, ['暴风雪']).build();
     g.play('暴风雪');
-    expect(g.minion(1, '雷克塞').health).toBe(4);
+    expect(g.minion(1, '雷克塞').health).toBe(3);
     expect(g.minion(1, '雷克塞').frozenAt).toBe(5);
     // 被打死的随从在整个法术结算完才离场，亡语召唤的蠕虫不会被冻结
     expect(g.boardNames(1)).toEqual(['雷克塞', '虚空蠕虫', '虚空蠕虫']);
@@ -433,7 +433,7 @@ describe('弗雷尔卓德', () => {
 
 describe('诺克萨斯', () => {
   card('安妮', () => {
-    expectStats('安妮', 2, 2, 1);
+    expectStats('安妮', 2, 1, 2);
     const g = scenario().board(1, ['远程小兵', '石甲虫']).hand(0, ['安妮']).build();
     g.play('安妮', { target: g.m(1, '远程小兵') });
     expect(g.boardNames(1)).toEqual(['石甲虫']);
@@ -444,7 +444,7 @@ describe('诺克萨斯', () => {
   });
 
   card('克烈', () => {
-    expectStats('克烈', 3, 2, 3);
+    expectStats('克烈', 3, 3, 2);
     const g = scenario().board(1, ['近战小兵', '克烈', '远程小兵']).hand(0, ['德玛西亚正义']).build();
     g.play('德玛西亚正义', { target: g.m(1, '克烈') });
     // 亡语召唤放在死者原来的位置
@@ -452,17 +452,17 @@ describe('诺克萨斯', () => {
   });
 
   card('泰隆', () => {
-    expectStats('泰隆', 3, 3, 2, ['stealth']);
+    expectStats('泰隆', 3, 4, 2, ['stealth']);
     const g = scenario().board(0, ['魔狼']).board(1, ['泰隆']).build();
     expectIllegal(g.try({ kind: 'attack', attacker: g.m(0, '魔狼'), target: g.m(1, '泰隆') }));
   });
 
   card('德莱文', () => {
-    expectStats('德莱文', 4, 3, 3, ['windfury']);
+    expectStats('德莱文', 4, 4, 2, ['windfury']);
     const g = scenario().board(0, ['德莱文']).build();
     g.attack(g.m(0, '德莱文'), g.hero(1));
     g.attack(g.m(0, '德莱文'), g.hero(1));
-    expect(g.p(1).hero.health).toBe(24);
+    expect(g.p(1).hero.health).toBe(22);
     expectIllegal(g.try({ kind: 'attack', attacker: g.m(0, '德莱文'), target: g.hero(1) }));
   });
 
@@ -473,7 +473,7 @@ describe('诺克萨斯', () => {
     expect(g.minion(1, '石甲虫').health).toBe(3);
     expect(g.minion(0, '魔狼').health).toBe(2);
     const m = g.minion(0, '卡特琳娜');
-    expect([m.attack, m.health]).toEqual([3, 3]);
+    expect([m.attack, m.health]).toEqual([4, 2]);
   });
 
   card('弗拉基米尔', () => {
@@ -485,7 +485,7 @@ describe('诺克萨斯', () => {
   });
 
   card('莎弥拉', () => {
-    expectStats('莎弥拉', 5, 5, 4, ['rush']);
+    expectStats('莎弥拉', 5, 6, 4, ['rush']);
     const g = scenario().board(1, ['石甲虫']).hand(0, ['莎弥拉']).build();
     g.play('莎弥拉');
     // 入场当回合只能打随从
@@ -495,7 +495,7 @@ describe('诺克萨斯', () => {
   });
 
   card('赛恩', () => {
-    expectStats('赛恩', 6, 5, 5, ['taunt']);
+    expectStats('赛恩', 6, 3, 7, ['taunt']);
     const g = scenario().board(1, ['赛恩', '近战小兵']).hand(0, ['德玛西亚正义']).build();
     g.play('德玛西亚正义', { target: g.m(1, '赛恩') });
     expect(g.boardNames(1)).toEqual(['亡骨赛恩', '近战小兵']);
@@ -563,7 +563,7 @@ describe('诺克萨斯', () => {
   card('诺克萨斯之力', () => {
     const g = scenario().board(1, ['雷克塞']).hand(0, ['诺克萨斯之力', '诺克萨斯之力']).build();
     g.play('诺克萨斯之力', { target: g.m(1, '雷克塞') });
-    expect(g.minion(1, '雷克塞').health).toBe(2);
+    expect(g.minion(1, '雷克塞').health).toBe(1);
     g.play('诺克萨斯之力', { target: g.hero(1) });
     expect(g.p(1).hero.health).toBe(26);
     expect(g.p(0).mana.current).toBe(2);
@@ -575,7 +575,7 @@ describe('艾欧尼亚', () => {
     expectStats('凯南', 2, 2, 3);
     const g = scenario().board(0, ['凯南']).board(1, ['雷克塞', '石甲虫']).hand(0, ['灵魄突袭', '大杀四方']).build();
     g.play('灵魄突袭', { target: g.m(1, '雷克塞') });
-    expect(g.minion(1, '雷克塞').health).toBe(2);
+    expect(g.minion(1, '雷克塞').health).toBe(1);
     g.play('大杀四方'); // 群体法术也加
     expect(g.boardNames(1)).toEqual(['石甲虫']);
     expect(g.minion(1, '石甲虫').health).toBe(2);
@@ -587,19 +587,19 @@ describe('艾欧尼亚', () => {
 
   card('阿卡丽', () => {
     // 本回合第一张牌：连击不触发
-    expectStats('阿卡丽', 3, 2, 3, ['stealth']);
+    expectStats('阿卡丽', 3, 3, 2, ['stealth']);
     const g = scenario().hand(0, ['飞斧', '阿卡丽']).build();
     g.play('飞斧', { target: g.hero(1) });
     g.play('阿卡丽');
     const m = g.minion(0, '阿卡丽');
-    expect([m.attack, m.health]).toEqual([4, 3]);
+    expect([m.attack, m.health]).toEqual([5, 2]);
     expect(m.keywords).toEqual(['stealth']);
     expect(g.eventsOf('trigger')[0].timing).toBe('combo');
     // 英雄技能不算使用过牌
     const g2 = scenario().classes('ionia', 'demacia').hand(0, ['阿卡丽']).build();
     g2.heroPower(g2.hero(1));
     g2.play('阿卡丽');
-    expect(g2.minion(0, '阿卡丽').attack).toBe(2);
+    expect(g2.minion(0, '阿卡丽').attack).toBe(3);
   });
 
   card('卡尔玛', () => {
@@ -671,7 +671,7 @@ describe('艾欧尼亚', () => {
   });
 
   card('易', () => {
-    expectStats('易', 5, 4, 4);
+    expectStats('易', 5, 5, 3);
     // 杀一个就能再打一次，没有次数上限
     const g = scenario().board(0, [{ card: '易', health: 10 }]).board(1, ['石甲虫', '近战小兵', '远程小兵']).build();
     g.attack(g.m(0, '易'), g.m(1, '石甲虫'));
@@ -679,19 +679,20 @@ describe('艾欧尼亚', () => {
     g.attack(g.m(0, '易'), g.m(1, '远程小兵'));
     expect(g.p(1).board).toHaveLength(0);
     g.attack(g.m(0, '易'), g.hero(1));
-    expect(g.p(1).hero.health).toBe(26);
+    expect(g.p(1).hero.health).toBe(25);
     expectIllegal(g.try({ kind: 'attack', attacker: g.m(0, '易'), target: g.hero(1) }));
     // 没杀死就不能再打
-    const g2 = scenario().board(0, ['易']).board(1, ['雷克塞']).build();
-    g2.attack(g2.m(0, '易'), g2.m(1, '雷克塞'));
+    const g2 = scenario().board(0, ['易']).board(1, ['布隆']).build();
+    g2.attack(g2.m(0, '易'), g2.m(1, '布隆'));
+    expect(g2.has(0, '易')).toBe(true);
     expectIllegal(g2.try({ kind: 'attack', attacker: g2.m(0, '易'), target: g2.hero(1) }));
     // 被法术打死的不算
     const g3 = scenario().board(0, ['易']).board(1, ['魔狼']).hand(0, ['灵魄突袭']).build();
     g3.play('灵魄突袭', { target: g3.m(1, '魔狼') });
     expect(g3.minion(0, '易').extraAttacks).toBe(0);
     // 对方回合被攻击时反杀，额外攻击次数不留到自己回合
-    const g4 = scenario().board(0, ['魔狼']).board(1, ['易']).build();
-    g4.attack(g4.m(0, '魔狼'), g4.m(1, '易'));
+    const g4 = scenario().board(0, ['远程小兵']).board(1, ['易']).build();
+    g4.attack(g4.m(0, '远程小兵'), g4.m(1, '易'));
     expect(g4.minion(1, '易').extraAttacks).toBe(0);
     expect(g4.eventsOf('trigger').some((e) => e.timing === 'on_kill')).toBe(true);
   });
@@ -700,9 +701,9 @@ describe('艾欧尼亚', () => {
     const g = scenario().board(0, ['魔狼']).board(1, ['雷克塞']).hand(0, ['永恩']).build();
     expectIllegal(g.try(g.playAction('永恩', { target: g.m(0, '魔狼') })));
     g.play('永恩', { target: g.m(1, '雷克塞') });
-    expect(g.minion(1, '雷克塞').health).toBe(4);
+    expect(g.minion(1, '雷克塞').health).toBe(3);
     const m = g.minion(0, '永恩');
-    expect([m.attack, m.health]).toEqual([4, 5]);
+    expect([m.attack, m.health]).toEqual([5, 4]);
   });
 
   card('辛德拉', () => {
@@ -713,7 +714,7 @@ describe('艾欧尼亚', () => {
     const m = g.minion(0, '辛德拉');
     expect([m.attack, m.health]).toEqual([4, 5]);
     g.play('灵魄突袭', { target: g.m(1, '雷克塞') });
-    expect(g.minion(1, '雷克塞').health).toBe(2);
+    expect(g.minion(1, '雷克塞').health).toBe(1);
   });
 
   card('鬼切', () => {
@@ -751,7 +752,7 @@ describe('艾欧尼亚', () => {
     const g = scenario().board(1, ['雷克塞']).hand(0, ['灵魄突袭']).build();
     expectIllegal(g.try(g.playAction('灵魄突袭', { target: g.hero(1) })));
     g.play('灵魄突袭', { target: g.m(1, '雷克塞') });
-    expect(g.minion(1, '雷克塞').health).toBe(3);
+    expect(g.minion(1, '雷克塞').health).toBe(2);
     expect(g.p(0).mana.current).toBe(8);
   });
 
@@ -766,7 +767,7 @@ describe('艾欧尼亚', () => {
     const g = scenario().board(0, ['魔狼']).board(1, ['雷克塞', '魔狼']).hand(0, ['狂风绝息斩']).build();
     g.play('狂风绝息斩');
     expect(g.boardNames(1)).toEqual(['雷克塞']);
-    expect(g.minion(1, '雷克塞').health).toBe(3);
+    expect(g.minion(1, '雷克塞').health).toBe(2);
     expect(g.minion(0, '魔狼').health).toBe(2);
     expect(g.p(0).mana.current).toBe(4);
   });

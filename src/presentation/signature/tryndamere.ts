@@ -6,7 +6,7 @@
 // 记忆点是时间慢下来那一瞬：减速代替震屏，只在怒吼时补一个 S1。
 // 这一段画面放在一条挂在全局时间线上的独立时间线里，不受整步减速影响，按真实时间播；整步里只占一个位置。
 import gsap from 'gsap';
-import { portraitMesh, UNIT } from '../animations/combat';
+import { HIT, portraitMesh, UNIT } from '../animations/combat';
 import { TINT } from '../animations/util';
 import { at, bigShake, COLOR, EASE, sfx, span, stepOf } from './kit';
 import { makeGroundRing } from './meshes';
@@ -43,9 +43,12 @@ export const undyingRage: SignatureModule = (c) => {
       real.to(step, { timeScale: U.timeScale, duration: 0.03, ease: 'none' }, 0);
       real.to(step, { timeScale: 1, duration: U.recover, ease: EASE.land }, U.slow + U.roar);
     }
+    // impact 低频一次。同一步（攻击）的命中声 cue 取最重的那条：有 ≥ 5 的伤害或打到英雄时，它已经带了一层 combat.hero_hit，
+    // 而且和这里同一刻（撞击帧），再放就是同一个音效响两次
+    const lowAlready = c.step.some((x) => x.kind === 'damage' && x.amount > 0 && (x.target.kind === 'hero' || x.amount >= HIT.lowAt));
     real.call(() => {
       sfx('spell.fire', x);
-      sfx('combat.hero_hit', x);
+      if (!lowAlready) sfx('combat.hero_hit', x);
     }, undefined, 0);
     if (!m) return;
     const mat = portraitMesh(m)?.material;

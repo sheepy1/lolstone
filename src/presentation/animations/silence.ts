@@ -1,5 +1,5 @@
 // 沉默（m4-storyboard E16，400ms，轻档）：头像亮度压到 0.5 再 150ms 回来；嘲讽金边、潜行烟、圣盾外壳和护盾环 100ms 内收缩消失；
-// 数值回到卡面，变化的徽章弹一下并变红；shadow_gather 紫色向内聚 200ms。没有专门的消音声，用减益声。
+// 数值回到卡面，变化的徽章弹一下并变红；shadow_gather 紫色向内聚 200ms。声音是消音声 card.silence。
 import { FX_PALETTE } from '../fx/particles';
 import { stripStatus } from '../fx/statusFx';
 import { BUFF, dimPortrait, hold, sfxAt, targetX } from './combat';
@@ -12,7 +12,7 @@ export const silence: AnimModule<'silence'> = (e, { scene, after }) => {
   const x = targetX(scene, e.target);
   const m = () => (e.target.kind === 'minion' ? scene.minion(e.target.instanceId) : undefined);
   t.call(() => {
-    sfxAt('card.debuff', x);
+    sfxAt('card.silence', x);
     const p = scene.pointOf(e.target);
     scene.particles.emit('shadow_gather', { at: { x: p.x, y: 0, z: p.z }, count: B.gather, color: FX_PALETTE.debuff, dir: 'in' });
     const v = m();

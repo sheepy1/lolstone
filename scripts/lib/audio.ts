@@ -47,6 +47,8 @@ export type Input = {
   trim?: [number, number?];
   /** 截取终点前淡出的秒数，默认 0.02。把长曲子截成短收尾时用。 */
   fadeOut?: number;
+  /** 低通滤波截止频率（Hz，24 dB/倍频程），把声音"闷住"，做消音声这类效果时用。 */
+  lowpass?: number;
   /** 混音时这一路的增益（dB）。 */
   gainDb?: number;
 };

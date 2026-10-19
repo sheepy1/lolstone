@@ -9,3 +9,11 @@ public/audio/voice/
 
 # 开发服务器存的截图（/__dev/screenshot）
 .dev-output/
+
+# 音效和音乐：原始素材用 scripts/fetch-sfx.ts 下载到 assets-src/，scripts/normalize-audio.ts 生成 public/audio 下的成品和清单。
+# 来源和授权记录在 scripts/data/audio-sources.json，进 git
+assets-src/
+public/audio/sfx/
+public/audio/music/
+public/audio/manifest.json
+public/audio/.normalize-state.json

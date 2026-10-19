@@ -381,3 +381,58 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
   映射表里所有主选图（icon 和 art）两两不重复。
 - 嘲讽用拉莫斯 E「狂乱嘲讽」。spec 5.4 写的 W 是笔误，设计会话会改。
 - spec 5.9 写 fetch-icons 输出到 `public/art/icons/`，实际按卡牌、英雄技能、关键词分成 `cards/`、`heropowers/`、`keywords/` 三个目录。
+
+## 音效和音乐素材（M4 准备，2026-10-19）
+
+脚本和用法见 README 的"音效和音乐"。这里记选择和踩过的坑。
+
+### 来源
+
+- 只用 CC0：Kenney 7 个音效包（页面写 CC0，包里带 License.txt），加 OpenGameArt 上 35 个页面（43 个文件）的素材，这些页面的授权一栏都只写了 CC0。
+  每个来源的页面、作者、授权依据在 `scripts/data/audio-sources.json` 的 `sources`。双授权（CC0 和 OGA-BY 并列）、
+  CC-BY 的一律没收，哪怕更合适（比如 YannZ 的菜单曲、JC Sounds 的自然环境音包）。
+- 没用 freesound：下原始文件要登录，不登录只能拿 128 kbps 的试听版。以后要补冷门音效再去，记得只挑 CC0 的。
+- 环境音用 Thimras 的公园录音（风、河水、鸟叫三条），每条十几分钟、七八十到一百 MB，`maxBytes` 只取开头一段，
+  混成 60 秒，结尾 4 秒叠回开头做成无缝循环。
+
+### 响度目标（建议写进 spec 5.7"一致性和分层"）
+
+| 类别 | 对齐指标 | 目标 | 声道 | 限幅器最多压 |
+| --- | --- | --- | --- | --- |
+| 音效 | 最大瞬时响度（400 毫秒窗口） | -18 LUFS | 单声道 | 6 dB |
+| 语音 | 积分响度 | -18 LUFS | 单声道 | 3 dB |
+| 胜负收尾 | 积分响度 | -18 LUFS | 立体声 | 3 dB |
+| 菜单、对局音乐 | 积分响度 | -20 LUFS | 立体声 | 3 dB |
+| 环境音 | 积分响度 | -30 LUFS | 立体声 | 3 dB |
+
+统一 48 kHz，真峰值不超过 -1 dBTP，ogg（Vorbis）加 mp3 兜底。音效单声道是为了按位置做声像时左右干净。
+
+- 音效不用积分响度：短于 400 毫秒的算不出来，几百毫秒的也偏低。
+- 增益是整段的静态增益，不做动态压缩。起音很尖（撞击、碎裂、冰咒）或只有几十毫秒（点击）的音效，要达到目标峰值得
+  高出上限十几 dB，所以增益有上限：限幅器最多压 6 dB，再多就停在峰值上限。这类音效最终的响度只取决于这个上限，和目标
+  无关；目标从 -14 降到 -18，就是为了让撞击、碎裂这些重要的声音不比"增益"这类柔和的声音轻太多。实测处理后音效的
+  最大瞬时响度中位数 -19.3，最轻的 10% 在 -26 以下（基本是界面点击声）。
+- 同类之间的轻重（悬停比按钮轻）不靠素材，靠 `src/audio/sfx.ts` 音效表的 volume。音效表的 volume 最大是 1，素材太轻
+  就补不回来，所以宁可目标低一点。
+
+### 接进 src/audio 时要做的
+
+- 清单 `public/audio/manifest.json` 的 `id` 和 `sfx.ts` 的 `SfxId`、`music.ts` 的 `TrackId` 一一对应。用户在试听页
+  定下留用的候选后，把对应的 `audio/sfx/<id>/<序号>.ogg` 填进 `SFX_TABLE` 的 variants，Howl 的 src 写成 `[ogg, mp3]`。
+- 清单里有 4 个 `sfx.ts` 还没有的键：`spell.big`（群体法术）、`flow.game_start`（开场音）、`flow.nexus_light`（枢纽点亮）、
+  `flow.nexus_explode`（胜负时枢纽爆炸）。spec 5.6 的声音列写了前三个，第四个是画面列有、声音列没写的。
+- 胜负收尾在 `sfx.ts` 里叫 `flow.victory`、`flow.defeat`，在 `music.ts` 里叫 `victory`、`defeat`，素材是同一段，接的时候
+  二选一，另一个删掉。
+- 语音处理后 `public/audio/voice/<key>/` 下多了 `choose.mp3`、`ban.mp3`，`voice.ts` 可以把 src 改成 `[ogg, mp3]`。
+- 菜单音乐的 1 号（Fantasy Orchestral Theme）不是循环曲；对局音乐 1、2 号是作者给的循环版；环境音三个都做成了无缝循环。
+
+### 踩过的坑
+
+- OpenGameArt 单连接只有十几 KB/s，大文件常常下到 5 MB、10 MB 这类整数处断开。`fetch-sfx.ts` 用 HTTP Range 从断开的
+  位置续传，30 秒收不到数据就重连。
+- ffmpeg 的 ebur128 在补的静音段上给出 `nan`，`Math.max` 遇到 NaN 结果整个变 NaN，短音效全被当成静音放大了 56 dB。
+  解析时跳过非有限值。
+- 限幅器只看采样点，真峰值会冒出来；Vorbis 编码又会冒出 1 dB 左右。现在先升到 4 倍采样率再限幅，上限设 -2.5 dBFS，
+  处理后真峰值最高 -1.4 dBTP。
+- `fetch-voice.ts` 按文件大小判断是否已下载，语音处理过之后大小变了，重跑 `fetch:voice` 会把原件重新下回来覆盖成品。
+  `normalize-audio.ts` 按内容认得出来，重跑一次就行。

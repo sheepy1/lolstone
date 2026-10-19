@@ -5,14 +5,47 @@ import { getCard, HIDDEN_CARD_ID } from '../engine';
 import { CARD_T } from '../presentation/layout';
 import { EDGE_GLOW, glowMaterial, markBloom } from '../presentation/fx/materials';
 import { cardBackTexture, cardFaceTexture } from './canvasArt';
+import { ART_STYLE } from './artStyle';
+import { cardFaceMaps, faceLayout } from './cardFrameArt';
 import { CardTexts, type CardStats } from './cardText';
-import { CARD_BODY, CARD_FACE, CARD_FRAME, CARD_GLOW } from './geometry';
+import { CARD_BODY, CARD_FACE, CARD_FRAME, CARD_GLOW, CARD_HERO_CREST } from './geometry';
 import { COLORS, REGION_COLORS } from './theme';
 import type { CardClass } from '../engine';
 import { shared } from './dispose';
 
+const NEW_ART = ART_STYLE === 'new';
 const bodyMat = shared(new THREE.MeshStandardMaterial({ color: 0x8a7650, roughness: 0.6, metalness: 0.3 }));
-const backMat = shared(new THREE.MeshStandardMaterial({ map: cardBackTexture(), roughness: 0.55, metalness: 0.15 }));
+const backMat = shared(
+  NEW_ART
+    ? new THREE.MeshStandardMaterial({ map: cardBackTexture(), ...faceMapProps('back'), roughness: 1, metalness: 1 })
+    : new THREE.MeshStandardMaterial({ map: cardBackTexture(), roughness: 0.55, metalness: 0.15 }),
+);
+
+// 新版卡面的法线、粗糙度、金属度贴图（按版式共用，cardFrameArt.ts）
+function faceMapProps(layout: ReturnType<typeof faceLayout>) {
+  const m = cardFaceMaps(layout);
+  return { normalMap: m.normal, normalScale: new THREE.Vector2(0.7, 0.7), roughnessMap: m.rm, metalnessMap: m.rm };
+}
+
+// 金属边框、卡背、卡面上的金属部分反射舞台的 reflections（和结束回合按钮的金色金属一样），
+// 没有反射环境时金属只剩一块暗色，看不出是金属
+let reflections: THREE.Texture | null = null;
+const reflective = new Set<THREE.MeshStandardMaterial>();
+export function useCardReflections(env: THREE.Texture): void {
+  if (!NEW_ART || reflections === env) return;
+  reflections = env;
+  for (const m of reflective) applyReflections(m);
+}
+function applyReflections(m: THREE.MeshStandardMaterial, intensity = m.userData.envIntensity ?? 0.7): void {
+  reflective.add(m);
+  m.userData.envIntensity = intensity;
+  if (!reflections || m.envMap === reflections) return;
+  m.envMap = reflections;
+  m.envMapIntensity = intensity;
+  m.needsUpdate = true;
+}
+if (NEW_ART) applyReflections(backMat, 0.35);
+
 // 发光边的亮度低于 bloom 阈值：只有边框本身亮，不往卡面上泛光
 export const glowMat = shared(glowMaterial(COLORS.playable, EDGE_GLOW));
 const markMat = shared((() => {
@@ -37,14 +70,38 @@ const markMat = shared((() => {
   return new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false });
 })());
 const markGeo = shared(new THREE.PlaneGeometry(0.9, 0.9));
-// 凸起边框的金属材质：按地区配色，五个地区加卡背各一份
+// 凸起边框的金属材质：按地区配色，五个地区加卡背各一份。新版里英雄卡和非英雄卡各一份：英雄卡亮、光滑，
+// 非英雄卡暗一些、粗一些（素边框）
 const frameMats = new Map<string, THREE.MeshStandardMaterial>();
-function frameMat(key: CardClass | 'back'): THREE.MeshStandardMaterial {
-  let m = frameMats.get(key);
+function frameMat(key: CardClass | 'back', hero = false): THREE.MeshStandardMaterial {
+  const id = `${key}|${hero}`;
+  let m = frameMats.get(id);
   if (!m) {
     const color = key === 'back' ? 0xc8aa6e : REGION_COLORS[key].frame;
-    m = shared(new THREE.MeshStandardMaterial({ color, metalness: 0.85, roughness: 0.28 }));
-    frameMats.set(key, m);
+    if (!NEW_ART) m = shared(new THREE.MeshStandardMaterial({ color, metalness: 0.85, roughness: 0.28 }));
+    else {
+      const c = new THREE.Color(key === 'noxus' ? 0x3a2f31 : color);
+      if (!hero && key !== 'back') c.multiplyScalar(0.72);
+      m = shared(new THREE.MeshStandardMaterial({ color: c, metalness: 0.9, roughness: hero || key === 'back' ? 0.24 : 0.38 }));
+      applyReflections(m, hero || key === 'back' ? 0.55 : 0.35);
+    }
+    frameMats.set(id, m);
+  }
+  return m;
+}
+// 英雄卡顶上冠饰的金属件和中间的宝石（3D 凸起，和底图上画的冠饰对齐）
+const crestMats = new Map<CardClass, [THREE.MeshStandardMaterial, THREE.MeshStandardMaterial]>();
+function crestMat(cls: CardClass): [THREE.MeshStandardMaterial, THREE.MeshStandardMaterial] {
+  let m = crestMats.get(cls);
+  if (!m) {
+    // 中立的强调色是石灰，和边框分不开，换成海克斯金
+    const accent = cls === 'neutral' ? COLORS.hexGold : REGION_COLORS[cls].accent;
+    const metal = shared(new THREE.MeshStandardMaterial({ color: accent, metalness: 0.9, roughness: 0.25 }));
+    const gem = shared(new THREE.MeshPhysicalMaterial({ color: accent, metalness: 0.1, roughness: 0.1, clearcoat: 1, emissive: accent, emissiveIntensity: 0.25 }));
+    applyReflections(metal, 0.6);
+    applyReflections(gem, 0.6);
+    m = [metal, gem];
+    crestMats.set(cls, m);
   }
   return m;
 }
@@ -56,9 +113,14 @@ export class CardView extends THREE.Group {
   readonly body = new THREE.Group();
   private readonly front: THREE.Mesh<THREE.BufferGeometry, THREE.MeshPhysicalMaterial>;
   private readonly frame: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
+  // 英雄卡的冠饰和内侧细框（只有新版的英雄卡显示）
+  private readonly crest: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
+  private readonly crestGem: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
+  private readonly heroRim: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
   private readonly glow: THREE.Mesh;
   private readonly mark: THREE.Mesh;
   private dimmed = false;
+  private matte = false;
   private readonly texts: CardTexts;
 
   constructor(instanceId: number, cardId: string) {
@@ -68,10 +130,14 @@ export class CardView extends THREE.Group {
     slab.castShadow = true;
     // 卡面材质每张牌一份（变暗、烧红只改自己），贴图按卡牌 id 共用
     // 卡面有一层清漆：高光随视角移动，转动时光线在卡面上流动
+    // 新版的卡面带法线、粗糙度、金属度贴图，粗糙度和金属度由贴图给，材质上的系数是 1
     this.front = new THREE.Mesh(
       CARD_FACE,
-      new THREE.MeshPhysicalMaterial({ roughness: 0.55, metalness: 0.05, clearcoat: 0.75, clearcoatRoughness: 0.2 }),
+      NEW_ART
+        ? new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 1, clearcoat: 0.4, clearcoatRoughness: 0.25 })
+        : new THREE.MeshPhysicalMaterial({ roughness: 0.55, metalness: 0.05, clearcoat: 0.75, clearcoatRoughness: 0.2 }),
     );
+    if (NEW_ART) applyReflections(this.front.material, 0.18);
     this.front.position.z = CARD_T / 2 + 0.002;
     const back = new THREE.Mesh(CARD_FACE, backMat);
     back.position.z = -CARD_T / 2 - 0.002;
@@ -86,7 +152,11 @@ export class CardView extends THREE.Group {
     this.frame = new THREE.Mesh(CARD_FRAME, frameMat('back'));
     this.frame.position.z = CARD_T / 2 - 0.004;
     this.frame.castShadow = true;
-    this.body.add(this.glow, slab, this.front, back, this.frame, this.mark);
+    this.crest = new THREE.Mesh(CARD_HERO_CREST.metal, frameMat('back'));
+    this.crestGem = new THREE.Mesh(CARD_HERO_CREST.gem, frameMat('back'));
+    this.heroRim = new THREE.Mesh(CARD_HERO_CREST.rim, frameMat('back'));
+    this.crest.visible = this.crestGem.visible = this.heroRim.visible = false;
+    this.body.add(this.glow, slab, this.front, back, this.frame, this.crest, this.crestGem, this.heroRim, this.mark);
     this.texts = new CardTexts(this.body);
     this.add(this.body);
     this.userData.pick = { kind: 'hand', id: instanceId };
@@ -100,11 +170,22 @@ export class CardView extends THREE.Group {
   setCard(cardId: string): void {
     if (cardId === this.cardId) return;
     this.cardId = cardId;
-    if (cardId !== HIDDEN_CARD_ID) getCard(cardId);
-    this.front.material.map = cardId === HIDDEN_CARD_ID ? cardBackTexture() : cardFaceTexture(cardId);
-    this.frame.material = frameMat(cardId === HIDDEN_CARD_ID ? 'back' : getCard(cardId).class);
-    this.front.material.needsUpdate = true;
-    this.texts.setCard(cardId === HIDDEN_CARD_ID ? null : cardId);
+    const def = cardId === HIDDEN_CARD_ID ? null : getCard(cardId);
+    const m = this.front.material;
+    m.map = def ? cardFaceTexture(cardId) : cardBackTexture();
+    this.frame.material = frameMat(def ? def.class : 'back', !!def?.champion);
+    if (NEW_ART) {
+      Object.assign(m, faceMapProps(faceLayout(def)));
+      if (this.matte) Object.assign(m, { roughnessMap: null, metalnessMap: null });
+      const hero = !!def?.champion;
+      this.crest.visible = this.crestGem.visible = this.heroRim.visible = hero;
+      if (def && hero) {
+        [this.crest.material, this.crestGem.material] = crestMat(def.class);
+        this.heroRim.material = this.crest.material;
+      }
+    }
+    m.needsUpdate = true;
+    this.texts.setCard(def ? cardId : null);
   }
 
   setHighlight(on: boolean): void {
@@ -121,9 +202,16 @@ export class CardView extends THREE.Group {
 
   // 去掉清漆层。悬停大卡浮在镜头前、正对着方向光的镜面反射方向，清漆把整张卡面照成一片白，原画看不清；
   // 它不需要转动时流动的高光，关掉清漆只留漫反射。
+  // 新版的卡面还去掉粗糙度、金属度贴图：金属部分和宝石正对着太阳的镜面方向，会反成一片白，看不出颜色；
+  // 法线贴图留着，倒角的明暗还在
   setMatte(): void {
-    this.front.material.clearcoat = 0;
-    this.front.material.needsUpdate = true;
+    const m = this.front.material;
+    m.clearcoat = 0;
+    if (NEW_ART) {
+      this.matte = true;
+      Object.assign(m, { roughnessMap: null, metalnessMap: null, roughness: 0.75, metalness: 0 });
+    }
+    m.needsUpdate = true;
   }
 
   setMarked(on: boolean): void {

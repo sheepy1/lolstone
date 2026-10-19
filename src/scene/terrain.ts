@@ -66,7 +66,7 @@ const PADS = pads();
 const ROW_Z = { near: boardSlot('near', 0, 1).pos.z, far: boardSlot('far', 0, 1).pos.z };
 
 // 0 表示必须平，1 表示可以起伏
-function freedom(x: number, z: number): number {
+export function freedom(x: number, z: number): number {
   let f = 1;
   // 随从行：整行加上左右余量
   for (const rz of [ROW_Z.near, ROW_Z.far]) {

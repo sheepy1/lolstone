@@ -20,6 +20,7 @@ import type { PresentationEvent } from '../../presentation/events';
 import { DRAG, Interaction } from '../../scene/interaction';
 import { END_TURN } from '../../scene/endTurnButton';
 import { NEXUS_LAMP } from '../../scene/nexusLamps';
+import { ART_STYLE, BOARD_ART } from '../../scene/artStyle';
 import { Director } from '../../presentation/director';
 import { PRESENTATION_EVENT_KINDS, type PresentationEventKind } from '../../presentation/events';
 import { createGsapPlayer, type GsapPlayer } from '../../presentation/player';
@@ -291,6 +292,22 @@ look.add(nexus, 'style', ['a', 'b', 'c']).name('方案').onChange((v: string) =>
   q.set('nexus', v);
   location.search = q.toString();
 });
+
+// 棋盘和卡框的美术（M4）：新旧两版切换（重新加载，?art=old 是 M3 的骨架版），新版棋盘着色器的参数现场可调
+const art = gui.addFolder('美术（切换版本会重新加载）');
+art.add({ style: ART_STYLE }, 'style', { 新版: 'new', '旧版（M3）': 'old' }).name('棋盘和卡框').onChange((v: string) => {
+  const q = new URLSearchParams(location.search);
+  if (v === 'old') q.set('art', 'old');
+  else q.delete('art');
+  location.search = q.toString();
+});
+art.add(BOARD_ART, 'edgeDark', 0, 1, 0.01).name('外圈压暗');
+art.add(BOARD_ART, 'saturation', 0, 1.5, 0.01).name('棋盘饱和度');
+art.add(BOARD_ART, 'brightness', 0.3, 1.6, 0.01).name('棋盘明度');
+art.add(BOARD_ART, 'caustics', 0, 2, 0.01).name('焦散');
+art.add(BOARD_ART, 'waterGloss', 0, 2, 0.01).name('水面反光');
+art.add(BOARD_ART, 'sway', 0, 3, 0.05).name('草丛摆动');
+art.close();
 
 // 回合流程（m4-storyboard E01 到 E05、E25 到 E29）：事件在上面"事件"里选，这里调时长
 const flow = gui.addFolder('回合流程');

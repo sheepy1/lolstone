@@ -13,6 +13,10 @@ import { artImage, type ArtImage } from '../assets/loader';
 import { drawCropped, enhanceUpscaled, UPSCALE_SOFT } from './artDraw';
 import { css, fallbackColor, FONT_CN, FONT_NUM, REGION_COLORS } from './theme';
 import { shared } from './dispose';
+import { bevelPath, hexPath } from './canvasPaths';
+import { ART_STYLE } from './artStyle';
+import { paintBackLegacy, paintFaceLegacy } from './canvasArtLegacy';
+import { paintCardBack, paintCardFace } from './cardFrameArt';
 
 // 竖版原画（308×560）里英雄的脸大多在上面三分之一，原画窗口取上部
 const LOADING_CROP: ArtCrop = { focus: [0.5, 0.2], zoom: 1 };
@@ -75,31 +79,6 @@ function toTexture(c: HTMLCanvasElement): THREE.CanvasTexture {
   return t;
 }
 
-function bevelPath(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, b: number): void {
-  g.beginPath();
-  g.moveTo(x + b, y);
-  g.lineTo(x + w - b, y);
-  g.lineTo(x + w, y + b);
-  g.lineTo(x + w, y + h - b);
-  g.lineTo(x + w - b, y + h);
-  g.lineTo(x + b, y + h);
-  g.lineTo(x, y + h - b);
-  g.lineTo(x, y + b);
-  g.closePath();
-}
-
-function hexPath(g: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
-  g.beginPath();
-  for (let i = 0; i < 6; i++) {
-    const a = (Math.PI / 3) * i + Math.PI / 6;
-    const x = cx + Math.cos(a) * r;
-    const y = cy + Math.sin(a) * r;
-    if (i === 0) g.moveTo(x, y);
-    else g.lineTo(x, y);
-  }
-  g.closePath();
-}
-
 function strokeText(g: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, fill: string, font = FONT_CN, stroke = 0.14): void {
   g.font = `900 ${size}px ${font}`;
   g.textAlign = 'center';
@@ -146,95 +125,24 @@ const CW = 512;
 const CH = 716;
 const faceCache = new Map<string, THREE.CanvasTexture>();
 
-function paintFace(g: CanvasRenderingContext2D, def: CardDef, pick: Pick): void {
-  const col = REGION_COLORS[def.class];
-  const champion = !!def.champion;
-  g.clearRect(0, 0, CW, CH);
-  bevelPath(g, 0, 0, CW, CH, 48);
-  g.fillStyle = css(col.frame);
-  g.fill();
-  bevelPath(g, 16, 16, CW - 32, CH - 32, 38);
-  g.fillStyle = css(col.inner);
-  g.fill();
-  if (champion) {
-    // 英雄卡的纹饰边：内圈再描一道、四角加菱形
-    bevelPath(g, 28, 28, CW - 56, CH - 56, 30);
-    g.lineWidth = 5;
-    g.strokeStyle = css(col.accent);
-    g.stroke();
-    g.fillStyle = css(col.accent);
-    for (const [x, y] of [[CW / 2, 22], [CW / 2, CH - 22]]) {
-      g.beginPath();
-      g.moveTo(x, y - 14);
-      g.lineTo(x + 22, y);
-      g.lineTo(x, y + 14);
-      g.lineTo(x - 22, y);
-      g.closePath();
-      g.fill();
-    }
-  }
-  // 原画窗口
-  const ax = 66;
-  const ay = 62;
-  const as = CW - 132;
-  const ah = as * 0.86;
-  g.save();
-  bevelPath(g, ax, ay, as, ah, 24);
-  g.clip();
-  if (pick) {
-    if (drawCropped(g, pick.img, pick.crop, ax, ay, as, ah) > UPSCALE_SOFT) enhanceUpscaled(g, ax, ay, as, ah);
-  } else {
-    drawFallback(g, def, def.champion ?? null, ax, ay, as, ah);
-  }
-  g.restore();
-  bevelPath(g, ax, ay, as, as * 0.86, 24);
-  g.lineWidth = 6;
-  g.strokeStyle = css(col.accent);
-  g.stroke();
-  // 名字横幅
-  const by = ay + as * 0.86 + 10;
-  g.fillStyle = 'rgba(0,0,0,0.62)';
-  g.fillRect(30, by, CW - 60, 66);
-  g.fillStyle = css(col.accent);
-  g.fillRect(30, by, CW - 60, 4);
-  g.fillRect(30, by + 62, CW - 60, 4);
-  // 文本框（文字由 cardText.ts 用 SDF 文本叠在上面，不烧进贴图）
-  g.fillStyle = def.class === 'demacia' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.25)';
-  g.fillRect(48, by + 76, CW - 96, CH - by - 76 - 60);
-  // 费用六边形
-  hexPath(g, 70, 70, 54);
-  g.fillStyle = '#2f8cff';
-  g.fill();
-  g.lineWidth = 7;
-  g.strokeStyle = '#c8aa6e';
-  g.stroke();
-  if (def.type === 'minion') {
-    for (const [x, fill] of [
-      [72, '#d9a024'],
-      [CW - 72, '#c8302c'],
-    ] as const) {
-      g.beginPath();
-      g.arc(x, CH - 72, 50, 0, Math.PI * 2);
-      g.fillStyle = fill;
-      g.fill();
-      g.lineWidth = 7;
-      g.strokeStyle = '#1a1208';
-      g.stroke();
-    }
-  }
-}
-
 export function cardFaceTexture(cardId: string): THREE.CanvasTexture {
   const cached = faceCache.get(cardId);
   if (cached) return cached;
   const def = getCard(cardId);
   const [c, g] = makeCanvas(CW, CH);
   const candidates = faceCandidates(def);
+  const paint = ART_STYLE === 'old' ? paintFaceLegacy : paintCardFace;
+  // 原画窗口里画什么：图按裁切铺满（小图放大时做增强），没有图时纯色加名字。画框的函数先裁好窗口再调它
+  const draw = (pick: Pick) => (x: number, y: number, w: number, h: number) => {
+    if (pick) {
+      if (drawCropped(g, pick.img, pick.crop, x, y, w, h) > UPSCALE_SOFT) enhanceUpscaled(g, x, y, w, h);
+    } else drawFallback(g, def, def.champion ?? null, x, y, w, h);
+  };
   const repaint = () => {
-    paintFace(g, def, firstImage(candidates, repaint));
+    paint(g, def, draw(firstImage(candidates, repaint)));
     tex.needsUpdate = true;
   };
-  paintFace(g, def, firstImage(candidates, repaint));
+  paint(g, def, draw(firstImage(candidates, repaint)));
   const tex = shared(toTexture(c));
   faceCache.set(cardId, tex);
   return tex;
@@ -244,31 +152,7 @@ let backTex: THREE.CanvasTexture | null = null;
 export function cardBackTexture(): THREE.CanvasTexture {
   if (backTex) return backTex;
   const [c, g] = makeCanvas(CW, CH);
-  bevelPath(g, 0, 0, CW, CH, 48);
-  g.fillStyle = '#1b2440';
-  g.fill();
-  g.lineWidth = 14;
-  g.strokeStyle = '#c8aa6e';
-  g.stroke();
-  bevelPath(g, 44, 44, CW - 88, CH - 88, 30);
-  g.lineWidth = 5;
-  g.strokeStyle = '#3a6fb0';
-  g.stroke();
-  g.beginPath();
-  g.moveTo(CW / 2, CH / 2 - 150);
-  g.lineTo(CW / 2 + 100, CH / 2);
-  g.lineTo(CW / 2, CH / 2 + 150);
-  g.lineTo(CW / 2 - 100, CH / 2);
-  g.closePath();
-  g.fillStyle = '#3a6fb0';
-  g.fill();
-  g.lineWidth = 8;
-  g.strokeStyle = '#c8aa6e';
-  g.stroke();
-  g.beginPath();
-  g.arc(CW / 2, CH / 2, 28, 0, Math.PI * 2);
-  g.fillStyle = '#c8aa6e';
-  g.fill();
+  (ART_STYLE === 'old' ? paintBackLegacy : paintCardBack)(g);
   backTex = shared(toTexture(c));
   return backTex;
 }
@@ -387,3 +271,4 @@ export function makeLabelCanvas(w: number, h: number): Label {
 }
 
 export { strokeText, hexPath, bevelPath };
+export { CW as CARD_CANVAS_W, CH as CARD_CANVAS_H };

@@ -745,6 +745,61 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
   加 `--use-angle=metal` 走 GPU，通过 CDP 设视口、点按钮、`Page.captureScreenshot`。`Runtime.evaluate` 要带
   `replMode: true` 才能在表达式里 `await import('/src/app/store.ts')` 拿到和应用同一份的界面状态。
 
+## M4 开局和回合流程（纵切片，m4-storyboard E01 到 E05、E25 到 E29）
+
+### 文件
+
+- `presentation/fx/flow.ts`：回合流程的画面件。
+  - 横幅 Banner：暗色带子、金线、SDF 大字、光扫，沿镜头的"上"方向滑入滑出。
+  - 先后手徽记 Emblem。
+  - 从牌库飞进手牌的弧线飞行 `flyFromDeck`：飞到 40% 到 70% 之间绕长轴翻面。
+  - 震屏 `screenShake(S1/S2/S3)`：衰减噪声，S3 带白闪。
+  - 胜负大字 BigWord。
+  - 爆牌的燃烧溶解 `burnAway`。
+  - 时长参数在 `FLOW`。
+- 动画模块：mulliganStart（E01 加发牌）、mulliganDone、gameStart、turnStart（E02）、turnEnd（E26）、draw（E03）、
+  manaChanged（E25）、burn（E04）、fatigue（E05）、aiThinking（E27）、gameOver（E28、E29）。每个模块导出自己的参数对象，
+  /dev/fx 的"回合流程"面板全部可调；game_over 的样例可以选胜、负、平。
+- 先后手在 createGame 时就定了，换牌之前就能演。所以 E01 放在 mulligan_start 这一步，game_start 只把手牌收进扇形。
+
+### 改到的共用文件
+
+- `scene/stage.ts`：
+  - 镜头加看向点 `cameraTarget`，开局推镜头时改它。震屏同时平移位置和看向点，所以仍然只是平移。
+  - 加整个画面的调色 `look`（亮度、饱和度、暗角），胜负用，每帧写进后处理。
+  - 打开 `localClippingEnabled`，爆牌溶解要用。
+- `scene/table.ts`：
+  - `intro`：开局时先不出换牌压暗板。
+  - `frozen`：胜负定格时停掉常驻的小动画。
+  - `spawnAtSlot`：sync 新建的手牌直接放在槽位上，由模块自己做从牌库飞来的那段。
+  - `panAt`：按屏幕横坐标算声像。
+  - 换牌时法力药水单独摆放，加一行说明。
+  - 能出的牌、能攻击的随从的绿边按 1.6 秒周期脉动。
+  - 每局开始把镜头和调色复位。
+- `presentation/layout.ts`：只加了 `mulliganPotionSlot`。
+- `scene/cardView.ts`、`scene/minionView.ts`：只给共用的绿边材质加了 export，脉动要用。
+- `scene/interaction.ts`：拿起、放下、取消、换牌点选、结束回合按下的音效，都带声像。
+- `app/match.ts`：AI 每个动作前的思考时间改成 0.5 到 1.5 秒随机，用自己的随机数，不影响 AI 的选择。
+- `scene/tableParts.ts`：法力条逐格动画，每颗水晶一份材质；临时法力改成紫色。
+
+### 做法和取舍
+
+- 横幅、换牌那行字、"手牌已满"这类东西，在后台播，不进这一步的时间线。进时间线会拖长这一步，压住后面的事件。
+  回合开始这一步只占 0.45 秒，横幅剩下的部分和法力、抽牌重叠播，抽牌正好在滑出开始时起飞。
+- 新牌飞进手牌之前，sync 要先把它放到最终槽位上（`spawnAtSlot`），再记下目标、挪回牌库起飞。
+  如果 sync 用补间把牌滑过去，模块读到的"目标"其实还是牌库的位置，牌就原地不动，直到这一步结束时的兜底同步才归位。
+- 换牌时离镜头比压暗板（18）远的东西会被压暗。法力药水和它的说明都要放在压暗板前面。
+- 压暗画面不能用 postprocessing 的 BrightnessContrastEffect。它是加减偏移，暗处的颜色减成负数，转 sRGB 时变成白色，
+  整个画面发白。现在用自写的 GainEffect：压暗时乘，加亮（白闪）时加。
+- 场景里新加的 SDF 文字写在 src/presentation 和 src/scene 里，字体子集的扫描目录加上这两个（共 632 字，约 120 KB）。
+
+### 自动化录屏的坑（接 M3 那一条）
+
+- 手动推 GSAP 时钟时，`__T` 的初值要等于全局时间线当前的时间（`gsap.globalTimeline._start + time()`），不能用 `ticker.time`。
+  比它大，第一步就跳过一截；比它小，时间线停住不动，直到追上为止。
+- 同一个前缀重录时，先清掉旧的帧。文件名里的时刻不同，按名字排序会把两次录的帧交错在一起，看起来像动画在来回跳。
+- 声音在静音下也能核对：`await import('/src/audio/index.ts')` 拿到 `sfxLog`，每帧读一次，记下音效名和时刻。
+
 ## 配图接进卡面和场景（M4，2026-10-20）
 
 `scripts/data/card-art.json` 的配图接进了卡面原画窗口、场上随从头像、英雄技能按钮、关键词小图标。素材仍不进 git，

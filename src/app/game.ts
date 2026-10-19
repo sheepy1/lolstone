@@ -2,7 +2,7 @@
 import gsap from 'gsap';
 import { matchManifest } from '../assets/manifest';
 import { loadManifest } from '../assets/loader';
-import { initAudio, playMusic, stopAmbience } from '../audio';
+import { initAudio, playMusic, playSfx, stopAmbience } from '../audio';
 import { PRESET_DECKS } from '../cards';
 import { getCard, getHeroClass, maskEvents, maskHidden, seedRng, type Action, type HeroClass, type Side } from '../engine';
 import { Director } from '../presentation/director';
@@ -192,6 +192,7 @@ export class GameApp {
     const hand = view.players[view.viewer].hand;
     const replace = hand.map((c, i) => (s.scene.mulliganMarks.has(c.instanceId) ? i : -1)).filter((i) => i >= 0);
     s.scene.mulliganMarks.clear();
+    playSfx('ui.button');
     setUi({ mulligan: { open: false, marked: 0 } });
     this.submit({ kind: 'mulligan', player: view.viewer, replace });
   }

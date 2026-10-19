@@ -5,6 +5,7 @@
 // - 罩里一个小的自发光灯芯，我方蓝、对方红，只有灯芯进泛光。
 // 灯芯的亮度每帧算：很慢的呼吸明暗，自己的回合亮一些、对方回合暗一些；生命低于 10 时从后往前逐颗熄灭，
 // 剩下的灯快速不稳地闪。参数在 NEXUS_LAMP，调试台 /dev/fx 里可以现场调。
+import gsap from 'gsap';
 import * as THREE from 'three';
 import { fresnelMaterial, hdr, markBloom } from '../presentation/fx/materials';
 import { shared } from './dispose';
@@ -73,6 +74,8 @@ export class NexusLamps extends THREE.Group {
   private dim = 1;
   private lastT: number | null = null;
   private flared = false;
+  // 每颗灯的通电程度 0 到 1（开局逐颗点亮用），乘在亮度上
+  readonly power: number[] = [1, 1, 1, 1, 1, 1];
 
   constructor(teamColor: number, bezelMat: THREE.Material, phase = 0) {
     super();
@@ -144,7 +147,7 @@ export class NexusLamps extends THREE.Group {
         const w = 0.6 * wave(P.lowPeriod, this.phase + i * 0.13) + 0.4 * wave(P.lowPeriod * 0.37, this.phase + i * 0.29);
         k = Math.max(0.1, 1 + P.lowBreath * w);
       } else k = 1 + P.breath * wave(P.period, this.phase);
-      const glow = this.level * this.dim * k;
+      const glow = this.level * this.dim * k * this.power[i];
       lamp.core.material.color.copy(this.team).multiplyScalar(P.core * glow);
       const rim = lamp.rim.uniforms.color.value as THREE.Color;
       rim.copy(this.team).multiplyScalar(P.rimGlow * glow);
@@ -152,6 +155,20 @@ export class NexusLamps extends THREE.Group {
       rim.g += P.rimGlass;
       rim.b += P.rimGlass;
     });
+  }
+
+  // 开局点亮（E01）：灯芯自发光从 0 到 1，每颗错开 stagger 秒（弹）。调用前先 setPower(0)
+  setPower(v: number): void {
+    this.power.fill(v);
+  }
+
+  lightUp(duration: number, stagger: number): gsap.core.Timeline {
+    const t = gsap.timeline();
+    this.lamps.forEach((_, i) => {
+      const st = { v: 0 };
+      t.to(st, { v: 1, duration, ease: 'back.out(1.4)', onUpdate: () => (this.power[i] = st.v) }, i * stagger);
+    });
+    return t;
   }
 
   // 输掉时：灯芯猛亮一下，然后整颗灯缩没（胜负动画里用）

@@ -1,4 +1,5 @@
 // 台面上的实体物件：法力水晶条、牌库、对方思考提示（棋盘在 board.ts，结束回合按钮在 endTurnButton.ts）。占位几何体，M4 换素材。
+import gsap from 'gsap';
 import * as THREE from 'three';
 import type { ManaSnapshot } from '../engine';
 import { MANA_STEP } from '../presentation/layout';
@@ -12,16 +13,25 @@ const gemGeo = shared(new THREE.OctahedronGeometry(0.2, 0));
 const socketGeo = shared(new THREE.CylinderGeometry(0.22, 0.26, 0.08, 8));
 const gemMats = {
   full: shared(new THREE.MeshStandardMaterial({ color: 0x3a8cff, emissive: COLORS.mana, emissiveIntensity: 1.6, roughness: 0.2, flatShading: true })),
-  temp: shared(new THREE.MeshStandardMaterial({ color: 0x45e0d0, emissive: COLORS.manaTemp, emissiveIntensity: 1.6, roughness: 0.2, flatShading: true })),
+  // 临时法力（法力药水）：紫色（m4-storyboard E25）
+  temp: shared(new THREE.MeshStandardMaterial({ color: 0xb07cff, emissive: 0x9a4dff, emissiveIntensity: 1.6, roughness: 0.2, flatShading: true })),
   spent: shared(new THREE.MeshStandardMaterial({ color: 0x1a2a40, emissive: 0x0a1428, emissiveIntensity: 0.3, roughness: 0.4, flatShading: true })),
   locked: shared(new THREE.MeshStandardMaterial({ color: 0x3a4250, roughness: 0.7, transparent: true, opacity: 0.35, flatShading: true })),
 };
+type GemState = 'full' | 'temp' | 'spent' | 'locked';
+
+// E25 的参数（调试台可调）
+export const MANA_FX = { stagger: 0.05, light: 0.2 };
+
 const socketMat = shared(new THREE.MeshStandardMaterial({ color: 0x2a2620, roughness: 0.6, metalness: 0.5 }));
 
 // 法力条：10 颗水晶立在台面上。可用的亮（自发光进 bloom），用掉的暗，临时法力另一种颜色，未解锁的熄灭变小。
+// 法力变化（m4-storyboard E25）：set(m, true) 时变化的格子从左往右 50ms 错开换状态，亮起的自发光从 0 到 1、弹一下；
+// 新解锁的空水晶从 0 放大出现。每颗水晶有自己的一份材质，亮度动画只改自己。
 export class ManaBarView extends THREE.Group {
   readonly flash: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
-  private readonly gems: THREE.Mesh[] = [];
+  private readonly gems: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>[] = [];
+  private states: GemState[] = Array(10).fill('locked');
   private readonly label = makeLabelCanvas(192, 96);
   private last = '';
 
@@ -31,7 +41,7 @@ export class ManaBarView extends THREE.Group {
       const socket = new THREE.Mesh(socketGeo, socketMat);
       socket.position.set(i * MANA_STEP, 0.04, 0);
       socket.receiveShadow = true;
-      const gem = new THREE.Mesh(gemGeo, gemMats.locked);
+      const gem = new THREE.Mesh(gemGeo, gemMats.locked.clone());
       gem.position.set(i * MANA_STEP, 0.32, 0);
       gem.scale.set(1, 1.4, 1);
       gem.castShadow = true;
@@ -47,23 +57,47 @@ export class ManaBarView extends THREE.Group {
     this.add(text, this.flash);
   }
 
-  set(m: ManaSnapshot): void {
+  set(m: ManaSnapshot, animate = false): void {
     const key = `${m.current}/${m.max}/${m.temp}`;
     if (key === this.last) return;
     this.last = key;
+    const next: GemState[] = this.gems.map((_, i) => (i < m.current ? (i >= m.current - m.temp ? 'temp' : 'full') : i < m.max ? 'spent' : 'locked'));
+    let k = 0;
     this.gems.forEach((gem, i) => {
-      let mat = gemMats.locked;
-      if (i < m.current) mat = i >= m.current - m.temp ? gemMats.temp : gemMats.full;
-      else if (i < m.max) mat = gemMats.spent;
-      gem.material = mat;
-      markBloom(gem, mat === gemMats.full || mat === gemMats.temp);
-      gem.scale.setScalar(i < Math.max(m.max, m.current) ? 1 : 0.6);
-      gem.scale.y *= 1.4;
+      const prev = this.states[i];
+      const to = next[i];
+      const size = to === 'locked' ? 0.6 : 1;
+      const apply = () => {
+        gem.material.copy(gemMats[to]);
+        markBloom(gem, to === 'full' || to === 'temp');
+        gem.scale.set(size, size * 1.4, size);
+      };
+      gsap.killTweensOf([gem.scale, gem.material]);
+      if (!animate || prev === to) {
+        apply();
+        return;
+      }
+      // 变化的格子从左往右错开
+      gsap.delayedCall(k++ * MANA_FX.stagger, () => {
+        apply();
+        if (to === 'full' || to === 'temp') {
+          gsap.fromTo(gem.material, { emissiveIntensity: 0 }, { emissiveIntensity: gemMats[to].emissiveIntensity, duration: MANA_FX.light, ease: 'power2.out' });
+        }
+        // 新解锁的空水晶从 0 放大出现；其余变化的弹一下
+        const from = prev === 'locked' ? 0.01 : size * 1.3;
+        gsap.fromTo(gem.scale, { x: from, y: from * 1.4, z: from }, { x: size, y: size * 1.4, z: size, duration: MANA_FX.light * (prev === 'locked' ? 1.5 : 1), ease: 'back.out(2)' });
+      });
     });
+    this.states = next;
     const g = this.label.g;
     g.clearRect(0, 0, 192, 96);
     strokeText(g, `${m.current}/${m.max}`, 96, 50, 58, '#cfe6ff', FONT_CN, 0.14);
     this.label.texture.needsUpdate = true;
+  }
+
+  // 第 i 颗水晶在世界里的位置（法力变化的粒子用）
+  gemPoint(i: number): THREE.Vector3 {
+    return this.gems[i].getWorldPosition(new THREE.Vector3());
   }
 
   tick(t: number): void {

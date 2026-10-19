@@ -5,8 +5,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { CARD_POOL, HERO_CLASSES } from '../cards';
 
-// 界面文字所在的目录：src/ui 是界面组件；src/app 里有加载页的进度说明、出错提示这类交给界面显示的字符串
-export const UI_TEXT_DIRS = ['src/ui', 'src/app'];
+// 界面文字所在的目录：src/ui 是界面组件；src/app 里有加载页的进度说明、出错提示这类交给界面显示的字符串；
+// src/presentation 和 src/scene 里有场景里的 SDF 文字（横幅、先后手、胜负大字、换牌说明）和悬停说明的关键词解释
+export const UI_TEXT_DIRS = ['src/ui', 'src/app', 'src/presentation', 'src/scene'];
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 

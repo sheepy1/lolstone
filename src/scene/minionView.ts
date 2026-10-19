@@ -34,7 +34,7 @@ const iconGeo = shared(new THREE.PlaneGeometry(1.24, 0.155));
 
 const tauntMat = shared(glowMaterial(COLORS.taunt, 1.4));
 // 描边亮度低于 bloom 阈值：描边本身亮，不往头像上泛光
-const attackRimMat = shared(glowMaterial(COLORS.playable, EDGE_GLOW));
+export const attackRimMat = shared(glowMaterial(COLORS.playable, EDGE_GLOW));
 const targetRimMat = shared(glowMaterial(COLORS.target, EDGE_GLOW * 1.3));
 const iceMat = shared(new THREE.MeshStandardMaterial({
   color: 0x9fd8ff,

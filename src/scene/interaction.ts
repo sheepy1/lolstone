@@ -4,6 +4,7 @@
 // 局面追上真实局面之前、对方回合里返回 null，表示锁定。锁定时仍然可以悬停看牌、快进动画。
 import gsap from 'gsap';
 import * as THREE from 'three';
+import { playSfx } from '../audio';
 import { actionKey, getCard, type Action, type TargetRef } from '../engine';
 import type { Point } from '../presentation/fx/arrow';
 import { BOARD_ROW_HALF, boardInsertIndex, boardRowZ, boardSlot, CARD_H, CARD_W, castSlot, CAMERA_PITCH, HAND_ZONE_Z } from '../presentation/layout';
@@ -213,6 +214,7 @@ export class Interaction {
     if (hit.kind === 'end_turn') {
       if (this.scene.endTurn.mode === 'mine' && legal.some((a) => a.kind === 'end_turn')) {
         this.scene.endTurn.press();
+        playSfx('ui.button', { pan: this.scene.panAt(this.scene.endTurn.position) });
         this.commit({ kind: 'end_turn' });
       }
       return;
@@ -225,6 +227,8 @@ export class Interaction {
       const marks = this.scene.mulliganMarks;
       if (marks.has(hit.id)) marks.delete(hit.id);
       else marks.add(hit.id);
+      const marked = this.scene.handCards.get(hit.id);
+      playSfx('ui.click', { pan: marked ? this.scene.panAt(marked.position) : 0 });
       this.scene.layoutHand(0.1);
       this.host.mulliganChanged(new Set(marks));
       return;
@@ -345,6 +349,7 @@ export class Interaction {
 
   private startDrag(card: CardView, handIndex: number, options: Action[]): void {
     const minion = getCard(card.cardId).type === 'minion';
+    playSfx('ui.pickup', { pan: this.scene.panAt(card.position) });
     this.setHover(null);
     this.scene.hoveredHand = null;
     this.scene.draggingHand = card.instanceId;
@@ -460,6 +465,7 @@ export class Interaction {
 
   // 取消：牌沿一条拱起的弧线回到手牌里自己的位置，不是瞬移
   private returnCard(card: CardView): void {
+    playSfx('ui.cancel', { pan: this.scene.panAt(card.position) });
     this.blob.visible = false;
     this.scene.draggingHand = null;
     this.scene.boardGap = null;
@@ -516,6 +522,11 @@ export class Interaction {
     }
     this.scene.arrow.stop();
     this.scene.setTargetMarks(null);
+    // 出牌松手：放下声，声像按松手的位置（拖着的牌这时还在指针下）
+    if (action.kind === 'play_card') {
+      const card = this.mode.k === 'drag' ? this.mode.card : this.mode.k === 'aim' ? this.mode.spellCard?.card : undefined;
+      playSfx('ui.drop', { pan: card ? this.scene.panAt(card.position) : 0 });
+    }
     // 打出随从：空位一直留到砸落那一刻（minion_summoned 清掉），相邻随从不先合拢再让开
     if (!(action.kind === 'play_card' && action.position !== undefined)) this.scene.boardGap = null;
     this.blob.visible = false;

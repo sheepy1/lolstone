@@ -2,3 +2,7 @@ node_modules/
 dist/
 .DS_Store
 .claude/worktrees/
+
+# 抓取脚本下载的英雄素材和清单，用 scripts/fetch-*.ts 重新生成
+public/art/
+public/audio/voice/

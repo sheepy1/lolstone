@@ -8,3 +8,19 @@
 - [初始卡池 v1](docs/cards-v1.md)：86 张卡、衍生物、预组卡组、实现分级。
 
 代码还没开始写。
+
+## 拉取素材
+
+英雄头像、竖版原画和语音不进 git，第一次 clone 之后在仓库根目录跑：
+
+```bash
+node scripts/fetch-art.ts
+node scripts/fetch-voice.ts
+```
+
+- 需要 Node 22.18 以上（直接运行 .ts），不需要先装依赖。
+- `fetch-art.ts` 从 Data Dragon 取最新版本，拉头像（`icon.png`）和竖版原画（`loading.jpg`）到 `public/art/<key 小写>/`，清单在 `public/art/manifest.json`。
+- `fetch-voice.ts` 从 CommunityDragon 拉选用语音（`choose.ogg`，登场台词）和禁用语音（`ban.ogg`，死亡台词）到 `public/audio/voice/<key 小写>/`，清单在 `public/audio/voice/manifest.json`。中文语音拿不到时用英文，清单的 `englishFallback` 列出这些英雄。
+- 已经下载且完整的文件会跳过。加 `--force` 全部重下，`--concurrency <1-6>` 调并发（默认 5）。删掉清单也会全部重下，因为脚本靠清单记的大小判断文件是否完整。
+- 有文件下载失败时脚本以非 0 退出，失败的文件记在清单的 `failed` 里，再跑一次会重试。
+- 要拉哪些英雄写在 `scripts/lib/champions.ts`，和 [初始卡池](docs/cards-v1.md) 的 key 列保持一致。key 在 Data Dragon 里找不到时脚本会列出来并退出，不下载任何东西。

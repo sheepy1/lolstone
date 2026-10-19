@@ -17,6 +17,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { ASPECT, CAMERA, fitCanvas } from '../presentation/layout';
 import { BLOOM_LAYER } from '../presentation/fx/materials';
+import { shared } from './dispose';
 
 export type FrameHook = (dt: number, t: number) => void;
 
@@ -100,7 +101,8 @@ export class Stage {
     );
 
     const pmrem = new THREE.PMREMGenerator(r);
-    this.reflections = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    // 跟着舞台一直留着、各局的材质共用，标成共用，释放一局的物件时不连带它
+    this.reflections = shared(pmrem.fromScene(new RoomEnvironment(), 0.04).texture);
     pmrem.dispose();
 
     this.resize();

@@ -1041,3 +1041,21 @@ M1 基准机上没测，合并后要在 M1 上用 `bench.benchCombat(bench.fullB
   我方回合的结束回合按钮是可交互，自己回合里出不了的手牌是不可用，其余是默认。悬停、拿起、选目标、提交、取消和每次 `refresh`
   都会调它。
 - 截图不带系统指针。验证时在页面里注入一个调试浮层：读指针下元素算出的 `cursor`，把同一张图按 1x/2x srcset 画在鼠标位置。
+
+## 设置页和对局菜单（spec 5.1，2026-10-20 从 M5 提前）
+
+- `src/ui/settings.ts`：动画速度（1、1.5、2 倍）和 AI 难度默认值，存在 localStorage 的 `melol.settings`。读写都包 try/catch，
+  存不下时只在本次生效；读到不认识的值按默认值（`parseSettings`）。四条音量仍由 `src/audio` 自己存（`melol.volumes`），
+  恢复默认时按 `VOLUME_DEFAULTS` 设回去，这份默认值要和 `src/audio/channels.ts` 的 `DEFAULTS` 保持一致。
+- `SettingsPanel.tsx`：四条音量滑杆接 `setVolume`；拖音效音量时试放 `card.land`（间隔至少 160ms），拖语音音量时试放当前职业
+  英雄的选用语音（间隔至少 1.4 秒），每次试放记进 `auditionLog`，静音的开发环境靠它核对。难度和主菜单的选择双向同步。
+- `PauseMenu.tsx`：左上角"菜单"按钮或 Esc 打开（回放时"菜单"仍是直接回主菜单）。继续、设置、认输、回主菜单；认输和回主菜单
+  有确认步骤，确认步骤的默认焦点在"取消"上。Esc：没有面板时打开；对局菜单里关掉；确认步骤里退回列表；设置页里关掉设置回到对局菜单。
+  面板接住按键并 `stopPropagation`，空格、Esc 不会漏到对局的键盘处理，Enter 不会漏到主菜单。焦点困在面板里。
+- 面板栈在 `UiState.panels`（`'pause' | 'settings'`），`GameApp.openPanel` / `closePanel` 开关。
+- 暂停：对局中有面板打开时 `gsap.globalTimeline.paused(true)`。对局里所有动画和 AI 思考的等待都在 GSAP 全局时间线上，AI 瞬间算完、
+  动作在导演队列里排着，所以时间线一停，导演和 AI 都停住。导演、播放器都没改。换局（teardown）时恢复。
+- 动画速度：导演有事件在播时全局时间线按设置的倍数走，空闲时回到 1 倍，河面这类环境循环不跟着变快（`applyBaseSpeed`）。
+  点击或空格快进仍是播放器设的三倍，和设置无关。
+- 认输：`Match.concede()` 把真实局面记为对手获胜，发一个 `game_over` 事件，表现层照常播失败演出、弹结算面板。排着的动画先快进播完。
+- 新加了 23 个界面用字，字体子集重新生成过（`pnpm font:subset`，源字体在主检出的 `assets-src/fonts/`）。

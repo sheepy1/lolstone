@@ -1,4 +1,4 @@
-// 左上角的小状态条：渲染器、快进提示、回主菜单。
+// 左上角的小状态条：渲染器、快进提示、对局菜单（回放时直接回主菜单）。
 import type { GameApp } from '../app/game';
 import { useUi } from '../app/store';
 
@@ -6,7 +6,7 @@ export function StatusBar({ app }: { app: GameApp }) {
   const status = useUi((s) => s.status);
   return (
     <div className="status-bar">
-      <button className="status-menu" onClick={() => (status.replay ? (location.href = location.pathname) : app.backToMenu())}>
+      <button className="status-menu" onClick={() => (status.replay ? (location.href = location.pathname) : app.openPanel('pause'))}>
         菜单
       </button>
       <span className="status-chip">{status.renderer}</span>

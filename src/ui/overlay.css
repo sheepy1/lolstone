@@ -1,0 +1,337 @@
+/* 叠在页面上的面板：设置页（SettingsPanel）、对局菜单和确认步骤（PauseMenu），以及主菜单右上角的设置按钮。
+   和 menu.css 同一套海克斯件（hx-panel、hx-btn、hx-cta、--hx-* 变量）。类名前缀 ov-。 */
+
+.ov-backdrop {
+  z-index: 5;
+  background: rgba(2, 6, 12, 0.62);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  animation: hx-fade-in 0.2s ease both;
+}
+
+/* ---------- 设置页 ---------- */
+
+.ov-settings {
+  left: calc(50% - 410px);
+  top: 120px;
+  width: 820px;
+  padding: 38px 58px 44px;
+  display: flex;
+  flex-direction: column;
+  animation-delay: 0s;
+}
+
+.ov-title {
+  text-align: center;
+  font-size: 46px;
+  font-weight: 900;
+  letter-spacing: 16px;
+  margin-right: -16px;
+  color: var(--hx-gold-bright);
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.7),
+    0 0 18px rgba(246, 220, 154, 0.35);
+}
+
+.ov-paused {
+  align-self: center;
+  margin-top: 8px;
+  padding: 2px 14px;
+  font-size: 18px;
+  letter-spacing: 4px;
+  color: var(--hx-cyan-bright);
+  border: 1px solid rgba(47, 214, 200, 0.5);
+  background: rgba(47, 214, 200, 0.08);
+}
+
+.ov-section {
+  margin-top: 26px;
+}
+
+.ov-section-label {
+  font-size: 22px;
+  letter-spacing: 6px;
+  color: var(--hx-gold);
+  margin-bottom: 6px;
+}
+
+.ov-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.ov-row .ov-section-label {
+  width: 128px;
+  margin-bottom: 0;
+}
+
+.ov-row .hx-radiogroup {
+  gap: 10px;
+}
+
+.ov-slider-row {
+  display: grid;
+  grid-template-columns: 128px 1fr 64px;
+  align-items: center;
+  gap: 18px;
+  height: 54px;
+  font-size: 23px;
+}
+
+.ov-slider-name {
+  padding-left: 4px;
+  color: var(--hx-text);
+}
+
+.ov-slider-value {
+  text-align: right;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  color: var(--hx-cyan-bright);
+}
+
+/* 滑杆：切角的轨道，已填部分青色发光，菱形金色把手 */
+.ov-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  margin: 0;
+  background:
+    linear-gradient(90deg, #136c74, var(--hx-cyan)) 0 0 / var(--pct) 100% no-repeat,
+    #060d16;
+  box-shadow:
+    inset 0 0 0 1px rgba(212, 176, 106, 0.55),
+    0 0 10px rgba(47, 214, 200, 0.15);
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  outline: none;
+}
+
+.ov-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, #fff2c8, #c99a4c 55%, #7a5c2c);
+  border: 2px solid #04070b;
+  box-shadow: 0 0 8px rgba(246, 220, 154, 0.6);
+}
+
+.ov-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  transform: rotate(45deg);
+  border-radius: 0;
+  background: linear-gradient(135deg, #fff2c8, #c99a4c 55%, #7a5c2c);
+  border: 2px solid #04070b;
+}
+
+/* 轨道裁了切角，把手的发光会被裁掉，焦点状态改成把整条行点亮 */
+.ov-slider-row:focus-within .ov-slider-name {
+  color: var(--hx-cyan-bright);
+}
+
+.ov-slider-row:focus-within .ov-slider {
+  box-shadow:
+    inset 0 0 0 2px var(--hx-cyan-bright),
+    0 0 14px rgba(47, 214, 200, 0.45);
+}
+
+.ov-slider:hover::-webkit-slider-thumb {
+  background: linear-gradient(135deg, #ffffff, #e3b862 55%, #8a6328);
+}
+
+.ov-seg {
+  position: relative;
+  min-width: 120px;
+  height: 52px;
+  padding: 0 18px;
+  border: 0;
+  font-size: 23px;
+  letter-spacing: 4px;
+  color: var(--hx-text-dim) !important;
+  background: linear-gradient(180deg, #2b3a48, #17222d);
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  box-shadow: inset 0 0 0 1px rgba(160, 175, 190, 0.35);
+  transition:
+    transform 0.18s var(--hx-ease),
+    background 0.18s ease;
+}
+
+.ov-seg-sub {
+  margin-left: 6px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 17px;
+  letter-spacing: 0;
+  opacity: 0.85;
+}
+
+.ov-seg:hover {
+  transform: translateY(-2px);
+  color: var(--hx-text) !important;
+}
+
+.ov-seg.on {
+  color: #eafffc !important;
+  background: linear-gradient(180deg, rgba(47, 214, 200, 0.45), rgba(15, 80, 84, 0.65));
+  box-shadow:
+    inset 0 0 0 2px var(--hx-cyan-bright),
+    inset 0 0 16px rgba(168, 247, 239, 0.35);
+}
+
+.ov-note {
+  margin: 8px 0 0 152px;
+  font-size: 18px;
+  color: var(--hx-text-dim);
+}
+
+.ov-buttons {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 24px;
+  margin-top: 36px;
+}
+
+.ov-reset {
+  width: 200px;
+  height: 60px;
+}
+
+.ov-done {
+  width: 240px;
+  height: 84px;
+}
+
+.ov-done .hx-cta-text {
+  font-size: 34px;
+}
+
+/* ---------- 对局菜单 ---------- */
+
+.ov-pause-backdrop {
+  background: rgba(2, 6, 12, 0.45);
+  -webkit-backdrop-filter: saturate(0.6);
+  backdrop-filter: saturate(0.6);
+}
+
+/* 设置页盖在上面时，对局菜单本身藏起来，只留暂停的压暗 */
+.ov-pause-backdrop.covered .ov-pause,
+.ov-pause-backdrop.covered .ov-paused-banner {
+  visibility: hidden;
+}
+
+.ov-paused-banner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 42%;
+  text-align: center;
+  font-size: clamp(36px, 4.4vw, 64px);
+  font-weight: 900;
+  letter-spacing: 0.4em;
+  color: rgba(242, 233, 212, 0.88);
+  text-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.7),
+    0 0 30px rgba(47, 214, 200, 0.35);
+  pointer-events: none;
+  animation: hx-fade-in 0.4s ease both;
+}
+
+/* 挂在左上角"菜单"按钮下面，不随舞台缩放 */
+.ov-pause {
+  --hx-cut: 14px;
+  position: fixed;
+  top: 52px;
+  left: 12px;
+  width: 300px;
+  padding: 20px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transform-origin: top left;
+  animation: hx-unfold 0.32s var(--hx-ease) both;
+}
+
+.ov-pause-title {
+  margin: 0 6px 6px;
+  font-size: 22px;
+  letter-spacing: 6px;
+  color: var(--hx-gold-bright);
+}
+
+.ov-confirm-text {
+  margin: -2px 6px 8px;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #d7cdb4;
+}
+
+.ov-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 18px;
+  border: 0;
+  font-size: 22px;
+  letter-spacing: 4px;
+  text-align: left;
+  color: var(--hx-text) !important;
+  background: linear-gradient(90deg, rgba(212, 176, 106, 0.1), rgba(212, 176, 106, 0.02));
+  box-shadow: inset 0 0 0 1px rgba(212, 176, 106, 0.32);
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  transition:
+    transform 0.16s var(--hx-ease),
+    background 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.ov-item kbd {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  letter-spacing: 0;
+  padding: 0 6px;
+  line-height: 22px;
+  color: var(--hx-gold-bright);
+  border: 1px solid rgba(212, 176, 106, 0.5);
+  border-radius: 3px;
+}
+
+.ov-item:hover,
+.ov-item:focus-visible {
+  transform: translateX(4px);
+  outline: none;
+  background: linear-gradient(90deg, rgba(47, 214, 200, 0.28), rgba(47, 214, 200, 0.04));
+  box-shadow: inset 0 0 0 2px var(--hx-cyan-bright);
+}
+
+.ov-item:active {
+  transform: translateX(2px) scale(0.98);
+}
+
+.ov-item.primary {
+  color: var(--hx-gold-bright) !important;
+  box-shadow: inset 0 0 0 1px rgba(246, 220, 154, 0.7);
+}
+
+.ov-item.danger:hover,
+.ov-item.danger:focus-visible {
+  background: linear-gradient(90deg, rgba(239, 106, 92, 0.32), rgba(239, 106, 92, 0.04));
+  box-shadow: inset 0 0 0 2px #ff8a7c;
+}
+
+/* ---------- 主菜单的设置按钮 ---------- */
+
+.mm-settings {
+  position: absolute;
+  top: 54px;
+  right: 72px;
+  width: 150px;
+  height: 56px;
+  font-size: 24px;
+  animation: hx-fade-down 0.8s var(--hx-ease) 0.3s both;
+}

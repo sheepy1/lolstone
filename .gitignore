@@ -6,3 +6,11 @@ dist/
 # 抓取脚本下载的英雄素材和清单，用 scripts/fetch-*.ts 重新生成
 public/art/
 public/audio/voice/
+
+# 音效和音乐：原始素材用 scripts/fetch-sfx.ts 下载到 assets-src/，scripts/normalize-audio.ts 生成 public/audio 下的成品和清单。
+# 来源和授权记录在 scripts/data/audio-sources.json，进 git
+assets-src/
+public/audio/sfx/
+public/audio/music/
+public/audio/manifest.json
+public/audio/.normalize-state.json

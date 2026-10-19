@@ -1,0 +1,1703 @@
+{
+  "$comment": "音效和音乐的来源、授权和候选清单。fetch-sfx.ts 按 sources 下载，normalize-audio.ts 按 sounds 输出 public/audio/sfx|music/<id>/<序号>.ogg|mp3。只收 CC0：加来源前先在页面上确认授权，把依据写进 licenseEvidence。",
+  "checkedAt": "2026-10-19",
+  "sources": {
+    "kenney-interface-sounds": {
+      "title": "Interface Sounds",
+      "author": "Kenney",
+      "page": "https://kenney.nl/assets/interface-sounds",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面写 License: Creative Commons CC0，包内 License.txt 写 Creative Commons Zero, CC0",
+      "licenseFile": "License.txt",
+      "url": "https://kenney.nl/media/pages/assets/interface-sounds/fa43c1dd4d-1677589452/kenney_interface-sounds.zip",
+      "file": "kenney_interface-sounds.zip",
+      "archive": "zip",
+      "bytes": 834536,
+      "sha256": "f2193d072726d6758a5f7871b2dcc54dcce0d5c35c6f0a62f92549b327c81232"
+    },
+    "kenney-ui-audio": {
+      "title": "UI Audio",
+      "author": "Kenney",
+      "page": "https://kenney.nl/assets/ui-audio",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面写 License: Creative Commons CC0，包内 License.txt 写 Creative Commons Zero, CC0",
+      "licenseFile": "License.txt",
+      "url": "https://kenney.nl/media/pages/assets/ui-audio/490d233f68-1677590494/kenney_ui-audio.zip",
+      "file": "kenney_ui-audio.zip",
+      "archive": "zip",
+      "bytes": 411949,
+      "sha256": "946fc23a63d535d693eb31b2eabb80c8c28d6351e2186b344ceb71b2cb1d5eb6"
+    },
+    "kenney-rpg-audio": {
+      "title": "RPG Audio",
+      "author": "Kenney",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面写 License: Creative Commons CC0，包内 License.txt 写 Creative Commons Zero, CC0",
+      "licenseFile": "License.txt",
+      "url": "https://kenney.nl/media/pages/assets/rpg-audio/8e99002d76-1677590336/kenney_rpg-audio.zip",
+      "file": "kenney_rpg-audio.zip",
+      "archive": "zip",
+      "bytes": 964837,
+      "sha256": "6dbeaf8544da958d8f2adcb4a4a4b76c1ade34a05f8ab9edccd327da7375f38b"
+    },
+    "kenney-impact-sounds": {
+      "title": "Impact Sounds",
+      "author": "Kenney",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面写 License: Creative Commons CC0，包内 License.txt 写 Creative Commons Zero, CC0",
+      "licenseFile": "License.txt",
+      "url": "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip",
+      "file": "kenney_impact-sounds.zip",
+      "archive": "zip",
+      "bytes": 800850,
+      "sha256": "029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8"
+    },
+    "kenney-casino-audio": {
+      "title": "Casino Audio",
+      "author": "Kenney",
+      "page": "https://kenney.nl/assets/casino-audio",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面写 License: Creative Commons CC0，包内 License.txt 写 Creative Commons Zero, CC0",
+      "licenseFile": "License.txt",
+      "url": "https://kenney.nl/media/pages/assets/casino-audio/2472606a04-1721639069/kenney_casino-audio.zip",
+      "file": "kenney_casino-audio.zip",
+      "archive": "zip",
+      "bytes": 876839,
+      "sha256": "f36250766ac5bc378c13708ddf12a23a8e54a3251f8d482c7536e51b5dbafa18"
+    },
+    "kenney-music-jingles": {
+      "title": "Music Jingles",
+      "author": "Kenney",
+      "page": "https://kenney.nl/assets/music-jingles",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面写 License: Creative Commons CC0，包内 License.txt 写 Creative Commons Zero, CC0",
+      "licenseFile": "License.txt",
+      "url": "https://kenney.nl/media/pages/assets/music-jingles/f37e530b9e-1677590399/kenney_music-jingles.zip",
+      "file": "kenney_music-jingles.zip",
+      "archive": "zip",
+      "bytes": 1239525,
+      "sha256": "b729ba57959bd58793d2c5cafa348aaf2655d354f3da35ec4729e03ec77197b8"
+    },
+    "kenney-digital-audio": {
+      "title": "Digital Audio",
+      "author": "Kenney",
+      "page": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面写 License: Creative Commons CC0，包内 License.txt 写 Creative Commons Zero, CC0",
+      "licenseFile": "License.txt",
+      "url": "https://kenney.nl/media/pages/assets/digital-audio/216eac4753-1677590265/kenney_digital-audio.zip",
+      "file": "kenney_digital-audio.zip",
+      "archive": "zip",
+      "bytes": 990367,
+      "sha256": "24e6ce28b76a6d8c89cff4d331e0965ff5c3de8a73c612028e9d363cc64e4f06"
+    },
+    "oga-80-cc0-rpg-sfx": {
+      "title": "80 CC0 RPG SFX",
+      "author": "rubberduck",
+      "page": "https://opengameart.org/content/80-cc0-rpg-sfx",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/80-CC0-RPG-SFX_0.zip",
+      "file": "80-CC0-RPG-SFX_0.zip",
+      "archive": "zip",
+      "bytes": 1845114,
+      "sha256": "1c2f06ff4e8563b5b8b745b23cf213c1474142a69bb82bd8f5e10d9b3f7a7bbd"
+    },
+    "oga-100-cc0-sfx": {
+      "title": "100 CC0 SFX",
+      "author": "rubberduck",
+      "page": "https://opengameart.org/content/100-cc0-sfx",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/100-CC0-SFX_0.zip",
+      "file": "100-CC0-SFX_0.zip",
+      "archive": "zip",
+      "bytes": 2921904,
+      "sha256": "a5c135878c132f1c59cca54e60061c296cd0ac27ad031ca2c41b8cd5cab3c706"
+    },
+    "oga-75-cc0-breaking": {
+      "title": "75 CC0 breaking / falling / hit sfx",
+      "author": "rubberduck",
+      "page": "https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/sfx_breaking_and_falling.zip",
+      "file": "sfx_breaking_and_falling.zip",
+      "archive": "zip",
+      "bytes": 1624406,
+      "sha256": "e6ee04d91c5f4d30cfda1260d2c9d1faf96fda36319287215fbd07bcb1a80451"
+    },
+    "oga-25-cc0-bang": {
+      "title": "25 CC0 bang / firework SFX",
+      "author": "rubberduck",
+      "page": "https://opengameart.org/content/25-cc0-bang-firework-sfx",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/25-CC0-bang-sfx.zip",
+      "file": "25-CC0-bang-sfx.zip",
+      "archive": "zip",
+      "bytes": 1390498,
+      "sha256": "c0c9ecc11e2dc0d190f0cced755569858234b8528286bc83becb6314c663407f"
+    },
+    "oga-freeze-spell": {
+      "title": "Freeze Spell",
+      "author": "artisticdude",
+      "page": "https://opengameart.org/content/freeze-spell-0",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/freeze.wav",
+      "file": "freeze.wav",
+      "bytes": 613544,
+      "sha256": "dc16da845f18f88885db4584205a4ad9b84a8da6e377b79d4511b366cc8631f1"
+    },
+    "oga-ice-spells": {
+      "title": "Ice spells",
+      "author": "bart",
+      "page": "https://opengameart.org/content/ice-spells",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/icespells.zip",
+      "file": "icespells.zip",
+      "archive": "zip",
+      "bytes": 269661,
+      "sha256": "45f02a204fc7cc896a17487080376c521ac2e564fe3da4d24cffa0086f8d6a54"
+    },
+    "oga-ice-shatter": {
+      "title": "Ice breaking/shattering",
+      "author": "IgnasD",
+      "page": "https://opengameart.org/content/ice-breakingshattering",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/IceShatters_0.zip",
+      "file": "IceShatters_0.zip",
+      "archive": "zip",
+      "bytes": 75074,
+      "sha256": "b84ea396fac1af183dd2cb205a01edaa94b493ffb36965eafe59912e41cf9eb7"
+    },
+    "oga-swishes": {
+      "title": "Swishes Sound Pack",
+      "author": "artisticdude",
+      "page": "https://opengameart.org/content/swishes-sound-pack",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/swishes.zip",
+      "file": "swishes.zip",
+      "archive": "zip",
+      "bytes": 385150,
+      "sha256": "7980215241b739a787dcf26f660ce510bb237900968789395a86911619795693"
+    },
+    "oga-cure-magic": {
+      "title": "Cure Magic",
+      "author": "Someoneman",
+      "page": "https://opengameart.org/content/cure-magic",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/curemagic.zip",
+      "file": "curemagic.zip",
+      "archive": "zip",
+      "bytes": 1611435,
+      "sha256": "5a0d60a13444d719d05bb496aceac3d749a925259297f1828a51563ee2e465d8"
+    },
+    "oga-card-game-sounds": {
+      "title": "Card Game sounds",
+      "author": "HaelDB",
+      "page": "https://opengameart.org/content/card-game-sounds",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0。作者说明这些声音是他为开源卡牌软件 Cockatrice 做的，作者本人以 CC0 发布",
+      "url": "https://opengameart.org/sites/default/files/Cardsounds.zip",
+      "file": "Cardsounds.zip",
+      "archive": "zip",
+      "bytes": 238226,
+      "sha256": "0c01b7807909119a4d93364fa3661f7c4be1421721e65da8a816edd71cf3f899"
+    },
+    "oga-catching-fire": {
+      "title": "Catching fire",
+      "author": "themightyglider",
+      "page": "https://opengameart.org/content/catching-fire",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/flame_0.ogg",
+      "file": "flame_0.ogg",
+      "bytes": 8259,
+      "sha256": "c1eaafba3746374c68c30dc8b7ec895dac0e1e66064522f03340dc9b2da4a2cd"
+    },
+    "oga-teleport-spell": {
+      "title": "Teleport Spell",
+      "author": "Ogrebane",
+      "page": "https://opengameart.org/content/teleport-spell",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/teleport.wav",
+      "file": "teleport.wav",
+      "bytes": 286694,
+      "sha256": "23fe938e7e82931227196bf6b2978ad9154f627af26623acf52958d12125f3b8"
+    },
+    "oga-dark-magic": {
+      "title": "3 dark magic spells",
+      "author": "qubodup",
+      "page": "https://opengameart.org/content/3-dark-magic-spells",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/dark_magic.7z",
+      "file": "dark_magic.7z",
+      "archive": "7z",
+      "bytes": 823588,
+      "sha256": "9527c2a952763a554ae79aaccd5a696eafe8be5df5eb7e79fd61ddcc406e2450"
+    },
+    "oga-energy-drain": {
+      "title": "Energy Drain",
+      "author": "qubodup",
+      "page": "https://opengameart.org/content/energy-drain",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/qubodup-PowerDrain.7z",
+      "file": "qubodup-PowerDrain.7z",
+      "archive": "7z",
+      "licenseFile": "qubodup-PowerDrain/license.txt",
+      "bytes": 356406,
+      "sha256": "e0038bfa31ba777feb71ac5f4c0f2457155253761e8d5f61851738eeb032fd34"
+    },
+    "oga-sword": {
+      "title": "20 Sword Sound Effects (Attacks and Clashes)：挥砍",
+      "author": "StarNinjas",
+      "page": "https://opengameart.org/content/20-sword-sound-effects-attacks-and-clashes",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/sword_-_starninjas_1.zip",
+      "file": "sword_-_starninjas_1.zip",
+      "archive": "zip",
+      "bytes": 149512,
+      "sha256": "87a1fe1cfeee5f282fe06a7a9c25ab9ebf24b7674fe19171b7f2762dffb628c1"
+    },
+    "oga-sword-clash": {
+      "title": "20 Sword Sound Effects (Attacks and Clashes)：碰撞",
+      "author": "StarNinjas",
+      "page": "https://opengameart.org/content/20-sword-sound-effects-attacks-and-clashes",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/sword_clash_-_starninjas_0.zip",
+      "file": "sword_clash_-_starninjas_0.zip",
+      "archive": "zip",
+      "bytes": 144575,
+      "sha256": "f363c80ea1627548d336370750651b0d2d092978148ecfb3642717c2efb54b6b"
+    },
+    "oga-impact-blocks": {
+      "title": "10 Impact/Shield Blocks",
+      "author": "StarNinjas",
+      "page": "https://opengameart.org/content/10-impactshield-blocks",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/impact_-_starninjas.zip",
+      "file": "impact_-_starninjas.zip",
+      "archive": "zip",
+      "bytes": 128502,
+      "sha256": "4592764795344ae010561b0191b059a0e7ed8c2d2e6c0e96171debaa346cf311"
+    },
+    "oga-steam-hisses": {
+      "title": "Steam release sounds",
+      "author": "bart",
+      "page": "https://opengameart.org/content/steam-release-sounds",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/steam_hisses.zip",
+      "file": "steam_hisses.zip",
+      "archive": "zip",
+      "bytes": 622313,
+      "sha256": "7dc5ae6f43ef0e9a47b8333e1e1508463cb64877ab06baa0259c643a9ab4677f"
+    },
+    "oga-air-whoosh": {
+      "title": "Air whoosh",
+      "author": "pyranostudios",
+      "page": "https://opengameart.org/content/air-whoosh",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/whoosh2_0.wav",
+      "file": "whoosh2_0.wav",
+      "bytes": 925662,
+      "sha256": "d3fbff5bb78b289af16b2dfa29083f07ef83b0cbaff4514c48dfda16d082b468"
+    },
+    "oga-glass-break": {
+      "title": "Glass Break",
+      "author": "TinyWorlds",
+      "page": "https://opengameart.org/content/glass-break",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/glass_breaking.wav",
+      "file": "glass_breaking.wav",
+      "bytes": 230924,
+      "sha256": "37d29069c885afe3f7ca639293fa679fb6511a6a1e54316f0e403e4493f502b3"
+    },
+    "oga-wobbleboxx": {
+      "title": "Level up, power up, Coin get (13 Sounds)",
+      "author": "wobbleboxx",
+      "page": "https://opengameart.org/content/level-up-power-up-coin-get-13-sounds",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/SoundPack01.zip",
+      "file": "SoundPack01.zip",
+      "archive": "zip",
+      "bytes": 6780792,
+      "sha256": "b3405c1c98f5223c101fdbfd445903c0b558ebb325b85306964d64a34ef82db3"
+    },
+    "oga-horn": {
+      "title": "Their Coming (generic horn sound)",
+      "author": "StumpyStrust",
+      "page": "https://opengameart.org/content/their-coming-generic-horn-sound",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/theircoming3_0.ogg",
+      "file": "theircoming3_0.ogg",
+      "bytes": 119570,
+      "sha256": "4f2e3500b4f06470727012e36709931d3edfc186d78999cee59674a521d06538"
+    },
+    "oga-magic-spell-1": {
+      "title": "Magic Spell SFX：magical_1",
+      "author": "JaggedStone",
+      "page": "https://opengameart.org/content/magic-spell-sfx",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/magical_1_0.ogg",
+      "file": "magical_1_0.ogg",
+      "bytes": 59071,
+      "sha256": "119f9061a566c72c1c58444b03f8685b833079ef268dda02fe742eb34d3bc68f"
+    },
+    "oga-magic-spell-2": {
+      "title": "Magic Spell SFX：magical_2",
+      "author": "JaggedStone",
+      "page": "https://opengameart.org/content/magic-spell-sfx",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/magical_2.ogg",
+      "file": "magical_2.ogg",
+      "bytes": 39689,
+      "sha256": "84a70f63f3f21e5ba4a48285b760a663d422ad3feddba2f3cbadd94b76cdc52e"
+    },
+    "oga-magic-spell-3": {
+      "title": "Magic Spell SFX：magical_3",
+      "author": "JaggedStone",
+      "page": "https://opengameart.org/content/magic-spell-sfx",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/magical_3.ogg",
+      "file": "magical_3.ogg",
+      "bytes": 38266,
+      "sha256": "9fac648a1de869cf9ca2f4b3f1cd47f1766a3ee9d2fdec45831234401d7b2392"
+    },
+    "oga-magic-spell-4": {
+      "title": "Magic Spell SFX：magical_4",
+      "author": "JaggedStone",
+      "page": "https://opengameart.org/content/magic-spell-sfx",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/magical_4.ogg",
+      "file": "magical_4.ogg",
+      "bytes": 79091,
+      "sha256": "b7862d109b4013dfb2a389a10f8917203beb0efc458444bc5a1b8ada605cc118"
+    },
+    "oga-magic-spell-5": {
+      "title": "Magic Spell SFX：magical_5",
+      "author": "JaggedStone",
+      "page": "https://opengameart.org/content/magic-spell-sfx",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/magical_5.ogg",
+      "file": "magical_5.ogg",
+      "bytes": 37790,
+      "sha256": "69aaaaed729cacb518005a5d24074196db3c5fffc0ed2cd01ad864fbed4a62be"
+    },
+    "oga-magic-spell-6": {
+      "title": "Magic Spell SFX：magical_6",
+      "author": "JaggedStone",
+      "page": "https://opengameart.org/content/magic-spell-sfx",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/magical_6_0.ogg",
+      "file": "magical_6_0.ogg",
+      "bytes": 37434,
+      "sha256": "0a18ee3460cf3fd79c3771bbf94c20c26d34b65ab60d0b0e15694ffcad815955"
+    },
+    "oga-park-birds": {
+      "title": "Park ambiences：鸟叫",
+      "author": "Thimras",
+      "page": "https://opengameart.org/content/park-ambiences",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/park_ambience_birds.wav",
+      "file": "park_ambience_birds.wav",
+      "maxBytes": 16000000,
+      "bytes": 16000000,
+      "sha256": "737aa74a47698900a2ca97a098045b71c15a7d9ed7838d946e888dae30db8eda"
+    },
+    "oga-park-river": {
+      "title": "Park ambiences：河水",
+      "author": "Thimras",
+      "page": "https://opengameart.org/content/park-ambiences",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/park_ambience_river.wav",
+      "file": "park_ambience_river.wav",
+      "maxBytes": 16000000,
+      "bytes": 16000000,
+      "sha256": "e7722c931e5d7707c45173205429c798c58c18f41c774c0c9a2e210c577b9252"
+    },
+    "oga-park-wind": {
+      "title": "Park ambiences：风",
+      "author": "Thimras",
+      "page": "https://opengameart.org/content/park-ambiences",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/park_ambience_wind.wav",
+      "file": "park_ambience_wind.wav",
+      "maxBytes": 20000000,
+      "bytes": 20000000,
+      "sha256": "10f4c9de79cd9f9c089cc257c05ca8c482af7e051b301f30fff2b30a9178f3ca"
+    },
+    "oga-birds-wind": {
+      "title": "Birds and Wind - Ambient（不带合成器的版本）",
+      "author": "Spring Spring",
+      "page": "https://opengameart.org/content/birds-and-wind-ambient-birds-wind-and-synth",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/Birds%20and%20Wind%20-%20Ambient_1.ogg",
+      "file": "Birds and Wind - Ambient_1.ogg",
+      "bytes": 1883864,
+      "sha256": "28f99f536a0772d80052f03bcb22c9ed8fd7c6e4db7f2e8356efcf26a8e24f01"
+    },
+    "oga-fantasy-orchestral": {
+      "title": "Fantasy Orchestral Theme",
+      "author": "Joth",
+      "page": "https://opengameart.org/content/fantasy-orchestral-theme",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/FantasyOrchestralTheme_1.mp3",
+      "file": "FantasyOrchestralTheme_1.mp3",
+      "bytes": 3837827,
+      "sha256": "add1de5eae0771c4ce5b3782a6eae9c01f321d32446421691426587000e50cdc"
+    },
+    "oga-field-of-dreams": {
+      "title": "The Field Of Dreams",
+      "author": "pauliuw",
+      "page": "https://opengameart.org/content/the-field-of-dreams",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/the_field_of_dreams.mp3",
+      "file": "the_field_of_dreams.mp3",
+      "bytes": 3385581,
+      "sha256": "103a7032a49be7e8399c5cb771f7759eac9ac1a0d2bf227f41fff42ad8d78194"
+    },
+    "oga-prepare-swords": {
+      "title": "\"Prepare your swords\"",
+      "author": "bojidar-bg",
+      "page": "https://opengameart.org/content/prepare-your-swords",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/prepare_your_swords_0.ogg",
+      "file": "prepare_your_swords_0.ogg",
+      "bytes": 1233496,
+      "sha256": "d0d2bc4a0a871b92d0c7b3af1e58da7162dbddff110d04cea51aaa72e1cd53c3"
+    },
+    "oga-bards-tale": {
+      "title": "Medieval: The Bard's Tale（循环版）",
+      "author": "RandomMind",
+      "page": "https://opengameart.org/content/medieval-the-bards-tale",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/Loop_The_Bards_Tale.wav",
+      "file": "Loop_The_Bards_Tale.wav",
+      "bytes": 10183830,
+      "sha256": "6d0852a758dc41a763cd33b0693fa878e36d7f1d0149f7674bc82241a7a90de1"
+    },
+    "oga-old-tower-inn": {
+      "title": "Medieval: The Old Tower Inn（循环版）",
+      "author": "RandomMind",
+      "page": "https://opengameart.org/content/medieval-the-old-tower-inn",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/Loop_The_Old_Tower_Inn.wav",
+      "file": "Loop_The_Old_Tower_Inn.wav",
+      "bytes": 8811712,
+      "sha256": "e18b497fb0edde74a745c4b5a0b90b3fc346c44555f33e3a1485411bbcc171bc"
+    },
+    "oga-battle-theme-a": {
+      "title": "Battle Theme A",
+      "author": "cynicmusic",
+      "page": "https://opengameart.org/content/battle-theme-a",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/battleThemeA.mp3",
+      "file": "battleThemeA.mp3",
+      "bytes": 3289143,
+      "sha256": "6042399782e581d753d616bc703e66483d5eccb5fb687a20c9a552d68c49e620"
+    },
+    "oga-victory-fanfare": {
+      "title": "Victory Fanfare Short",
+      "author": "cynicmusic",
+      "page": "https://opengameart.org/content/victory-fanfare-short",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/Heavy_ConceptB.wav",
+      "file": "Heavy_ConceptB.wav",
+      "bytes": 2092996,
+      "sha256": "cf7aca1193530c804f41a22cfd9a2813c25d3c244fa96ad88c88c6206daa033d"
+    },
+    "oga-victory-rpg": {
+      "title": "Victory Theme for RPG",
+      "author": "cynicmusic",
+      "page": "https://opengameart.org/content/victory-theme-for-rpg",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/Victory1_1.mp3",
+      "file": "Victory1_1.mp3",
+      "bytes": 1361839,
+      "sha256": "1148060f2fbf4f84914dce2ce754beb08c98597f286d106e7c5dfc2b1c264b8f"
+    },
+    "oga-random-fanfare": {
+      "title": "Just a random fanfare",
+      "author": "Spring Spring",
+      "page": "https://opengameart.org/content/just-a-random-fanfare",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/fanfare_0.ogg",
+      "file": "fanfare_0.ogg",
+      "bytes": 295834,
+      "sha256": "952e2492abd4376d2034f4b546cadd077236e350a05b1bd05f8cec81936680a2"
+    },
+    "oga-medieval-defeat": {
+      "title": "Medieval: Defeat Theme",
+      "author": "RandomMind",
+      "page": "https://opengameart.org/content/medieval-defeat-theme",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/defeat.wav",
+      "file": "defeat.wav",
+      "bytes": 11934230,
+      "sha256": "832a9062921000cde7044f18838d11682c578067db0c60a124d95473bb122fc8"
+    },
+    "oga-icy-game-over": {
+      "title": "Icy Game Over",
+      "author": "Sudocolon",
+      "page": "https://opengameart.org/content/icy-game-over",
+      "license": "CC0-1.0",
+      "licenseEvidence": "页面 License(s) 一栏只列了 CC0",
+      "url": "https://opengameart.org/sites/default/files/Icy%20Game%20Over.mp3",
+      "file": "Icy Game Over.mp3",
+      "bytes": 339517,
+      "sha256": "737ebffecb8d92cb8c1773752f375b832ba2c574ddc3af89d50f03ab9dfcd2c9"
+    }
+  },
+  "sounds": [
+    {
+      "id": "ui.hover",
+      "group": "ui",
+      "label": "悬停",
+      "spec": "5.7 界面：悬停",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-ui-audio",
+          "member": "Audio/rollover2.ogg"
+        },
+        {
+          "source": "kenney-ui-audio",
+          "member": "Audio/rollover4.ogg"
+        },
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/tick_002.ogg"
+        }
+      ]
+    },
+    {
+      "id": "ui.click",
+      "group": "ui",
+      "label": "点击",
+      "spec": "5.7 界面：点击",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-ui-audio",
+          "member": "Audio/click1.ogg"
+        },
+        {
+          "source": "kenney-ui-audio",
+          "member": "Audio/click3.ogg"
+        },
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/click_002.ogg"
+        }
+      ]
+    },
+    {
+      "id": "ui.button",
+      "group": "ui",
+      "label": "按钮按下",
+      "spec": "5.7 界面：按钮按下",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/select_001.ogg"
+        },
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/confirmation_001.ogg"
+        },
+        {
+          "source": "kenney-ui-audio",
+          "member": "Audio/switch3.ogg"
+        }
+      ]
+    },
+    {
+      "id": "ui.pickup",
+      "group": "ui",
+      "label": "拖起手牌",
+      "spec": "5.7 界面：拖起",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-casino-audio",
+          "member": "Audio/card-slide-1.ogg"
+        },
+        {
+          "source": "kenney-casino-audio",
+          "member": "Audio/card-slide-4.ogg"
+        },
+        {
+          "source": "kenney-casino-audio",
+          "member": "Audio/card-fan-1.ogg"
+        }
+      ]
+    },
+    {
+      "id": "ui.drop",
+      "group": "ui",
+      "label": "放下手牌",
+      "spec": "5.7 界面：放下",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-casino-audio",
+          "member": "Audio/card-place-1.ogg"
+        },
+        {
+          "source": "kenney-casino-audio",
+          "member": "Audio/card-place-3.ogg"
+        },
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/drop_002.ogg"
+        }
+      ]
+    },
+    {
+      "id": "ui.cancel",
+      "group": "ui",
+      "label": "取消",
+      "spec": "5.7 界面：取消",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/back_001.ogg"
+        },
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/back_003.ogg"
+        },
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/minimize_002.ogg"
+        }
+      ]
+    },
+    {
+      "id": "card.draw",
+      "group": "card",
+      "label": "抽牌（翻牌声）",
+      "spec": "5.6 抽牌；5.7 卡牌：抽牌",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-casino-audio",
+          "member": "Audio/card-slide-6.ogg"
+        },
+        {
+          "source": "kenney-casino-audio",
+          "member": "Audio/card-slide-7.ogg"
+        },
+        {
+          "source": "oga-card-game-sounds",
+          "member": "cockatrice/draw.wav"
+        }
+      ]
+    },
+    {
+      "id": "card.play",
+      "group": "card",
+      "label": "出牌",
+      "spec": "5.6 对手出牌；5.7 卡牌：出牌",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-casino-audio",
+          "member": "Audio/card-shove-1.ogg"
+        },
+        {
+          "source": "kenney-casino-audio",
+          "member": "Audio/card-shove-3.ogg"
+        },
+        {
+          "source": "oga-card-game-sounds",
+          "member": "cockatrice/playcard.wav"
+        }
+      ]
+    },
+    {
+      "id": "card.land",
+      "group": "card",
+      "label": "随从砸落",
+      "spec": "5.6 出随从：砸落声；5.7 卡牌：出牌落地",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-impact-sounds",
+          "member": "Audio/impactWood_heavy_001.ogg"
+        },
+        {
+          "source": "oga-100-cc0-sfx",
+          "member": "slam_02.ogg"
+        },
+        {
+          "source": "kenney-impact-sounds",
+          "member": "Audio/impactSoft_heavy_002.ogg"
+        }
+      ]
+    },
+    {
+      "id": "card.burn",
+      "group": "card",
+      "label": "爆牌（燃烧）",
+      "spec": "5.6 爆牌；5.7 卡牌：爆牌",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-catching-fire",
+          "member": "flame_0.ogg"
+        },
+        {
+          "source": "oga-80-cc0-rpg-sfx",
+          "member": "spell_fire_06.ogg"
+        },
+        {
+          "source": "oga-80-cc0-rpg-sfx",
+          "member": "spell_fire_07.ogg"
+        }
+      ]
+    },
+    {
+      "id": "card.buff",
+      "group": "card",
+      "label": "增益",
+      "spec": "5.6 增益；5.7 卡牌：增益",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-wobbleboxx",
+          "member": "Upper01.aif",
+          "trim": [
+            0,
+            1.6
+          ]
+        },
+        {
+          "source": "kenney-digital-audio",
+          "member": "Audio/powerUp4.ogg"
+        },
+        {
+          "source": "oga-magic-spell-5",
+          "member": "magical_5.ogg"
+        }
+      ]
+    },
+    {
+      "id": "card.debuff",
+      "group": "card",
+      "label": "减益、沉默（消音声）",
+      "spec": "5.6 减益 / 沉默；5.7 卡牌：减益",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-digital-audio",
+          "member": "Audio/lowDown.ogg"
+        },
+        {
+          "source": "oga-wobbleboxx",
+          "member": "Downer01.aif"
+        },
+        {
+          "source": "kenney-digital-audio",
+          "member": "Audio/phaserDown2.ogg"
+        }
+      ]
+    },
+    {
+      "id": "card.bounce",
+      "group": "card",
+      "label": "回手",
+      "spec": "5.6 回手；5.7 卡牌：回手",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-casino-audio",
+          "member": "Audio/card-slide-8.ogg"
+        },
+        {
+          "source": "kenney-digital-audio",
+          "member": "Audio/phaseJump1.ogg"
+        },
+        {
+          "source": "oga-swishes",
+          "member": "swishes/swish-9.wav"
+        }
+      ]
+    },
+    {
+      "id": "card.transform",
+      "group": "card",
+      "label": "变形",
+      "spec": "5.6 变形；5.7 卡牌：变形",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-teleport-spell",
+          "member": "teleport.wav"
+        },
+        {
+          "source": "oga-wobbleboxx",
+          "member": "FX01.aif"
+        },
+        {
+          "source": "kenney-digital-audio",
+          "member": "Audio/zapThreeToneUp.ogg"
+        }
+      ]
+    },
+    {
+      "id": "spell.fire",
+      "group": "spell",
+      "label": "法术：火",
+      "spec": "5.6 出法术：火焰飞弹；5.7 法术施放：火",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-80-cc0-rpg-sfx",
+          "member": "spell_fire_01.ogg"
+        },
+        {
+          "source": "oga-80-cc0-rpg-sfx",
+          "member": "spell_fire_04.ogg"
+        },
+        {
+          "source": "oga-80-cc0-rpg-sfx",
+          "member": "spell_fire_05.ogg"
+        }
+      ]
+    },
+    {
+      "id": "spell.frost",
+      "group": "spell",
+      "label": "法术：冰",
+      "spec": "5.6 出法术：冰霜扩散；5.7 法术施放：冰",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-ice-spells",
+          "member": "ice.wav"
+        },
+        {
+          "source": "oga-freeze-spell",
+          "member": "freeze.wav"
+        },
+        {
+          "source": "oga-ice-spells",
+          "member": "coldsnap.wav"
+        }
+      ]
+    },
+    {
+      "id": "spell.holy",
+      "group": "spell",
+      "label": "法术：光",
+      "spec": "5.6 出法术：光柱；5.7 法术施放：光",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-magic-spell-1",
+          "member": "magical_1_0.ogg"
+        },
+        {
+          "source": "oga-magic-spell-4",
+          "member": "magical_4.ogg"
+        },
+        {
+          "source": "oga-wobbleboxx",
+          "member": "Rise02.aif"
+        }
+      ]
+    },
+    {
+      "id": "spell.shadow",
+      "group": "spell",
+      "label": "法术：影",
+      "spec": "5.6 出法术：暗影聚拢；5.7 法术施放：影",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-dark-magic",
+          "member": "dark_magic/fout-02.flac"
+        },
+        {
+          "source": "oga-dark-magic",
+          "member": "dark_magic/fout-01.flac"
+        },
+        {
+          "source": "oga-energy-drain",
+          "member": "qubodup-PowerDrain/ogg/qubodup-PowerDrain.ogg",
+          "trim": [
+            0,
+            2.2
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spell.physical",
+      "group": "spell",
+      "label": "法术：物理",
+      "spec": "5.6 出法术：物理挥砍；5.7 法术施放：物理",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-sword",
+          "member": "sword - StarNinjas/sword.1.ogg"
+        },
+        {
+          "source": "oga-sword",
+          "member": "sword - StarNinjas/sword.4.ogg"
+        },
+        {
+          "source": "oga-80-cc0-rpg-sfx",
+          "member": "blade_02.ogg"
+        }
+      ]
+    },
+    {
+      "id": "spell.big",
+      "group": "spell",
+      "label": "群体法术（大法术音）",
+      "spec": "5.6 群体法术",
+      "profile": "sfx",
+      "inSfxTable": false,
+      "candidates": [
+        {
+          "source": "oga-dark-magic",
+          "member": "dark_magic/fout-03.flac"
+        },
+        {
+          "source": "oga-100-cc0-sfx",
+          "member": "explosion.ogg"
+        },
+        {
+          "source": "oga-25-cc0-bang",
+          "member": "bang_05.ogg"
+        }
+      ]
+    },
+    {
+      "id": "combat.swing",
+      "group": "combat",
+      "label": "挥击（动作层）",
+      "spec": "5.6 攻击：挥击声；5.7 战斗：挥击",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-swishes",
+          "member": "swishes/swish-1.wav"
+        },
+        {
+          "source": "oga-swishes",
+          "member": "swishes/swish-4.wav"
+        },
+        {
+          "source": "oga-swishes",
+          "member": "swishes/swish-8.wav"
+        }
+      ]
+    },
+    {
+      "id": "combat.hit_light",
+      "group": "combat",
+      "label": "命中轻（材质层）",
+      "spec": "5.6 攻击、受伤：命中声；5.7 战斗：命中轻",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-impact-sounds",
+          "member": "Audio/impactPunch_medium_000.ogg"
+        },
+        {
+          "source": "kenney-impact-sounds",
+          "member": "Audio/impactPunch_medium_002.ogg"
+        },
+        {
+          "source": "oga-impact-blocks",
+          "member": "impact.3.ogg"
+        }
+      ]
+    },
+    {
+      "id": "combat.hit_heavy",
+      "group": "combat",
+      "label": "命中重（材质层）",
+      "spec": "5.6 攻击：按伤害大小选轻重；5.7 战斗：命中重",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-impact-sounds",
+          "member": "Audio/impactPunch_heavy_000.ogg"
+        },
+        {
+          "source": "kenney-impact-sounds",
+          "member": "Audio/impactPunch_heavy_002.ogg"
+        },
+        {
+          "source": "oga-100-cc0-sfx",
+          "member": "hit_02.ogg"
+        }
+      ]
+    },
+    {
+      "id": "combat.hero_hit",
+      "group": "combat",
+      "label": "英雄受伤（枢纽重击）",
+      "spec": "5.6 英雄受伤：重击声；5.7 战斗：英雄受伤",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-impact-sounds",
+          "member": "Audio/impactMining_002.ogg"
+        },
+        {
+          "source": "kenney-impact-sounds",
+          "member": "Audio/impactGlass_heavy_000.ogg"
+        },
+        {
+          "source": "oga-75-cc0-breaking",
+          "member": "bfh1_rock_breaking_03.ogg"
+        }
+      ]
+    },
+    {
+      "id": "combat.death",
+      "group": "combat",
+      "label": "随从死亡（碎裂）",
+      "spec": "5.6 随从死亡：碎裂声；5.7 战斗：死亡碎裂",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-75-cc0-breaking",
+          "member": "bfh1_rock_breaking_01.ogg"
+        },
+        {
+          "source": "oga-75-cc0-breaking",
+          "member": "bfh1_breaking_02.ogg"
+        },
+        {
+          "source": "oga-75-cc0-breaking",
+          "member": "bfh1_glass_breaking_03.ogg"
+        }
+      ]
+    },
+    {
+      "id": "combat.shield_break",
+      "group": "combat",
+      "label": "破盾",
+      "spec": "5.6 圣盾被打破；5.7 战斗：破盾",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-glass-break",
+          "member": "glass_breaking.wav"
+        },
+        {
+          "source": "oga-75-cc0-breaking",
+          "member": "bfh1_glass_breaking_05.ogg"
+        },
+        {
+          "source": "oga-100-cc0-sfx",
+          "member": "glass_03.ogg"
+        }
+      ]
+    },
+    {
+      "id": "combat.freeze",
+      "group": "combat",
+      "label": "结冰",
+      "spec": "5.6 冻结；5.7 战斗：结冰",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-ice-shatter",
+          "member": "IceShatters/LedasLuzta33.ogg"
+        },
+        {
+          "source": "kenney-impact-sounds",
+          "member": "Audio/footstep_snow_001.ogg"
+        },
+        {
+          "mix": [
+            {
+              "source": "oga-ice-spells",
+              "member": "coldsnap.wav",
+              "trim": [
+                0,
+                1.2
+              ]
+            },
+            {
+              "source": "kenney-interface-sounds",
+              "member": "Audio/glass_002.ogg",
+              "gainDb": -6
+            }
+          ],
+          "note": "冰咒尾段叠玻璃轻响"
+        }
+      ]
+    },
+    {
+      "id": "combat.unfreeze",
+      "group": "combat",
+      "label": "碎冰（解冻）",
+      "spec": "5.6 冻结：解冻时碎开；5.7 战斗：碎冰",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-ice-shatter",
+          "member": "IceShatters/LedasLuzta.ogg"
+        },
+        {
+          "source": "oga-ice-shatter",
+          "member": "IceShatters/LedasLuzta2.ogg"
+        },
+        {
+          "source": "oga-ice-shatter",
+          "member": "IceShatters/LedasLuzta4.ogg"
+        }
+      ]
+    },
+    {
+      "id": "combat.stealth",
+      "group": "combat",
+      "label": "潜行（烟雾）",
+      "spec": "5.6 潜行：烟雾声",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-steam-hisses",
+          "member": "steam hisses - Marker #1.wav"
+        },
+        {
+          "source": "oga-steam-hisses",
+          "member": "steam hisses - Marker #3.wav"
+        },
+        {
+          "source": "oga-air-whoosh",
+          "member": "whoosh2_0.wav",
+          "trim": [
+            0,
+            1.5
+          ]
+        }
+      ]
+    },
+    {
+      "id": "combat.heal",
+      "group": "combat",
+      "label": "治疗",
+      "spec": "5.6 治疗：治疗声",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-cure-magic",
+          "member": "Cure1.wav"
+        },
+        {
+          "source": "oga-cure-magic",
+          "member": "Cure4.wav"
+        },
+        {
+          "source": "oga-magic-spell-2",
+          "member": "magical_2.ogg"
+        }
+      ]
+    },
+    {
+      "id": "combat.summon",
+      "group": "combat",
+      "label": "召唤衍生物（光点凝聚）",
+      "spec": "5.6 召唤衍生物：召唤声",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-magic-spell-3",
+          "member": "magical_3.ogg"
+        },
+        {
+          "source": "oga-magic-spell-6",
+          "member": "magical_6_0.ogg"
+        },
+        {
+          "source": "oga-wobbleboxx",
+          "member": "Rise03.aif"
+        }
+      ]
+    },
+    {
+      "id": "hero_power.demacia",
+      "group": "hero_power",
+      "label": "德玛西亚：召集（士兵从光中落地）",
+      "spec": "5.6 英雄技能；5.7 职业：德玛西亚",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-horn",
+          "member": "theircoming3_0.ogg",
+          "trim": [
+            0,
+            2.5
+          ]
+        },
+        {
+          "source": "oga-sword-clash",
+          "member": "sword_clash.1.ogg"
+        },
+        {
+          "mix": [
+            {
+              "source": "oga-magic-spell-1",
+              "member": "magical_1_0.ogg"
+            },
+            {
+              "source": "kenney-impact-sounds",
+              "member": "Audio/impactMetal_heavy_002.ogg",
+              "gainDb": -2
+            }
+          ],
+          "note": "光的嗡鸣叠金属落地"
+        }
+      ]
+    },
+    {
+      "id": "hero_power.noxus",
+      "group": "hero_power",
+      "label": "诺克萨斯：断头台（斧刃飞向枢纽）",
+      "spec": "5.6 英雄技能；5.7 职业：诺克萨斯",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-sword",
+          "member": "sword - StarNinjas/sword.8.ogg"
+        },
+        {
+          "source": "oga-80-cc0-rpg-sfx",
+          "member": "blade_03.ogg"
+        },
+        {
+          "source": "kenney-rpg-audio",
+          "member": "Audio/chop.ogg"
+        }
+      ]
+    },
+    {
+      "id": "hero_power.ionia",
+      "group": "hero_power",
+      "label": "艾欧尼亚：灵魄（灵魄飞弹）",
+      "spec": "5.6 英雄技能；5.7 职业：艾欧尼亚",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-digital-audio",
+          "member": "Audio/phaserUp3.ogg"
+        },
+        {
+          "source": "oga-wobbleboxx",
+          "member": "FX02.aif",
+          "trim": [
+            0,
+            1.6
+          ]
+        },
+        {
+          "source": "oga-80-cc0-rpg-sfx",
+          "member": "spell_01.ogg"
+        }
+      ]
+    },
+    {
+      "id": "hero_power.freljord",
+      "group": "hero_power",
+      "label": "弗雷尔卓德：寒冰箭",
+      "spec": "5.6 英雄技能；5.7 职业：弗雷尔卓德",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-ice-shatter",
+          "member": "IceShatters/LedasLuzta5.ogg"
+        },
+        {
+          "source": "kenney-impact-sounds",
+          "member": "Audio/impactGlass_light_003.ogg"
+        },
+        {
+          "mix": [
+            {
+              "source": "oga-swishes",
+              "member": "swishes/swish-12.wav"
+            },
+            {
+              "source": "oga-ice-shatter",
+              "member": "IceShatters/LedasLuzta2.ogg",
+              "gainDb": -4
+            }
+          ],
+          "note": "箭的破风声叠碎冰"
+        }
+      ]
+    },
+    {
+      "id": "flow.game_start",
+      "group": "flow",
+      "label": "开局（开场音）",
+      "spec": "5.6 开局：开场音",
+      "profile": "sfx",
+      "inSfxTable": false,
+      "candidates": [
+        {
+          "source": "oga-horn",
+          "member": "theircoming3_0.ogg",
+          "trim": [
+            0,
+            4
+          ]
+        },
+        {
+          "source": "kenney-music-jingles",
+          "member": "Audio/Hit jingles/jingles_HIT15.ogg"
+        },
+        {
+          "source": "kenney-music-jingles",
+          "member": "Audio/Hit jingles/jingles_HIT11.ogg"
+        }
+      ]
+    },
+    {
+      "id": "flow.nexus_light",
+      "group": "flow",
+      "label": "水晶枢纽点亮",
+      "spec": "5.6 开局：枢纽点亮声",
+      "profile": "sfx",
+      "inSfxTable": false,
+      "candidates": [
+        {
+          "source": "oga-wobbleboxx",
+          "member": "Rise01.aif"
+        },
+        {
+          "source": "kenney-digital-audio",
+          "member": "Audio/powerUp11.ogg"
+        },
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/glass_005.ogg"
+        }
+      ]
+    },
+    {
+      "id": "flow.turn_start",
+      "group": "flow",
+      "label": "回合开始",
+      "spec": "5.6 回合开始：回合提示音；5.7 流程：回合开始",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-100-cc0-sfx",
+          "member": "bell_01.ogg"
+        },
+        {
+          "source": "oga-100-cc0-sfx",
+          "member": "bell_03.ogg"
+        },
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/bong_001.ogg"
+        }
+      ]
+    },
+    {
+      "id": "flow.turn_end",
+      "group": "flow",
+      "label": "结束回合（按钮声）",
+      "spec": "5.6 结束回合：按钮声；5.7 流程：回合结束",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/switch_002.ogg"
+        },
+        {
+          "source": "kenney-ui-audio",
+          "member": "Audio/switch33.ogg"
+        },
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/confirmation_004.ogg"
+        }
+      ]
+    },
+    {
+      "id": "flow.fatigue",
+      "group": "flow",
+      "label": "疲劳（低沉钟声）",
+      "spec": "5.6 疲劳：低沉钟声；5.7 流程：疲劳",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "oga-100-cc0-sfx",
+          "member": "gong_01.ogg"
+        },
+        {
+          "source": "oga-100-cc0-sfx",
+          "member": "gong_02.ogg"
+        },
+        {
+          "source": "kenney-impact-sounds",
+          "member": "Audio/impactBell_heavy_000.ogg"
+        }
+      ]
+    },
+    {
+      "id": "flow.mana",
+      "group": "flow",
+      "label": "法力变化",
+      "spec": "5.6 法力变化：法力声",
+      "profile": "sfx",
+      "candidates": [
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/glass_001.ogg"
+        },
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/glass_004.ogg"
+        },
+        {
+          "source": "kenney-interface-sounds",
+          "member": "Audio/pluck_001.ogg"
+        }
+      ]
+    },
+    {
+      "id": "flow.nexus_explode",
+      "group": "flow",
+      "label": "水晶枢纽爆炸",
+      "spec": "5.6 胜利、失败：枢纽爆炸（画面列有，声音列只写了音乐，这里补一个爆炸声）",
+      "profile": "sfx",
+      "inSfxTable": false,
+      "candidates": [
+        {
+          "source": "oga-25-cc0-bang",
+          "member": "bang_01.ogg"
+        },
+        {
+          "source": "oga-25-cc0-bang",
+          "member": "cannon_03.ogg"
+        },
+        {
+          "source": "oga-75-cc0-breaking",
+          "member": "bfh1_rock_breaking_02.ogg"
+        }
+      ]
+    },
+    {
+      "id": "menu",
+      "group": "music",
+      "label": "主菜单音乐",
+      "spec": "5.7 音乐：主菜单一首循环",
+      "profile": "music",
+      "loop": true,
+      "candidates": [
+        {
+          "source": "oga-fantasy-orchestral",
+          "member": "FantasyOrchestralTheme_1.mp3",
+          "note": "不是循环曲，结尾渐强，循环播放时首尾有接缝"
+        },
+        {
+          "source": "oga-field-of-dreams",
+          "member": "the_field_of_dreams.mp3"
+        },
+        {
+          "source": "oga-prepare-swords",
+          "member": "prepare_your_swords_0.ogg"
+        }
+      ]
+    },
+    {
+      "id": "match",
+      "group": "music",
+      "label": "对局音乐",
+      "spec": "5.7 音乐：对局一首循环，音量偏低",
+      "profile": "music",
+      "loop": true,
+      "candidates": [
+        {
+          "source": "oga-bards-tale",
+          "member": "Loop_The_Bards_Tale.wav",
+          "note": "作者给的循环版"
+        },
+        {
+          "source": "oga-old-tower-inn",
+          "member": "Loop_The_Old_Tower_Inn.wav",
+          "note": "作者给的循环版"
+        },
+        {
+          "source": "oga-battle-theme-a",
+          "member": "battleThemeA.mp3",
+          "note": "节奏紧，可能盖过音效"
+        }
+      ]
+    },
+    {
+      "id": "victory",
+      "group": "music",
+      "label": "胜利收尾",
+      "spec": "5.6 胜利：胜利音乐；5.7 音乐：胜利短收尾。sfx.ts 的 flow.victory 和 music.ts 的 victory 指同一段，接的时候二选一",
+      "profile": "stinger",
+      "candidates": [
+        {
+          "source": "oga-victory-fanfare",
+          "member": "Heavy_ConceptB.wav"
+        },
+        {
+          "source": "oga-victory-rpg",
+          "member": "Victory1_1.mp3",
+          "trim": [
+            0,
+            10
+          ],
+          "fadeOut": 3,
+          "note": "原曲 57 秒，截前 10 秒、最后 3 秒淡出"
+        },
+        {
+          "source": "oga-random-fanfare",
+          "member": "fanfare_0.ogg"
+        }
+      ]
+    },
+    {
+      "id": "defeat",
+      "group": "music",
+      "label": "失败收尾",
+      "spec": "5.6 失败：失败音乐；5.7 音乐：失败短收尾。sfx.ts 的 flow.defeat 和 music.ts 的 defeat 指同一段，接的时候二选一",
+      "profile": "stinger",
+      "candidates": [
+        {
+          "source": "oga-medieval-defeat",
+          "member": "defeat.wav",
+          "trim": [
+            0,
+            10
+          ],
+          "fadeOut": 3,
+          "note": "原曲 45 秒，截前 10 秒、最后 3 秒淡出"
+        },
+        {
+          "source": "oga-icy-game-over",
+          "member": "Icy Game Over.mp3"
+        }
+      ]
+    },
+    {
+      "id": "ambience",
+      "group": "ambience",
+      "label": "峡谷环境音",
+      "spec": "5.7 环境音：峡谷的风、水声、鸟叫，很轻",
+      "profile": "ambience",
+      "loop": true,
+      "candidates": [
+        {
+          "mix": [
+            {
+              "source": "oga-park-wind",
+              "member": "park_ambience_wind.wav",
+              "gainDb": -3
+            },
+            {
+              "source": "oga-park-river",
+              "member": "park_ambience_river.wav",
+              "gainDb": -2
+            },
+            {
+              "source": "oga-park-birds",
+              "member": "park_ambience_birds.wav"
+            }
+          ],
+          "loop": {
+            "length": 60,
+            "crossfade": 4
+          },
+          "note": "风、河水、鸟叫三层混成 60 秒无缝循环"
+        },
+        {
+          "mix": [
+            {
+              "source": "oga-birds-wind",
+              "member": "Birds and Wind - Ambient_1.ogg"
+            },
+            {
+              "source": "oga-park-river",
+              "member": "park_ambience_river.wav",
+              "gainDb": -6
+            }
+          ],
+          "loop": {
+            "length": 60,
+            "crossfade": 4
+          },
+          "note": "另一位作者的鸟叫和风，叠河水，60 秒无缝循环"
+        },
+        {
+          "mix": [
+            {
+              "source": "oga-park-river",
+              "member": "park_ambience_river.wav"
+            },
+            {
+              "source": "oga-park-birds",
+              "member": "park_ambience_birds.wav",
+              "gainDb": -4
+            }
+          ],
+          "loop": {
+            "length": 60,
+            "crossfade": 4
+          },
+          "note": "只有河水和鸟叫，没有风"
+        }
+      ]
+    }
+  ]
+}

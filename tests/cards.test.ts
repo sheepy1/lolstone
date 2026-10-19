@@ -452,7 +452,7 @@ describe('诺克萨斯', () => {
   });
 
   card('泰隆', () => {
-    expectStats('泰隆', 3, 3, 2, ['stealth']);
+    expectStats('泰隆', 3, 4, 2, ['stealth']);
     const g = scenario().board(0, ['魔狼']).board(1, ['泰隆']).build();
     expectIllegal(g.try({ kind: 'attack', attacker: g.m(0, '魔狼'), target: g.m(1, '泰隆') }));
   });
@@ -485,7 +485,7 @@ describe('诺克萨斯', () => {
   });
 
   card('莎弥拉', () => {
-    expectStats('莎弥拉', 5, 5, 4, ['rush']);
+    expectStats('莎弥拉', 5, 6, 4, ['rush']);
     const g = scenario().board(1, ['石甲虫']).hand(0, ['莎弥拉']).build();
     g.play('莎弥拉');
     // 入场当回合只能打随从

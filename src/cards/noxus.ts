@@ -21,7 +21,7 @@ export const NOXUS_CARDS: CardDef[] = [
     effects: [{ trigger: 'deathrattle', actions: [{ kind: 'summon', token: 'token.kled_dismounted', count: 1, fx: 'physical' }] }],
   },
   {
-    id: 'noxus.talon', name: '泰隆', type: 'minion', class: 'noxus', cost: 3, attack: 3, health: 2,
+    id: 'noxus.talon', name: '泰隆', type: 'minion', class: 'noxus', cost: 3, attack: 4, health: 2,
     keywords: ['stealth'], text: '潜行', champion: 'Talon',
   },
   {
@@ -38,7 +38,7 @@ export const NOXUS_CARDS: CardDef[] = [
     keywords: ['lifesteal'], text: '吸血', champion: 'Vladimir',
   },
   {
-    id: 'noxus.samira', name: '莎弥拉', type: 'minion', class: 'noxus', cost: 5, attack: 5, health: 4,
+    id: 'noxus.samira', name: '莎弥拉', type: 'minion', class: 'noxus', cost: 5, attack: 6, health: 4,
     keywords: ['rush'], text: '突袭', champion: 'Samira',
   },
   {

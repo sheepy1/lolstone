@@ -28,7 +28,7 @@ export const IONIA_CARDS: CardDef[] = [
   {
     id: 'ionia.zed', name: '劫', type: 'minion', class: 'ionia', cost: 4, attack: 3, health: 2,
     keywords: ['stealth'], text: '潜行。战吼：召唤一个 1/1 并具有潜行的影分身', champion: 'Zed',
-    effects: [{ trigger: 'battlecry', actions: [{ kind: 'summon', token: 'token.zed_shadow', count: 1, fx: 'shadow' }] }],
+    effects: [{ trigger: 'battlecry', actions: [{ kind: 'summon', token: 'token.zed_shadow', count: 1, fx: 'shadow', fxId: 'zed.living_shadow' }] }],
   },
   {
     id: 'ionia.yasuo', name: '亚索', type: 'minion', class: 'ionia', cost: 4, attack: 4, health: 3,
@@ -39,7 +39,7 @@ export const IONIA_CARDS: CardDef[] = [
     text: '连击：将一个敌方随从移回其拥有者的手牌', champion: 'LeeSin',
     effects: [{
       trigger: 'combo', target: { pick: 'enemy_minion' },
-      actions: [{ kind: 'bounce', target: 'chosen', fx: 'physical' }],
+      actions: [{ kind: 'bounce', target: 'chosen', fx: 'physical', fxId: 'leesin.dragons_rage' }],
     }],
   },
   {
@@ -110,6 +110,6 @@ export const IONIA_CARDS: CardDef[] = [
   {
     id: 'ionia.last_breath', name: '狂风绝息斩', type: 'spell', class: 'ionia', cost: 6,
     text: '对所有敌方随从造成 3 点伤害',
-    effects: [{ trigger: 'cast', actions: [{ kind: 'damage', amount: 3, target: 'all_enemy_minions', fx: 'physical' }] }],
+    effects: [{ trigger: 'cast', actions: [{ kind: 'damage', amount: 3, target: 'all_enemy_minions', fx: 'physical', fxId: 'yasuo.last_breath' }] }],
   },
 ];

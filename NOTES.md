@@ -327,3 +327,23 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
 
 `tests/fixtures/l0-replay.json`：种子 181、弗雷尔卓德对德玛西亚的 L0 对 L0，按批存原始事件和开局显示局面。
 `pnpm fixture:record` 重新录制（卡池或事件改了之后）。它没有回手和失去潜行，这两种由构造的事件测试覆盖。
+
+## fxId 透传（spec 3.4，2026-10-19）
+
+- 带 fx 的动作都可以写可选的 `fxId`（招牌卡专属特效 id）。引擎不读它，只在发事件时原样放进去，涉及 `minion_summoned`、
+  `damage`、`heal`、`buff`、`silence`、`freeze`、`bounce`、`transform`。
+- 动作没写 fxId 时，事件里**这个键不出现**（不是 `null`）。表现层用 `e.fxId !== undefined` 或 `'fxId' in e` 判断。
+  这样没有招牌卡的老事件和录制的夹具保持原样；事件字段表（`tests/helpers/events.ts`）里 fxId 是可选字段，只在有值时才允许出现。
+- 引擎自己产生的事件（攻击伤害、疲劳、吸血治疗、激怒、增益到期）没有动作可挂，永远没有 fxId。随从自己打出时的
+  `minion_summoned`（via 为 play）也没有。
+- `destroy` 动作本身不发事件，所以 fxId 没处可放。做法：消灭带 fxId 时，引擎记下 fx 和 fxId，随后该随从的 `death` 事件
+  同时带上 `fx` 和 `fxId`（只有被带 fxId 的消灭动作消灭时才有，其余死亡的 death 事件字段不变）。德玛西亚正义就是这样。
+  代价是 death 比别的事件多了两个可选字段；如果表现层希望消灭有独立事件，要改事件契约，这里没做。
+- 校验（`src/cards/validate.ts`）：fxId 必须是字符串，匹配 `^[a-z0-9_]+\.[a-z0-9_]+$`（小写字母、数字、下划线，
+  中间恰好一个点，写成"英雄 key.招式"）；没有 fx 的动作（draw、gain_mana、extra_attack、random_keyword）不能写 fxId。
+  spec 只写了字符集和"英雄 key.招式"的形状，"恰好一个点"是我按这个形状收紧的，要放宽改 `FX_ID`。
+- 已标 fxId 的 9 张：狂风绝息斩（damage）、暴风雪（damage 和 freeze 都标，两种事件都带）、丽桑卓（freeze）、卡特琳娜（damage）、
+  审判（damage）、德玛西亚正义（destroy，在 death 上）、劫（summon）、李青（combo 的 bounce）、纳什男爵（turn_end 的 buff）。
+  泰达米尔和易数据没改，由表现层按 (卡牌 id, 触发时机) 映射。
+- 测试：`tests/fxid.test.ts`（透传、没写时键不出现、9 张卡各一条、卡池里带 fxId 的恰好是这 9 张、校验），
+  测试专用卡 `test.fxid_*` 在 `tests/helpers/testCards.ts`。

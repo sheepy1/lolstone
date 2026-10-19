@@ -1,4 +1,4 @@
-import { emit, findMinion, minionRef, type Ctx } from '../context';
+import { emit, findMinion, fxIdField, minionRef, type Ctx } from '../context';
 import type { SourceRef } from '../events';
 import { createMinion } from '../minion';
 import type { Fx, TargetRef } from '../state';
@@ -12,6 +12,7 @@ export function transformTarget(
   target: TargetRef,
   into: string,
   fx: Fx,
+  fxId?: string,
 ): void {
   if (target.kind === 'hero') return;
   const loc = findMinion(ctx.state, target.instanceId);
@@ -32,5 +33,6 @@ export function transformTarget(
     attack: m.attack,
     health: m.health,
     fx,
+    ...fxIdField(fxId),
   });
 }

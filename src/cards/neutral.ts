@@ -126,7 +126,7 @@ export const NEUTRAL_CARDS: CardDef[] = [
     keywords: ['taunt'], text: '嘲讽。在你的回合结束时，使其他所有友方随从获得 +1/+1',
     effects: [{
       trigger: 'turn_end',
-      actions: [{ kind: 'buff', target: 'other_friendly_minions', attack: 1, health: 1, duration: 'permanent', fx: 'shadow' }],
+      actions: [{ kind: 'buff', target: 'other_friendly_minions', attack: 1, health: 1, duration: 'permanent', fx: 'shadow', fxId: 'baron.hand_of_baron' }],
     }],
   },
 ];

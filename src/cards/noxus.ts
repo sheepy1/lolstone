@@ -31,7 +31,7 @@ export const NOXUS_CARDS: CardDef[] = [
   {
     id: 'noxus.katarina', name: '卡特琳娜', type: 'minion', class: 'noxus', cost: 4, attack: 4, health: 2,
     text: '战吼：对所有敌方随从造成 1 点伤害', champion: 'Katarina',
-    effects: [{ trigger: 'battlecry', actions: [{ kind: 'damage', amount: 1, target: 'all_enemy_minions', fx: 'physical' }] }],
+    effects: [{ trigger: 'battlecry', actions: [{ kind: 'damage', amount: 1, target: 'all_enemy_minions', fx: 'physical', fxId: 'katarina.death_lotus' }] }],
   },
   {
     id: 'noxus.vladimir', name: '弗拉基米尔', type: 'minion', class: 'noxus', cost: 5, attack: 4, health: 4,

@@ -67,7 +67,7 @@ export const FRELJORD_CARDS: CardDef[] = [
   {
     id: 'freljord.lissandra', name: '丽桑卓', type: 'minion', class: 'freljord', cost: 7, attack: 5, health: 5,
     text: '战吼：冻结所有敌方随从', champion: 'Lissandra',
-    effects: [{ trigger: 'battlecry', actions: [{ kind: 'freeze', target: 'all_enemy_minions', fx: 'frost' }] }],
+    effects: [{ trigger: 'battlecry', actions: [{ kind: 'freeze', target: 'all_enemy_minions', fx: 'frost', fxId: 'lissandra.frozen_tomb' }] }],
   },
   {
     id: 'freljord.volibear', name: '沃利贝尔', type: 'minion', class: 'freljord', cost: 7, attack: 6, health: 7,
@@ -106,8 +106,8 @@ export const FRELJORD_CARDS: CardDef[] = [
     effects: [{
       trigger: 'cast',
       actions: [
-        { kind: 'damage', amount: 2, target: 'all_enemy_minions', fx: 'frost' },
-        { kind: 'freeze', target: 'all_enemy_minions', fx: 'frost' },
+        { kind: 'damage', amount: 2, target: 'all_enemy_minions', fx: 'frost', fxId: 'anivia.glacial_storm' },
+        { kind: 'freeze', target: 'all_enemy_minions', fx: 'frost', fxId: 'anivia.glacial_storm' },
       ],
     }],
   },

@@ -2,7 +2,7 @@
 // 所以对外仍然是纯函数：入参不变，返回新局面。
 import type { GameEvent, SourceRef } from './events';
 import { nextInt } from './rng';
-import type { GameState, MinionState, PlayerState, Side, TargetRef } from './state';
+import type { Fx, GameState, MinionState, PlayerState, Side, TargetRef } from './state';
 
 export type KillCredit = { victim: number; killer: number };
 
@@ -12,13 +12,15 @@ export type Ctx = {
   nextGroup: number;
   // 本随从造成的伤害记一笔，死亡结算时据此触发 on_kill（spec 3.4）
   kills: KillCredit[];
+  // 带 fxId 的消灭动作命中的随从（instanceId → fx、fxId）。消灭本身不发事件，随后的 death 事件带上这两个字段
+  destroyFx: Map<number, { fx: Fx; fxId: string }>;
 };
 
 // 有人获胜或平局时抛出，applyAction 捕获后结束执行。只在引擎内部使用。
 export class GameOverSignal {}
 
 export function makeCtx(state: GameState): Ctx {
-  return { state, events: [], nextGroup: 0, kills: [] };
+  return { state, events: [], nextGroup: 0, kills: [], destroyFx: new Map() };
 }
 
 export function newGroup(ctx: Ctx): number {
@@ -29,6 +31,11 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K>
 
 export function emit(ctx: Ctx, group: number, event: DistributiveOmit<GameEvent, 'group'>): void {
   ctx.events.push({ ...event, group } as GameEvent);
+}
+
+// fxId 只在动作写了的时候才放进事件，没写时键不出现。
+export function fxIdField(fxId: string | undefined): { fxId?: string } {
+  return fxId === undefined ? {} : { fxId };
 }
 
 export function player(ctx: Ctx, side: Side): PlayerState {

@@ -20,6 +20,8 @@ const ACTION_TARGETS = new Set<ActionTarget>([
 ]);
 const PICKS = new Set<TargetPick>(['any_character', 'any_minion', 'enemy_minion', 'friendly_minion', 'other_friendly_minion']);
 const FX = new Set(['physical', 'fire', 'frost', 'holy', 'shadow']);
+// fxId 命名（spec 3.4）：小写字母、数字、下划线，用一个点分成"英雄 key.招式"两段
+const FX_ID = /^[a-z0-9_]+\.[a-z0-9_]+$/;
 const TRIGGERS = new Set(['cast', 'battlecry', 'deathrattle', 'combo', 'turn_start', 'turn_end', 'on_kill', 'static']);
 const TARGETABLE_TRIGGERS = new Set(['cast', 'battlecry', 'combo']);
 const CLASSES = new Set(['neutral', 'demacia', 'noxus', 'ionia', 'freljord']);
@@ -90,6 +92,12 @@ export function validateCardPool(cards: readonly CardDef[], classes: readonly He
           if (t === 'self' && !isMinion) err(`${a.kind}: self target only allowed on minions`);
         }
         if ('fx' in a && !FX.has(a.fx)) err(`${a.kind}: unknown fx ${a.fx}`);
+        if ('fxId' in a) {
+          const fxId: unknown = a.fxId;
+          const kind: string = a.kind;
+          if (!('fx' in a)) err(`${kind}: fxId only allowed on actions with fx`);
+          else if (typeof fxId !== 'string' || !FX_ID.test(fxId)) err(`${kind}: bad fxId ${String(fxId)}`);
+        }
         if (a.kind === 'summon') {
           const token = byId.get(a.token);
           if (!token) err(`summon: unknown card ${a.token}`);

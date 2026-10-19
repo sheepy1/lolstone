@@ -48,6 +48,7 @@ export type GameEvent =
         health: number;
         source: SourceRef | null; // via 为 play 时为 null
         fx: Fx | null;
+        fxId?: string; // 动作写了 fxId 才有，没写时这个键不出现
       }
     >
   | E<'spell_cast', { side: Side; card: CardInstance; target: TargetRef | null }>
@@ -73,6 +74,7 @@ export type GameEvent =
         healthAfter: number;
         lethalPrevented: boolean; // 泰达米尔这类替代致命伤害的效果拦下了这次死亡
         fx: Fx;
+        fxId?: string;
       }
     >
   | E<
@@ -84,9 +86,20 @@ export type GameEvent =
         healthBefore: number;
         healthAfter: number;
         fx: Fx;
+        fxId?: string;
       }
     >
-  | E<'death', { target: TargetRef; cardId: string; position: number }>
+  | E<
+      'death',
+      {
+        target: TargetRef;
+        cardId: string;
+        position: number;
+        // 只有被带 fxId 的消灭动作消灭时才有这两个字段（消灭本身不发事件，招牌卡的特效挂在 death 上）
+        fx?: Fx;
+        fxId?: string;
+      }
+    >
   | E<
       'buff',
       {
@@ -105,6 +118,7 @@ export type GameEvent =
         maxHealthBefore: number;
         maxHealthAfter: number;
         fx: Fx;
+        fxId?: string;
       }
     >
   | E<
@@ -120,9 +134,10 @@ export type GameEvent =
         maxHealthAfter: number;
         keywordsLost: Keyword[];
         fx: Fx;
+        fxId?: string;
       }
     >
-  | E<'freeze', { source: SourceRef; target: TargetRef; frozenAt: number; fx: Fx }>
+  | E<'freeze', { source: SourceRef; target: TargetRef; frozenAt: number; fx: Fx; fxId?: string }>
   | E<'unfreeze', { target: TargetRef; reason: 'turn_end' | 'silence' }>
   | E<'shield_broken', { target: TargetRef }>
   | E<'stealth_lost', { target: TargetRef }>
@@ -137,6 +152,7 @@ export type GameEvent =
         destroyed: boolean;
         card: CardInstance | null; // 回到手牌的那张牌
         fx: Fx;
+        fxId?: string;
       }
     >
   | E<
@@ -151,6 +167,7 @@ export type GameEvent =
         attack: number;
         health: number;
         fx: Fx;
+        fxId?: string;
       }
     >
   | E<

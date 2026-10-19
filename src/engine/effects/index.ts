@@ -41,13 +41,13 @@ function runAction(ctx: Ctx, env: EffectEnv, action: EffectAction): void {
       const amount = action.amount + (env.isSpell ? spellDamage(ctx.state, env.side) : 0);
       const src = sourceMinion(ctx, env);
       for (const t of resolveActionTargets(ctx, env, action.target)) {
-        dealDamage(ctx, group, env.source, src, t, amount, action.fx);
+        dealDamage(ctx, group, env.source, src, t, amount, action.fx, action.fxId);
       }
       return;
     }
     case 'heal':
       for (const t of resolveActionTargets(ctx, env, action.target)) {
-        healCharacter(ctx, group, env.source, t, action.amount, action.fx);
+        healCharacter(ctx, group, env.source, t, action.amount, action.fx, action.fxId);
       }
       return;
     case 'buff':
@@ -68,30 +68,32 @@ function runAction(ctx: Ctx, env: EffectEnv, action: EffectAction): void {
           },
           env.source,
           action.fx,
+          'effect',
+          action.fxId,
         );
       }
       return;
     case 'summon':
-      summonTokens(ctx, group, env, action.token, action.count, action.fx);
+      summonTokens(ctx, group, env, action.token, action.count, action.fx, action.fxId);
       return;
     case 'draw':
       for (let i = 0; i < action.count; i++) drawCard(ctx, group, env.side);
       return;
     case 'freeze':
-      for (const t of resolveActionTargets(ctx, env, action.target)) freezeTarget(ctx, group, env.source, t, action.fx);
+      for (const t of resolveActionTargets(ctx, env, action.target)) freezeTarget(ctx, group, env.source, t, action.fx, action.fxId);
       return;
     case 'silence':
-      for (const t of resolveActionTargets(ctx, env, action.target)) silenceTarget(ctx, group, env.source, t, action.fx);
+      for (const t of resolveActionTargets(ctx, env, action.target)) silenceTarget(ctx, group, env.source, t, action.fx, action.fxId);
       return;
     case 'destroy':
-      for (const t of resolveActionTargets(ctx, env, action.target)) destroyTarget(ctx, t);
+      for (const t of resolveActionTargets(ctx, env, action.target)) destroyTarget(ctx, t, action.fx, action.fxId);
       return;
     case 'bounce':
-      for (const t of resolveActionTargets(ctx, env, action.target)) bounceTarget(ctx, group, env.source, t, action.fx);
+      for (const t of resolveActionTargets(ctx, env, action.target)) bounceTarget(ctx, group, env.source, t, action.fx, action.fxId);
       return;
     case 'transform':
       for (const t of resolveActionTargets(ctx, env, action.target)) {
-        transformTarget(ctx, group, env.source, t, action.into, action.fx);
+        transformTarget(ctx, group, env.source, t, action.into, action.fx, action.fxId);
       }
       return;
     case 'gain_mana':

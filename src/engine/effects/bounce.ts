@@ -1,10 +1,10 @@
-import { emit, findMinion, type Ctx } from '../context';
+import { emit, findMinion, fxIdField, type Ctx } from '../context';
 import type { SourceRef } from '../events';
 import { MAX_HAND, type CardInstance, type Fx, type TargetRef } from '../state';
 
 // 回手：随从移回拥有者手牌，变回一张卡面状态的牌（保留实例 id）。
 // 手牌已满时直接销毁，不触发亡语（spec 2.9）。
-export function bounceTarget(ctx: Ctx, group: number, source: SourceRef, target: TargetRef, fx: Fx): void {
+export function bounceTarget(ctx: Ctx, group: number, source: SourceRef, target: TargetRef, fx: Fx, fxId?: string): void {
   if (target.kind === 'hero') return;
   const loc = findMinion(ctx.state, target.instanceId);
   if (!loc) return;
@@ -23,6 +23,7 @@ export function bounceTarget(ctx: Ctx, group: number, source: SourceRef, target:
       destroyed: true,
       card: null,
       fx,
+      ...fxIdField(fxId),
     });
     return;
   }
@@ -38,5 +39,6 @@ export function bounceTarget(ctx: Ctx, group: number, source: SourceRef, target:
     destroyed: false,
     card,
     fx,
+    ...fxIdField(fxId),
   });
 }

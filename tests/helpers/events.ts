@@ -1,4 +1,5 @@
 // 事件完整性检查（spec 6.7）：每种事件的字段表。字段缺失、多出或值为 undefined 都算不齐。
+// 字段表只列必有字段，可选字段（fxId 等）见 optionalFields。
 import { expect } from 'vitest';
 import type { EventOf, GameEvent, GameEventKind } from '../../src/engine';
 
@@ -40,8 +41,16 @@ export const EVENT_FIELDS: FieldTable = {
   game_over: ['winner'],
 };
 
+// 可选字段：动作写了 fxId 才有，没写时键不出现（不是 null）。death 是被带 fxId 的消灭动作消灭时才带 fx 和 fxId。
+const FX_KINDS: readonly GameEventKind[] = [
+  'minion_summoned', 'damage', 'heal', 'buff', 'silence', 'freeze', 'bounce', 'transform', 'death',
+];
+const optionalFields = (kind: GameEventKind): string[] =>
+  kind === 'death' ? ['fx', 'fxId'] : FX_KINDS.includes(kind) ? ['fxId'] : [];
+
 export function expectEventShape(e: GameEvent): void {
-  const expected = ['kind', 'group', ...EVENT_FIELDS[e.kind]].sort();
+  const optional = optionalFields(e.kind).filter((k) => k in e);
+  const expected = ['kind', 'group', ...EVENT_FIELDS[e.kind], ...optional].sort();
   expect(Object.keys(e).sort(), `fields of ${e.kind}`).toEqual(expected);
   for (const [k, v] of Object.entries(e)) expect(v, `${e.kind}.${k}`).not.toBeUndefined();
   expect(typeof e.group).toBe('number');

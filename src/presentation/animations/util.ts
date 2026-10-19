@@ -51,6 +51,24 @@ export function at(p: Point): () => Point {
   return () => p;
 }
 
+// 分镜的颜色（m4-storyboard 1.8）
+export const TINT = { damage: 0xff3b30, heal: 0x3ddc84, buff: 0xffc44d, debuff: 0xb05cff } as const;
+
+// 攻击、生命徽章弹一下并闪色（spec 5.6 v0.6.2：受伤、治疗、增益、减益都作用在徽章上）。英雄的生命宝石同理。
+// 物件在播放时才查（可能是这一步刚召唤出来的）
+export function popStat(scene: TableScene, ref: TargetRef, kind: 'attack' | 'health', tint: number): gsap.core.Timeline {
+  const t = gsap.timeline();
+  t.call(() => {
+    if (ref.kind === 'hero') {
+      if (kind === 'health') scene.heroes[ref.side].popHealth(tint);
+      return;
+    }
+    scene.minion(ref.instanceId)?.badges[kind].pop(tint);
+  });
+  t.to({}, { duration: 0.4 });
+  return t;
+}
+
 // 把场景对到显示局面，并给布局滑动留出时间。
 export function syncTo(scene: TableScene, view: Parameters<TableScene['sync']>[0], duration = 0.3): gsap.core.Timeline {
   const t = gsap.timeline();

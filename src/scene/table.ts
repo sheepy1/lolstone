@@ -53,7 +53,7 @@ function put(obj: THREE.Object3D, s: Slot): void {
 }
 
 // 滑到槽位。返回是否需要移动。
-function moveTo(obj: THREE.Object3D, s: Slot, duration: number): boolean {
+function moveTo(obj: THREE.Object3D, s: Slot, duration: number, ease = 'power2.out'): boolean {
   const p = obj.position;
   const r = obj.rotation;
   const far =
@@ -66,7 +66,6 @@ function moveTo(obj: THREE.Object3D, s: Slot, duration: number): boolean {
     put(obj, s);
     return true;
   }
-  const ease = 'power2.out';
   gsap.to(obj.position, { ...s.pos, duration, ease, overwrite: 'auto' });
   gsap.to(obj.rotation, { ...s.rot, duration, ease, overwrite: 'auto' });
   gsap.to(obj.scale, { x: s.scale, y: s.scale, z: s.scale, duration, ease, overwrite: 'auto' });
@@ -100,6 +99,12 @@ export class TableScene {
   // 交互状态，布局时要考虑
   hoveredHand: number | null = null;
   draggingHand: number | null = null;
+  // 正沿弧线飞回手牌的牌：参与手牌排位，但位置由飞行动画管
+  readonly returningHand = new Set<number>();
+  // 由动画模块接管入场的随从：sync 建出来时先藏起来，不做默认的落下动画
+  readonly heldSpawns = new Set<number>();
+  // 自己打出、悬在落点上方等着砸落的随从牌（card_played 放进来，minion_summoned 取走）
+  readonly pendingPlayCards = new Map<number, CardView>();
   boardGap: number | null = null; // 我方随从行空出的位置
   mulliganMarks = new Set<number>();
   // 新手牌的出发点（默认从牌库飞出；回手的牌从随从原来的位置飞出）
@@ -199,7 +204,7 @@ export class TableScene {
   pointOf(ref: TargetRef): Point {
     if (ref.kind === 'hero') {
       const h = this.heroes[ref.side];
-      return { x: h.position.x, y: 0.8, z: h.position.z };
+      return { x: h.position.x, y: 0.5, z: h.position.z };
     }
     const m = this.minions.get(ref.instanceId);
     if (m) return { x: m.position.x + m.body.position.x, y: 0.35 + m.body.position.y, z: m.position.z + m.body.position.z };
@@ -323,20 +328,27 @@ export class TableScene {
   }
 
   // 只重排手牌（悬停、拖拽时用）。
-  layoutHand(duration = 0.15): void {
-    for (const side of [0, 1] as Side[]) this.syncHand(side, duration);
+  layoutHand(duration = 0.15, ease?: string): void {
+    for (const side of [0, 1] as Side[]) this.syncHand(side, duration, ease);
   }
 
   // 只重排我方随从行（拖随从牌时空出位置）。
-  layoutBoard(duration = 0.15): void {
-    this.syncBoard(this.view.viewer, duration);
+  layoutBoard(duration = 0.15, ease?: string): void {
+    this.syncBoard(this.view.viewer, duration, ease);
+  }
+
+  // 一张我方手牌不悬停时该在的槽位（拖回手牌时的落点）
+  handSlotOf(id: number): Slot | null {
+    const hand = this.view.players[this.view.viewer].hand;
+    const i = hand.findIndex((c) => c.instanceId === id);
+    return i < 0 ? null : handSlot('near', i, hand.length);
   }
 
   private layerOf(p: Placement): THREE.Group {
     return p === 'near' ? this.layers.handNear : this.layers.handFar;
   }
 
-  private syncHand(side: Side, duration: number): boolean {
+  private syncHand(side: Side, duration: number, ease?: string): boolean {
     const p = this.place(side);
     const layer = this.layerOf(p);
     const hand = this.view.players[side].hand;
@@ -371,12 +383,13 @@ export class TableScene {
       } else slot = handSlot(p, i, visible.length);
       // 悬停的牌画在最上面（它离镜头最近，深度测试本来就对；renderOrder 只防同深度闪烁）
       c.renderOrder = i === hoveredIndex ? 2 : 0;
-      moved = moveTo(c, slot, duration) || moved;
+      if (this.returningHand.has(card.instanceId)) return;
+      moved = moveTo(c, slot, duration, ease) || moved;
     });
     return moved;
   }
 
-  private syncBoard(side: Side, duration: number): boolean {
+  private syncBoard(side: Side, duration: number, ease?: string): boolean {
     const p = this.place(side);
     const board = this.view.players[side].board;
     const ids = new Set(board.map((m) => m.instanceId));
@@ -396,7 +409,10 @@ export class TableScene {
         put(m, slot);
         this.minions.set(vm.instanceId, m);
         this.layers.minions.add(m);
-        if (duration > 0) {
+        if (this.heldSpawns.has(vm.instanceId)) {
+          this.heldSpawns.delete(vm.instanceId);
+          m.body.visible = false;
+        } else if (duration > 0) {
           // 落地：从空中落下、压扁回弹
           m.body.position.y = 1.6;
           m.body.scale.set(0.6, 0.6, 0.6);
@@ -406,7 +422,7 @@ export class TableScene {
         }
       }
       m.update(vm);
-      moved = moveTo(m, slot, duration) || moved;
+      moved = moveTo(m, slot, duration, ease) || moved;
     });
     return moved;
   }

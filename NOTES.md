@@ -299,3 +299,38 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
 
 `tests/fixtures/l0-replay.json`：种子 181、弗雷尔卓德对德玛西亚的 L0 对 L0，按批存原始事件和开局显示局面。
 `pnpm fixture:record` 重新录制（卡池或事件改了之后）。它没有回手和失去潜行，这两种由构造的事件测试覆盖。
+
+## 非英雄卡的配图（fetch-icons）
+
+`scripts/data/card-art.json` 是映射表：没有 champion 字段的 47 张卡（小兵、野怪、亚龙、法术、衍生物）、4 个英雄技能、11 个关键词，
+每项写来源、裁切建议、选图理由和备选。`scripts/fetch-icons.ts` 按它下载，`scripts/art-review.ts` 出逐张对照页。还没接进卡面和场景，
+等 M3 定稿后再接：卡面原画窗口读 `art`（按 `crop` 裁），场上随从头像读 `icon`，清单是 `public/art/icons-manifest.json`。
+
+### 来源
+
+- 峡谷单位（小兵、野怪、亚龙、男爵、虚空幼虫和虚空螨）：CommunityDragon 的 `characters/<单位>/hud/<名>_square.png`，128×128。
+  目录可以用 `https://raw.communitydragon.org/json/latest/game/assets/characters/<单位>/hud/` 列出来，返回 JSON。
+  虚空幼虫对应 `sru_horde`（Voidgrub），虚空蠕虫对应 `sru_horde_mini`（Voidmite）。
+- 技能、被动、物品、召唤师技能图标：Data Dragon，64×64，地址带版本号。回城图标 Data Dragon 没有，用 CommunityDragon 的
+  `game/assets/spells/icons2d/recallhome.png`。
+- 皮肤原画：Data Dragon `cdn/img/champion/splash/<Key>_<编号>.jpg`，1215×717，和竖版原画一样不带版本号，带了返回 403。
+- 符文之地传说（Legends of Runeterra）卡牌原画：`https://dd.b.pvp.net/7_10_0/<set>/en_us/img/cards/<卡号>-full.png`，2048×1024。
+  卡号和 set 查 `https://dd.b.pvp.net/latest/<set>/en_us/data/<set>-en_us.json`（zh_cn 返回 403，en_us 能用）；set 有
+  set1 到 set9 以及 set6cde、set7b，卡号前两位不能直接推出 set（06 开头的分在 set6 和 set6cde）。服务器是没有 CDN 的 S3，
+  单张 15 到 100 秒，所以 http.ts 加了 `timeoutMs`，这类来源放宽到 10 分钟。
+
+### 选图的取舍
+
+- 中立单位统一用峡谷头像，画风一致；符文之地传说里有同名大图的 5 张（蓝色哨兵、山脉、海洋、云端亚龙、远古巨龙）放在备选。
+  头像只有 128 像素，放进原画窗口偏糊，纳什男爵这种 10 费卡最值得以后生成大图。
+- 法术优先用符文之地传说里效果或名字对得上的卡（审判、大杀四方、回城、魔法水晶箭等），再退到皮肤原画。英雄本人的原皮原画已经
+  被随从卡或职业英雄用了，法术要用皮肤原画时换别的皮肤，避免两张卡同图。
+- 符文之地传说的法术原画是黑底上的圆形画面，`crop.zoom` 设 1.55（窗口宽高比 1:0.86 时四角刚好落在圆里）；单位原画是满幅的，不用放大。
+- 建议生成的 2 张：失去坐骑的克烈、法力药水（映射表里带 `generate` 字段，先用替代图）。
+
+### 和 spec 不一致、需要定的
+
+- spec 5.4 写「嘲讽用拉莫斯的 W」，但嘲讽是他的 E（`PuncturingTaunt`），W 是尖刺防御。映射表用 E，W 放备选。
+- spec 5.9 指定的英雄技能图标有两处和法术撞图：召集用 `GarenE`，而 `GarenE` 就是法术「审判」；诺克萨斯断头台用 `DariusExecute`，
+  法术「处决」的效果和它一样，图标也用了它。召集的备选是盖伦 W 和嘉文四世被动。
+- spec 5.9 写 fetch-icons 输出到 `public/art/icons/`，实际按卡牌、英雄技能、关键词分成 `cards/`、`heropowers/`、`keywords/` 三个目录。

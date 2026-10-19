@@ -13,7 +13,7 @@ export const turnStart: AnimModule<'turn_start'> = (e, { scene, after, viewer })
   const t = tl();
   if (e.side !== viewer) {
     t.add(syncTo(scene, after, 0.3));
-    return { tl: t };
+    return { tl: t, tail: 0.3 }; // 对方回合开始：只有布局滑动，整段都算收尾
   }
   const banner = new Banner(scene.stage, scene.layers.top, bannerSlot().pos, '你的回合', WARM);
   t.call(() => {

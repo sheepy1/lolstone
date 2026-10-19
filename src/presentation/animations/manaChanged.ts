@@ -26,5 +26,5 @@ export const manaChanged: AnimModule<'mana_changed'> = (e, { scene, after }) => 
     t.call(() => void scene.sync(after, 0.3), undefined, 0);
     t.to({}, { duration: 0.05 });
   }
-  return { tl: t };
+  return { tl: t, tail: e.reason === 'turn_start' ? 0.15 : 0.05 };
 };

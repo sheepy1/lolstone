@@ -45,7 +45,7 @@ export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before
       if (m) flash(m.flash, 0xffffff, 0.9, 0.35);
       if (m) statusEnter(scene, m.instanceId, keywordsOf(after, e.side, m.instanceId));
     }, undefined, 0.05);
-    return { tl: t };
+    return { tl: t, tail: 0.35 };
   }
   const id = e.target.instanceId;
   const P = PLAY_MINION;
@@ -99,5 +99,6 @@ export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before
     if (champ) playVoice(champ, 'choose');
   }, undefined, '+=0.15');
   t.to({}, { duration: Math.max(0, P.settle - 0.15) });
-  return { tl: t };
+  // 落地之后（压扁回弹、冲击波、登场台词）都算收尾，下一组可以在收尾进行到 60% 时开始
+  return { tl: t, tail: Math.max(0, t.duration() - (P.charge + P.smash)) };
 };

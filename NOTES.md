@@ -327,3 +327,46 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
 
 `tests/fixtures/l0-replay.json`：种子 181、弗雷尔卓德对德玛西亚的 L0 对 L0，按批存原始事件和开局显示局面。
 `pnpm fixture:record` 重新录制（卡池或事件改了之后）。它没有回手和失去潜行，这两种由构造的事件测试覆盖。
+
+## M4 菜单页面（加载、主菜单、结算）
+
+按 docs/m4-first-minutes.md 第 1、2、12 步做的 React 叠加层，海克斯科技风格（spec 5.9）。对局场景没动。
+
+### 文件
+
+- `src/ui/menu.css`：这三页的全部样式。类名前缀 `hx-`（共用件）、`mm-`（主菜单）、`ld-`（加载）、`rs-`（结算），
+  和 `styles.css` 里对局界面的类分开。
+- `src/ui/hextech.tsx`：1920×1080 舞台（`Stage`，按窗口等比缩放，spec 5.4）、台面远景背景（`MenuBackdrop`）、漂浮粒子。
+- `src/ui/menuData.ts`：四个职业的英雄名、技能名、一句话风格，AI 难度，加载页的 10 条小提示。
+- `src/ui/MainMenu.tsx`、`LoadingScreen.tsx`、`ResultPanel.tsx`：三页。`UiRoot.tsx` 管换页过渡。
+
+### 做法
+
+- 背景：`MenuBackdrop` 现在是 CSS 画的台面远景（透视网格、远处金色台沿和中心光、扫过的光束）加 2D canvas 粒子。
+  `live` 参数打开时只留粒子和暗角，让下面画布里的实时 3D 场景透上来；场景层以后能渲染台面远景时，加载页和主菜单传
+  `live` 即可。
+- 换页过渡：上一页在新页上面淡出 0.45 秒。两个要点：上一页要在渲染时就记下（`useScreenLayers` 里在渲染中 setState），
+  等 effect 再记的话那一次提交里上一页已经被卸载，再挂上时入场动画从头放；新页插在后面、不挪 DOM 节点，挪动会重放
+  CSS 动画。淡出要等新页画出一帧（两次 rAF）才开始：进对局时首帧编译着色器会卡主线程几百毫秒，透明度动画在合成线程上
+  照样走，不等的话卡顿期间就淡完了。
+- 进度条：显示值追着真实进度走，每秒最多 1.6（整条约 0.6 秒），资源已缓存时也看得出在走。打开页面时进度是渲染器
+  0–30%、四张职业原画和界面字体 30–100%（`main.tsx` 的 `preloadMenu`）；开一局时清单资源 0–90%、卡面字体 90–100%。
+  打开页面的加载页最少停 0.9 秒，对局加载页最少停 1.4 秒（`MIN_BOOT_MS`、`MIN_LOADING_MS`）。
+- AI 难度：`startMatch` 多了第 4 个参数，`l0` 用 `l0ChooseAction`，`l1`（默认）用 L1。菜单选择存在 `menu.difficulty`。
+  `startMatch` 会把这局的职业和难度写回 `menu`，加载页和结算面板从那里读。
+- 键盘：三组选项是 WAI-ARIA 单选组（选中项可 Tab 到，方向键在组内移动并选中），Tab 到开始按钮，Enter 在页面任何
+  地方都开始对局。进主菜单时焦点在已选的职业卡上。结算面板出现时焦点在"再来一局"。
+- 声音：悬停 `ui.hover`、选择 `ui.click`、开始和再来一局 `ui.button`，第一次点击或按键后 `playMusic('menu')`。音效表和
+  曲目表现在都是空的（M4 填素材），所以实际没声音；接口已经接好。
+- 字体：`menu.css` 用 `@font-face` 声明 M3 的子集字体 `MeLoL Serif SC`，`--hx-font` 先读 `--melol-font-cn`，没有就用
+  子集字体、再兜底到系统宋体。子集只带卡池用到的字，菜单文字里约 140 个字不在子集里（"局""胜""败""选"等），由系统宋体
+  补；为了粗细一致，菜单文字统一按粗体排。要统一字形，把菜单文字加进字体子集。
+
+### 截图和验证
+
+- 开发服务器不监听本 worktree：`vite.config.ts` 的 `watch.ignored` 有 `**/.claude/**`，而 worktree 本身就在
+  `.claude/worktrees/` 下，改了文件页面不会更新，开发服务器还会继续发旧的转换结果。在 worktree 里调界面要每次改完重启
+  开发服务器。
+- 原尺寸截图用 Playwright 缓存里的 `chrome-headless-shell`（`~/Library/Caches/ms-playwright/chromium_headless_shell-*/`）
+  加 `--use-angle=metal` 走 GPU，通过 CDP 设视口、点按钮、`Page.captureScreenshot`。`Runtime.evaluate` 要带
+  `replMode: true` 才能在表达式里 `await import('/src/app/store.ts')` 拿到和应用同一份的界面状态。

@@ -13,8 +13,11 @@ export type Step = {
 };
 
 // 播放一步。before 是这一步之前的显示局面，after[i] 是推进完第 i 个事件之后的显示局面。
-// 返回的 Promise 完成就是这一步播完。
-export type StepPlayer = (step: Step, before: ViewState, after: ViewState[]) => Promise<void>;
+// 返回一个 Promise：完成就是这一步播完，下一步接着开始（严格串行）。
+// 也可以返回 { ready, done }（m4-storyboard 1.7 的组间重叠）：ready 完成时下一步就可以开始，这一步的收尾和下一步重叠；
+// done 完成才算这一步彻底播完。导演在 ready 时推进显示局面，所有步的 done 都完成之前一直算忙（输入锁定）。
+export type StepPlayback = { ready: Promise<void>; done: Promise<void> };
+export type StepPlayer = (step: Step, before: ViewState, after: ViewState[]) => Promise<void> | StepPlayback;
 
 export type DirectorListener = (d: Director) => void;
 
@@ -79,10 +82,24 @@ export class Director {
     for (const fn of this.listeners) fn(this);
   }
 
+  // 新事件进队列时叫醒正在等收尾的 pump
+  private wake: (() => void) | null = null;
+
   private async pump(): Promise<void> {
-    if (this.running) return;
+    if (this.running) {
+      this.wake?.();
+      return;
+    }
     this.running = true;
-    while (this.queue.length > 0) {
+    // 已经过了 ready、收尾还没播完的步
+    const tails = new Set<Promise<void>>();
+    while (this.queue.length > 0 || tails.size > 0) {
+      if (this.queue.length === 0) {
+        // 等收尾播完，或者有新事件进来（新事件可以接在收尾上重叠播）
+        await Promise.race([...tails, new Promise<void>((resolve) => (this.wake = resolve))]);
+        this.wake = null;
+        continue;
+      }
       const step = this.queue.shift()!;
       const before = this.view;
       const after: ViewState[] = [];
@@ -91,12 +108,24 @@ export class Director {
         v = reduceView(v, e);
         after.push(v);
       }
-      try {
-        await this.player(step, before, after);
-      } catch (err) {
+      const fail = (err: unknown) => {
         this.errors.push(err);
         console.error('[director] step failed', step, err);
+      };
+      let playback: StepPlayback;
+      try {
+        const r = this.player(step, before, after);
+        playback = r instanceof Promise ? { ready: r, done: r } : r;
+      } catch (err) {
+        fail(err);
+        playback = { ready: Promise.resolve(), done: Promise.resolve() };
       }
+      // 出错只记一次：ready 和 done 是同一个 Promise（严格串行的播放器）时只在 done 上记
+      const done = playback.done.catch(fail);
+      tails.add(done);
+      void done.then(() => tails.delete(done));
+      if (playback.ready !== playback.done) await playback.ready.catch(fail);
+      else await done;
       this.view = v;
       this.notify();
     }

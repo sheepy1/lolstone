@@ -1,13 +1,13 @@
 // 随从入场（spec 5.6 v0.6.2、m4-storyboard E07）：
 // 从手牌打出的：牌悬在落点上方，蓄力再抬一点，然后变成随从底座快速砸到台面；落地时底座压扁再回弹，脚下扬起尘土，
-// 相邻随从同时让位；高费随从加一圈冲击波和很轻的镜头震动。英雄随从落地后说登场台词。
+// 相邻随从同时让位；高费随从加一圈冲击波和很轻的镜头震动。尘土是粒子预设 dust_land（分镜表 1.5）。英雄随从落地后说登场台词。
 // 效果和英雄技能召唤的衍生物从光点凝聚成形。
 import gsap from 'gsap';
 import { playSfx, playVoice } from '../../audio';
 import { championOf } from '../../assets/manifest';
 import { getCard } from '../../engine';
 import { dispose } from '../../scene/dispose';
-import { burst, ring } from '../fx/effects';
+import { ring } from '../fx/effects';
 import { boardSlot } from '../layout';
 import type { AnimModule } from './types';
 import { flash, pointOf, syncTo, tl } from './util';
@@ -82,7 +82,10 @@ export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before
       { x: 1, y: 1, z: 1, duration: P.settle, ease: 'elastic.out(1, 0.45)', immediateRender: true },
     );
   });
-  t.add(burst(scene.layers.fx, () => ({ x: slot.x, y: 0.05, z: slot.z }), 0x9a8060, dustCount(cost), 0.5), '<');
+  // 扬尘用粒子预设 dust_land，在落地帧发出去就不管了：尘土要飘 0.85 秒，不能把这一步拖长，压住后面的事件
+  t.call(() => scene.particles.emit('dust_land', { at: { x: slot.x, y: 0, z: slot.z }, count: dustCount(cost) }), undefined, '<');
+  // 冲击波还用贴地的光环：预设里最接近的 spark_heavy 是打击火花（朝镜头的白闪加四散的火星），
+  // 放在落点上读起来像"被打了一下"，不像重物落地，白闪还会盖住头像
   if (cost >= P.shockwaveCost) t.add(ring(scene.layers.fx, () => ({ x: slot.x, y: 0.02, z: slot.z }), 0xd8c08a, 170, 0.45), '<');
   if (cost >= P.shakeCost) t.add(scene.shake(P.shake), '<');
   t.call(() => {

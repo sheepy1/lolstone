@@ -303,15 +303,21 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
   拱起的弧线回到手牌里的位置。
 - 出随从（`minionSummoned.ts` 的 `PLAY_MINION`，参数取自 m4-storyboard 的 E07）：松手后牌飞到落点上方转平悬着，
   蓄力上提 0.1 秒，再 0.11 秒加速砸下（expo.in），落地压扁到 0.85 再弹回（elastic），扬起尘土（费用越高越多），
-  费用 ≥ 5 加一圈冲击波，≥ 6 镜头轻震，全程约 0.6 秒。松手到砸落之间空位一直留着（`scene.boardGap` 到砸落时才清），
+  费用 ≥ 5 加一圈冲击波，≥ 6 镜头轻震，全程约 0.6 秒。
+  尘土是粒子预设 `dust_land`（数量按分镜 8/14/20），在落地帧发出就不管，不算进这一步的时长（尘土飘 0.85 秒，
+  算进去会把后面的事件压住 0.3 秒）。冲击波没换成预设：最接近的 `spark_heavy` 是打击火花，朝镜头的白闪盖住头像，
+  四散的火星读起来像被打了一下，不像重物落地；还是用贴地向外扩的光环（`effects.ts` 的 `ring`）。松手到砸落之间空位一直留着（`scene.boardGap` 到砸落时才清），
   不然两边的随从会先合拢再被推开。对手的随从和效果召唤的随从不砸，用光圈加闪光出场。
 - 出法术：自己的法术沿弧线飞到中央放大，停 0.35 秒，再放大提亮缩没，接法术效果；对手打出的牌在中央停 0.8 秒再淡出。
 - 换牌阶段压暗棋盘：一块朝镜头的半透明黑板，放在离镜头 18 的位置，在起手牌（17.6）之后、我方枢纽（18.4）之前。
 
-- 卡面字体：思源宋体粗体（Noto Serif SC Bold，OFL，许可证在 `public/fonts/OFL.txt`）按卡池用到的字做子集，
-  `public/fonts/melol-serif-sc.woff`（约 80 KB），旁边的 `.chars.txt` 记着带了哪些字。卡池加了新字后运行
-  `pnpm font:subset <NotoSerifSC-Bold.otf 的路径>` 重新生成（要 Python 的 fonttools）；`tests/presentation-font.test.ts`
-  在缺字时失败。子集去掉了 OpenType 排版特性：思源的标点挤压会让 troika 把全角冒号挤没。
+- 卡面字体：思源宋体粗体（Noto Serif SC Bold，OFL，许可证在 `public/fonts/OFL.txt`）按卡池和界面用到的字做子集，
+  `public/fonts/melol-serif-sc.woff`（585 个字，约 110 KB），旁边的 `.chars.txt` 记着带了哪些字。主菜单、加载页、
+  结算面板也用这个子集（`src/ui/menu.css` 的 @font-face），缺的字会由系统宋体补，字形不统一。
+  界面文字由 `src/dev/fontChars.ts` 扫 `src/ui` 和 `src/app` 的源码收集：去掉注释后，字符串和 JSX 文本里的非 ASCII 字符
+  （ASCII 本来就全带）。`src/app` 也扫，是因为加载页的进度说明、出错提示这些字符串写在对局层里。
+  卡池或界面加了新字后运行 `pnpm font:subset <NotoSerifSC-Bold.otf 的路径>` 重新生成（要 Python 的 fonttools）；
+  `tests/presentation-font.test.ts` 在卡池或界面缺字时失败。子集去掉了 OpenType 排版特性：思源的标点挤压会让 troika 把全角冒号挤没。
 - 悬停大卡：悬停场上随从或英雄技能时，场景左侧显示一张放大的卡（`TableScene.showInspect`，和场上同一套光照），
   随从显示当前数值；关键词解释是 DOM，贴在放大卡下面（位置用镜头投影算出）。悬停手牌时手牌自己抬起放大，不另外显示。
 - 棋盘（spec 5.2）：`scene/terrain.ts` 是纯函数的高度场（河道挖下去、左侧野区丘陵、全场细小起伏），`scene/board.ts`
@@ -466,8 +472,10 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
 
 ## 粒子系统（M4，分镜表 1.5）
 
-代码在 `src/presentation/fx/particles/`，演示页 `src/dev/particles/`，测试 `tests/particles.test.ts`。还没接进事件动画，
-M4 各事件模块直接调用。
+代码在 `src/presentation/fx/particles/`，演示页 `src/dev/particles/`，测试 `tests/particles.test.ts`。
+对局场景里有一个现成的系统：`TableScene.particles`，挂在场景根上，每帧跟着渲染推进（乘全局时间线的 timeScale，
+效果和 `driveWithGsap` 一样，但手动推帧录屏时也会动），一局结束时随场景释放。动画模块直接
+`scene.particles.emit(...)` 或 `particleTimeline(scene.particles, ...)`。已接上的：出随从的落地扬尘（`dust_land`）。
 
 ### 用法
 

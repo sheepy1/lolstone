@@ -1041,3 +1041,30 @@ M1 基准机上没测，合并后要在 M1 上用 `bench.benchCombat(bench.fullB
   我方回合的结束回合按钮是可交互，自己回合里出不了的手牌是不可用，其余是默认。悬停、拿起、选目标、提交、取消和每次 `refresh`
   都会调它。
 - 截图不带系统指针。验证时在页面里注入一个调试浮层：读指针下元素算出的 `cursor`，把同一张图按 1x/2x srcset 画在鼠标位置。
+
+## M4 剩余事件：召唤衍生物、回手、变形、触发（m4-storyboard E08、E20、E21、E22）
+
+- 召唤衍生物（E20，`minionSummoned.ts` 的 tokenSummon，只改了这部分，出随从的砸落没动）：
+  - 凝聚 250ms：summon_gather 20 粒在槽位向内聚，同时 sync 让位，新随从先放上但不显示（heldSpawns）；
+  - 成形 200ms：底座 0 → 1.1 → 1（back.out），dust_land 4 粒；
+  - 声音：combat.summon 在 t=0，轻落地 card.land 在成形帧；
+  - 同一步召唤多个时，按模块上下文的 index 错开 80ms。参数在 `TOKEN_SUMMON`。
+- 回手（E21，`bounce.ts`）：
+  - 底座收缩（150ms 起）；sync 把回手的那张牌放到手牌槽位上，再用 flow.ts 的 flyFromDeck 从底座上方沿弧线飞过去，落位时 ui.drop；
+  - 飞行中的牌登记在 incomingHand，布局同步不挪它；
+  - 手牌满：卡升到手牌区上方，走 E04 的燃烧段（burnAway、burn_ash、card.burn）。参数在 `BOUNCE`。
+- 变形（E22，`transform.ts`）：
+  - 闪白 100ms，放大 1.1；
+  - 炸开 150ms：白色 death_shards 8 粒、spark_light 6 粒，原形象缩没；
+  - 成形 250ms：新随从底座 0 → 1（back.out），徽章直接是新值；
+  - 声音：card.transform 在闪白，card.land 在成形帧。参数在 `TRANSFORM`。
+- 触发（E08，`trigger.ts`）：
+  - 有选定目标（战吼、连击选目标）：来源闪金色，fx/beam.ts 的光线拉出 150ms（头部先到），命中处白闪加 spark_light 6 粒，170ms 淡出；
+  - 光线的造型跟玩家拖的目标箭头一样（TubeGeometry 加圆锥头、同样的拱起），颜色用海克斯金，和伤害红区分；
+  - 光线是这个模块自己画的，不用 arrow.ts。配图会话在改 arrow.ts 的风格，改完后如果两者不一致，只需要改 beam.ts；
+  - 没有目标：来源闪金色加一圈光环和时机的字。回合开始、回合结束的触发（娑娜、斯维因、纳什男爵、冰凤凰蛋）多一圈 buff_ring；
+  - tail 设成整段时长，所以后面的动作（伤害、冻结、增益）在命中闪附近就开始，不等光线消失。实测：命中 0.20 秒，伤害的命中声在 0.28 秒。
+- /dev/fx 的"召唤衍生物、回手、变形、触发"面板：
+  - 能切的样例：衍生物一次几个、回手时手牌是否已满、变形成松鼠还是艾尼维亚、触发类型（战吼选目标并接伤害、回合结束、亡语）；
+  - 各个模块的时长参数也在这个面板里调；
+  - 自动化录屏改样例用 `bench.sample`。页面里自己 import 的 sampleEvents 是另一份模块实例，改它不生效。

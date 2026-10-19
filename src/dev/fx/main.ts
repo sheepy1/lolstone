@@ -9,7 +9,7 @@ import GUI from 'lil-gui';
 import { l0ChooseAction } from '../../ai/l0';
 import { installDefaultPool, PRESET_DECKS } from '../../cards';
 import { applyAction, createGame, getCard, listLegalActions, maskEvents, seedRng, type Action, type Fx, type GameState, type RngState, type Side } from '../../engine';
-import { PLAY_MINION } from '../../presentation/animations/minionSummoned';
+import { PLAY_MINION, TOKEN_SUMMON } from '../../presentation/animations/minionSummoned';
 import { ATTACK, BUFF, DEATH, FREEZE, HEAL, HERO_HIT, HIT, SHIELD, STEALTH } from '../../presentation/animations/combat';
 import { FLOAT_TEXT } from '../../presentation/fx/combatText';
 import { CRACKS } from '../../presentation/fx/nexusCracks';
@@ -36,6 +36,10 @@ import { TURN_END } from '../../presentation/animations/turnEnd';
 import { FLOW } from '../../presentation/fx/flow';
 import { MANA_FX } from '../../scene/tableParts';
 import { AI_PACE } from '../../app/match';
+import { BOUNCE } from '../../presentation/animations/bounce';
+import { TRANSFORM } from '../../presentation/animations/transform';
+import { TRIGGER } from '../../presentation/animations/trigger';
+import { BEAM } from '../../presentation/fx/beam';
 import { SAMPLE, sampleEvents } from '../sampleEvents';
 
 gsap.registerPlugin(GSDevTools);
@@ -310,6 +314,19 @@ addAll(flow, AI_THINK, 'E27');
 addAll(flow, AI_PACE, 'E27 思考');
 addAll(flow, ENDGAME, 'E28/29');
 
+// 剩余事件（m4-storyboard E08、E20、E21、E22 和回合开始/结束的触发）：样例变体和时长
+const misc = gui.addFolder('召唤衍生物、回手、变形、触发');
+misc.close();
+misc.add(SAMPLE, 'tokens', 1, 3, 1).name('衍生物一次几个');
+misc.add(SAMPLE, 'bounceFull').name('回手时手牌已满');
+misc.add(SAMPLE, 'transformInto', ['松鼠', '艾尼维亚']).name('变成');
+misc.add(SAMPLE, 'trigger', ['战吼选目标', '回合结束', '亡语']).name('触发');
+addAll(misc, TOKEN_SUMMON, 'E20');
+addAll(misc, BOUNCE, 'E21');
+addAll(misc, TRANSFORM, 'E22');
+addAll(misc, BEAM, 'E08 光线');
+addAll(misc, TRIGGER, 'E08');
+
 // 方案 b 的小灯。"谁的回合""生命"只改画面，不改局面，"重置棋盘"后恢复
 const lamp = gui.addFolder('枢纽小灯 NEXUS_LAMP');
 lamp.add(NEXUS_LAMP, 'core', 0.5, 6, 0.1).name('灯芯亮度');
@@ -372,4 +389,6 @@ window.addEventListener('keydown', (e) => {
   fullBoard: () => fullBoard(base, BOARD_CARDS),
   fullBoardWipe,
   scenarios: COMBAT_SCENARIOS,
+  // 样例变体（胜负结果、衍生物个数、回手满手、变形目标、触发类型），自动化录屏时改它
+  sample: SAMPLE,
 };

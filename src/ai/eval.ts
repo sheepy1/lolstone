@@ -1,11 +1,12 @@
 // 局面评估函数（spec 4.3）。L1 贪心用它比较"执行一个动作之后"和"现在"哪个好。
 // 只读局面，不改；在遮挡后的局面上算，不需要看对方手牌内容，只用张数。
 import { hasKeyword, isFrozen, staticEffects } from '../engine/keywords';
-import { other, type GameState, type HeroClass, type MinionState, type Side } from '../engine/state';
+import { MAX_MANA, other, type GameState, type HeroClass, type MinionState, type Side } from '../engine/state';
 
 export type EvalWeights = {
   wHp: Record<HeroClass, number>; // 英雄生命差的权重，按评估方的职业取
   wHand: number; // 手牌张数差的权重
+  wMana: number; // 法力上限差的权重，上限按 10 封顶
   win: number; // 对方死亡加分、我方死亡扣分
   minion: {
     attack: number;
@@ -25,6 +26,7 @@ export type EvalWeights = {
 export const EVAL_WEIGHTS: EvalWeights = {
   wHp: { noxus: 1.5, freljord: 0.6, demacia: 1.0, ionia: 1.0 },
   wHand: 0.7,
+  wMana: 2,
   win: 1000,
   minion: {
     attack: 1.0,
@@ -65,6 +67,8 @@ export function evaluate(state: GameState, side: Side, w: EvalWeights = EVAL_WEI
   for (const m of me.board) score += minionValue(m, w);
   for (const m of opp.board) score -= minionValue(m, w);
   score += w.wHand * (me.hand.length - opp.hand.length);
+  // 凛冬将至这类加空水晶的牌只改上限，不算这一项就永远不会打
+  score += w.wMana * (Math.min(me.mana.max, MAX_MANA) - Math.min(opp.mana.max, MAX_MANA));
   // 平局时两项抵消，按生命差等其余项算
   if (opp.hero.health <= 0) score += w.win;
   if (me.hero.health <= 0) score -= w.win;

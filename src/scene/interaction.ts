@@ -601,7 +601,8 @@ export class Interaction {
     this.hoverPick = hit;
     this.syncCursor();
     const handId = hit?.kind === 'hand' ? hit.id : null;
-    if (handId !== this.scene.hoveredHand && this.scene.view.phase === 'playing') {
+    // 换牌时悬停的牌也略微抬起放大，让玩家知道指着的是哪张（法力药水还会出说明，m4-first-minutes 第 4 步）
+    if (handId !== this.scene.hoveredHand && this.scene.view.phase !== 'over') {
       this.scene.hoveredHand = handId;
       this.scene.layoutHand(0.12);
     }

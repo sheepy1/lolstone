@@ -205,7 +205,10 @@ export class Match {
     const r = applyAction(this.state, choice.action);
     if (!r.ok) throw new Error(`AI action rejected: ${r.error}`);
     if (this.state.phase === 'playing') {
-      const wait: PresentationEvent = { kind: 'ai_thinking', group: 0, side: this.aiSide, seconds: choice.action.kind === 'end_turn' ? AI_PACE.endTurn : this.nextThink(turn.k++, turn.first) };
+      const seconds = choice.action.kind === 'end_turn' ? AI_PACE.endTurn : this.nextThink(turn.k++, turn.first);
+      // 下一步是出牌时带上那张牌的实例 id：思考时抬起的就是它，然后直接从抬起的状态飞出
+      const next = choice.action.kind === 'play_card' ? this.state.players[this.aiSide].hand[choice.action.handIndex]?.instanceId : undefined;
+      const wait: PresentationEvent = { kind: 'ai_thinking', group: 0, side: this.aiSide, seconds, ...(next !== undefined ? { card: next } : {}) };
       this.onBatch?.([wait], this.state);
       this.director?.enqueue([wait]);
     }

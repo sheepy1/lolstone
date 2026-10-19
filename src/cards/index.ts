@@ -1,4 +1,4 @@
-// 卡池：M1 范围是全部中立卡、德玛西亚、弗雷尔卓德、四个职业的英雄技能、所有衍生物。
+// 卡池：中立卡、四个职业的职业卡和英雄技能、所有衍生物。
 import { installCardPool } from '../engine/cardDb';
 import type { CardDef } from '../engine/state';
 import { HERO_CLASSES } from './classes';

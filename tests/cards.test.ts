@@ -1,4 +1,4 @@
-// 每张卡一个测试（spec 6.7）：M1 范围内的全部中立卡、德玛西亚、弗雷尔卓德、四个英雄技能、全部衍生物。
+// 每张卡一个测试（spec 6.7）：全部 86 张卡、四个英雄技能、全部衍生物。
 // 身材和关键词按 cards-v1.md 的表格手抄一份来比，保证卡面文本和数据一致。
 import { describe, expect, it } from 'vitest';
 import { CARD_POOL } from '../src/cards';
@@ -431,7 +431,348 @@ describe('弗雷尔卓德', () => {
   });
 });
 
-describe('其他职业的英雄技能', () => {
+describe('诺克萨斯', () => {
+  card('安妮', () => {
+    expectStats('安妮', 2, 2, 1);
+    const g = scenario().board(1, ['远程小兵', '石甲虫']).hand(0, ['安妮']).build();
+    g.play('安妮', { target: g.m(1, '远程小兵') });
+    expect(g.boardNames(1)).toEqual(['石甲虫']);
+    expect(g.eventsOf('damage')[0].fx).toBe('fire');
+    // 只能选随从
+    const g2 = scenario().hand(0, ['安妮']).build();
+    expectIllegal(g2.try(g2.playAction('安妮', { target: g2.hero(1) })));
+  });
+
+  card('克烈', () => {
+    expectStats('克烈', 3, 2, 3);
+    const g = scenario().board(1, ['近战小兵', '克烈', '远程小兵']).hand(0, ['德玛西亚正义']).build();
+    g.play('德玛西亚正义', { target: g.m(1, '克烈') });
+    // 亡语召唤放在死者原来的位置
+    expect(g.boardNames(1)).toEqual(['近战小兵', '失去坐骑的克烈', '远程小兵']);
+  });
+
+  card('泰隆', () => {
+    expectStats('泰隆', 3, 3, 2, ['stealth']);
+    const g = scenario().board(0, ['魔狼']).board(1, ['泰隆']).build();
+    expectIllegal(g.try({ kind: 'attack', attacker: g.m(0, '魔狼'), target: g.m(1, '泰隆') }));
+  });
+
+  card('德莱文', () => {
+    expectStats('德莱文', 4, 3, 3, ['windfury']);
+    const g = scenario().board(0, ['德莱文']).build();
+    g.attack(g.m(0, '德莱文'), g.hero(1));
+    g.attack(g.m(0, '德莱文'), g.hero(1));
+    expect(g.p(1).hero.health).toBe(24);
+    expectIllegal(g.try({ kind: 'attack', attacker: g.m(0, '德莱文'), target: g.hero(1) }));
+  });
+
+  card('卡特琳娜', () => {
+    const g = scenario().board(0, ['魔狼']).board(1, ['远程小兵', '石甲虫']).hand(0, ['卡特琳娜']).build();
+    g.play('卡特琳娜');
+    expect(g.boardNames(1)).toEqual(['石甲虫']);
+    expect(g.minion(1, '石甲虫').health).toBe(3);
+    expect(g.minion(0, '魔狼').health).toBe(2);
+    const m = g.minion(0, '卡特琳娜');
+    expect([m.attack, m.health]).toEqual([3, 3]);
+  });
+
+  card('弗拉基米尔', () => {
+    expectStats('弗拉基米尔', 5, 4, 4, ['lifesteal']);
+    const g = scenario().health(0, 20).board(0, ['弗拉基米尔']).build();
+    g.attack(g.m(0, '弗拉基米尔'), g.hero(1));
+    expect(g.p(1).hero.health).toBe(26);
+    expect(g.p(0).hero.health).toBe(24);
+  });
+
+  card('莎弥拉', () => {
+    expectStats('莎弥拉', 5, 5, 4, ['rush']);
+    const g = scenario().board(1, ['石甲虫']).hand(0, ['莎弥拉']).build();
+    g.play('莎弥拉');
+    // 入场当回合只能打随从
+    expectIllegal(g.try({ kind: 'attack', attacker: g.m(0, '莎弥拉'), target: g.hero(1) }));
+    g.attack(g.m(0, '莎弥拉'), g.m(1, '石甲虫'));
+    expect(g.p(1).board).toHaveLength(0);
+  });
+
+  card('赛恩', () => {
+    expectStats('赛恩', 6, 5, 5, ['taunt']);
+    const g = scenario().board(1, ['赛恩', '近战小兵']).hand(0, ['德玛西亚正义']).build();
+    g.play('德玛西亚正义', { target: g.m(1, '赛恩') });
+    expect(g.boardNames(1)).toEqual(['亡骨赛恩', '近战小兵']);
+    // 亡骨赛恩没有嘲讽
+    expect(g.minion(1, '亡骨赛恩').keywords).toEqual([]);
+  });
+
+  card('斯维因', () => {
+    expectStats('斯维因', 6, 4, 5);
+    const g = scenario().board(0, ['斯维因', '魔狼']).board(1, ['远程小兵', '石甲虫']).build();
+    g.endTurn();
+    expect(g.boardNames(1)).toEqual(['石甲虫']);
+    expect(g.minion(1, '石甲虫').health).toBe(3);
+    expect(g.minion(0, '魔狼').health).toBe(2);
+    g.endTurn(); // 对方回合结束不触发
+    expect(g.minion(1, '石甲虫').health).toBe(3);
+  });
+
+  card('飞斧', () => {
+    const g = scenario().board(1, ['魔狼']).hand(0, ['飞斧', '飞斧']).build();
+    g.play('飞斧', { target: g.m(1, '魔狼') });
+    expect(g.p(1).board).toHaveLength(0);
+    g.play('飞斧', { target: g.hero(1) });
+    expect(g.p(1).hero.health).toBe(28);
+    expect(g.p(0).mana.current).toBe(8);
+  });
+
+  card('血怒', () => {
+    const g = scenario().board(0, ['魔狼']).board(1, ['远程小兵']).hand(0, ['血怒']).build();
+    expectIllegal(g.try(g.playAction('血怒', { target: g.m(1, '远程小兵') })));
+    g.play('血怒', { target: g.m(0, '魔狼') });
+    expect(g.minion(0, '魔狼').attack).toBe(6);
+    g.attack(g.m(0, '魔狼'), g.hero(1));
+    expect(g.p(1).hero.health).toBe(24);
+    g.endTurn(); // 本回合结束时到期
+    const m = g.minion(0, '魔狼');
+    expect([m.attack, m.health]).toEqual([3, 2]);
+  });
+
+  card('处决', () => {
+    const g = scenario().board(1, [{ card: '雷克塞', health: 5, maxHealth: 6 }, '魔狼']).hand(0, ['处决']).build();
+    // 没受伤的不能选
+    expectIllegal(g.try(g.playAction('处决', { target: g.m(1, '魔狼') })));
+    g.play('处决', { target: g.m(1, '雷克塞') });
+    expect(g.boardNames(1)).toEqual(['魔狼']);
+    expect(g.p(0).mana.current).toBe(8);
+    // 消灭不是伤害，无尽怒火拦不住
+    const g2 = scenario().board(1, [{ card: '泰达米尔', health: 4, maxHealth: 5 }]).hand(0, ['处决']).build();
+    g2.play('处决', { target: g2.m(1, '泰达米尔') });
+    expect(g2.p(1).board).toHaveLength(0);
+    // 没有受伤的敌方随从时不能用
+    const g3 = scenario().board(0, [{ card: '雷克塞', health: 5, maxHealth: 6 }]).board(1, ['魔狼']).hand(0, ['处决']).build();
+    expect(g3.legal().some((a) => a.kind === 'play_card')).toBe(false);
+  });
+
+  card('大杀四方', () => {
+    const g = scenario().board(0, ['魔狼']).board(1, ['远程小兵', '石甲虫']).hand(0, ['大杀四方']).build();
+    g.play('大杀四方');
+    expect(g.boardNames(1)).toEqual(['石甲虫']);
+    expect(g.minion(1, '石甲虫').health).toBe(3);
+    expect(g.minion(0, '魔狼').health).toBe(2);
+    expect(g.p(0).mana.current).toBe(8);
+  });
+
+  card('诺克萨斯之力', () => {
+    const g = scenario().board(1, ['雷克塞']).hand(0, ['诺克萨斯之力', '诺克萨斯之力']).build();
+    g.play('诺克萨斯之力', { target: g.m(1, '雷克塞') });
+    expect(g.minion(1, '雷克塞').health).toBe(2);
+    g.play('诺克萨斯之力', { target: g.hero(1) });
+    expect(g.p(1).hero.health).toBe(26);
+    expect(g.p(0).mana.current).toBe(2);
+  });
+});
+
+describe('艾欧尼亚', () => {
+  card('凯南', () => {
+    expectStats('凯南', 2, 2, 2);
+    const g = scenario().board(0, ['凯南']).board(1, ['雷克塞', '石甲虫']).hand(0, ['灵魄突袭', '大杀四方']).build();
+    g.play('灵魄突袭', { target: g.m(1, '雷克塞') });
+    expect(g.minion(1, '雷克塞').health).toBe(2);
+    g.play('大杀四方'); // 群体法术也加
+    expect(g.boardNames(1)).toEqual(['石甲虫']);
+    expect(g.minion(1, '石甲虫').health).toBe(2);
+    // 英雄技能不加
+    const g2 = scenario().classes('ionia', 'demacia').board(0, ['凯南']).board(1, ['魔狼']).build();
+    g2.heroPower(g2.m(1, '魔狼'));
+    expect(g2.minion(1, '魔狼').health).toBe(1);
+  });
+
+  card('阿卡丽', () => {
+    // 本回合第一张牌：连击不触发
+    expectStats('阿卡丽', 3, 2, 2, ['stealth']);
+    const g = scenario().hand(0, ['飞斧', '阿卡丽']).build();
+    g.play('飞斧', { target: g.hero(1) });
+    g.play('阿卡丽');
+    const m = g.minion(0, '阿卡丽');
+    expect([m.attack, m.health]).toEqual([4, 2]);
+    expect(m.keywords).toEqual(['stealth']);
+    expect(g.eventsOf('trigger')[0].timing).toBe('combo');
+    // 英雄技能不算使用过牌
+    const g2 = scenario().classes('ionia', 'demacia').hand(0, ['阿卡丽']).build();
+    g2.heroPower(g2.hero(1));
+    g2.play('阿卡丽');
+    expect(g2.minion(0, '阿卡丽').attack).toBe(2);
+  });
+
+  card('卡尔玛', () => {
+    expectStats('卡尔玛', 3, 2, 3);
+    const g = scenario().hand(0, ['卡尔玛']).build();
+    g.play('卡尔玛');
+    expect(g.p(0).hand).toHaveLength(1);
+    expect(g.p(0).deck).toHaveLength(9);
+  });
+
+  card('劫', () => {
+    const g = scenario().board(0, ['近战小兵']).hand(0, ['劫']).build();
+    g.play('劫', { pos: 0 });
+    // 战吼召唤放在本随从右边
+    expect(g.boardNames(0)).toEqual(['劫', '影分身', '近战小兵']);
+    const z = g.minion(0, '劫');
+    expect([z.attack, z.health, z.keywords]).toEqual([3, 2, ['stealth']]);
+    expect(g.minion(0, '影分身').keywords).toEqual(['stealth']);
+    expect(g.p(0).mana.current).toBe(6);
+  });
+
+  card('亚索', () => {
+    expectStats('亚索', 4, 4, 3, ['divine_shield']);
+    const g = scenario().board(0, ['魔狼']).board(1, ['亚索']).build();
+    g.attack(g.m(0, '魔狼'), g.m(1, '亚索'));
+    const m = g.minion(1, '亚索');
+    expect([m.health, m.keywords]).toEqual([3, []]);
+  });
+
+  card('李青', () => {
+    // 没有连击时没有目标，也不移回
+    expectStats('李青', 4, 3, 3);
+    const g0 = scenario().board(1, ['雷克塞']).hand(0, ['李青']).build();
+    expect(g0.legal().filter((a) => a.kind === 'play_card').every((a) => a.kind === 'play_card' && !a.target)).toBe(true);
+    // 连击：把敌方随从移回其拥有者的手牌
+    const g = scenario().board(1, [{ card: '雷克塞', health: 2 }]).hand(0, ['飞斧', '李青']).build();
+    g.play('飞斧', { target: g.hero(1) });
+    expect(g.legal().some((a) => a.kind === 'play_card' && a.target?.kind === 'minion' && a.target.side === 0)).toBe(false);
+    const id = g.minion(1, '雷克塞').instanceId;
+    g.play('李青', { target: g.m(1, '雷克塞') });
+    expect(g.p(1).board).toHaveLength(0);
+    expect(g.p(1).hand).toEqual([{ instanceId: id, cardId: 'neutral.reksai' }]);
+    expect(g.eventsOf('bounce')[0]).toMatchObject({ destroyed: false, handIndex: 0 });
+    // 手牌已满时直接销毁，不触发亡语
+    const g2 = scenario().board(1, ['虚空幼虫']).hand(1, Array(10).fill('魔狼')).hand(0, ['李青']).cardsPlayed(0, 1).build();
+    g2.play('李青', { target: g2.m(1, '虚空幼虫') });
+    expect(g2.p(1).board).toHaveLength(0);
+    expect(g2.p(1).hand).toHaveLength(10);
+    expect(g2.eventsOf('bounce')[0]).toMatchObject({ destroyed: true, handIndex: null });
+    expect(g2.eventsOf('death')).toHaveLength(0);
+  });
+
+  card('慎', () => {
+    expectStats('慎', 4, 2, 5, ['taunt']);
+    const g = scenario().board(0, ['魔狼']).board(1, ['远程小兵']).hand(0, ['慎']).build();
+    expectIllegal(g.try(g.playAction('慎', { target: g.m(1, '远程小兵') })));
+    g.play('慎', { target: g.m(0, '魔狼') });
+    expect(g.minion(0, '魔狼').keywords).toContain('divine_shield');
+    expect(g.minion(0, '慎').keywords).toEqual(['taunt']);
+  });
+
+  card('艾瑞莉娅', () => {
+    expectStats('艾瑞莉娅', 4, 3, 4, ['rush']);
+    const g = scenario().board(1, ['远程小兵']).hand(0, ['艾瑞莉娅']).build();
+    g.play('艾瑞莉娅');
+    expectIllegal(g.try({ kind: 'attack', attacker: g.m(0, '艾瑞莉娅'), target: g.hero(1) }));
+    g.attack(g.m(0, '艾瑞莉娅'), g.m(1, '远程小兵'));
+    expect(g.p(1).board).toHaveLength(0);
+  });
+
+  card('易', () => {
+    expectStats('易', 5, 4, 4);
+    // 杀一个就能再打一次，没有次数上限
+    const g = scenario().board(0, [{ card: '易', health: 10 }]).board(1, ['石甲虫', '近战小兵', '远程小兵']).build();
+    g.attack(g.m(0, '易'), g.m(1, '石甲虫'));
+    g.attack(g.m(0, '易'), g.m(1, '近战小兵'));
+    g.attack(g.m(0, '易'), g.m(1, '远程小兵'));
+    expect(g.p(1).board).toHaveLength(0);
+    g.attack(g.m(0, '易'), g.hero(1));
+    expect(g.p(1).hero.health).toBe(26);
+    expectIllegal(g.try({ kind: 'attack', attacker: g.m(0, '易'), target: g.hero(1) }));
+    // 没杀死就不能再打
+    const g2 = scenario().board(0, ['易']).board(1, ['雷克塞']).build();
+    g2.attack(g2.m(0, '易'), g2.m(1, '雷克塞'));
+    expectIllegal(g2.try({ kind: 'attack', attacker: g2.m(0, '易'), target: g2.hero(1) }));
+    // 被法术打死的不算
+    const g3 = scenario().board(0, ['易']).board(1, ['魔狼']).hand(0, ['灵魄突袭']).build();
+    g3.play('灵魄突袭', { target: g3.m(1, '魔狼') });
+    expect(g3.minion(0, '易').extraAttacks).toBe(0);
+    // 对方回合被攻击时反杀，额外攻击次数不留到自己回合
+    const g4 = scenario().board(0, ['魔狼']).board(1, ['易']).build();
+    g4.attack(g4.m(0, '魔狼'), g4.m(1, '易'));
+    expect(g4.minion(1, '易').extraAttacks).toBe(0);
+    expect(g4.eventsOf('trigger').some((e) => e.timing === 'on_kill')).toBe(true);
+  });
+
+  card('永恩', () => {
+    const g = scenario().board(0, ['魔狼']).board(1, ['雷克塞']).hand(0, ['永恩']).build();
+    expectIllegal(g.try(g.playAction('永恩', { target: g.m(0, '魔狼') })));
+    g.play('永恩', { target: g.m(1, '雷克塞') });
+    expect(g.minion(1, '雷克塞').health).toBe(4);
+    const m = g.minion(0, '永恩');
+    expect([m.attack, m.health]).toEqual([4, 5]);
+  });
+
+  card('辛德拉', () => {
+    const g = scenario().board(1, ['雷克塞']).hand(0, ['辛德拉', '灵魄突袭']).build();
+    g.play('辛德拉', { target: g.hero(1) });
+    // 战吼不吃自己的法术伤害
+    expect(g.p(1).hero.health).toBe(27);
+    const m = g.minion(0, '辛德拉');
+    expect([m.attack, m.health]).toEqual([4, 5]);
+    g.play('灵魄突袭', { target: g.m(1, '雷克塞') });
+    expect(g.minion(1, '雷克塞').health).toBe(2);
+  });
+
+  card('鬼切', () => {
+    const g = scenario().board(0, ['魔狼']).board(1, ['远程小兵']).hand(0, ['鬼切']).build();
+    expectIllegal(g.try(g.playAction('鬼切', { target: g.m(1, '远程小兵') })));
+    g.play('鬼切', { target: g.m(0, '魔狼') });
+    expect(g.minion(0, '魔狼').keywords).toEqual(['stealth']);
+    expect(g.p(0).mana.current).toBe(9);
+    g.endTurn(); // 永久，不是本回合
+    expect(g.minion(0, '魔狼').keywords).toEqual(['stealth']);
+    expectIllegal(g.try({ kind: 'attack', attacker: g.m(1, '远程小兵'), target: g.m(0, '魔狼') }));
+    // 攻击之后失去潜行
+    g.endTurn();
+    g.attack(g.m(0, '魔狼'), g.hero(1));
+    expect(g.minion(0, '魔狼').keywords).toEqual([]);
+    g.endTurn();
+    expect(g.minion(0, '魔狼').keywords).toEqual([]);
+  });
+
+  card('传送回城', () => {
+    const g = scenario().board(0, [{ card: '卡尔玛', attack: 5, health: 1 }]).board(1, ['远程小兵']).hand(0, ['传送回城']).build();
+    expectIllegal(g.try(g.playAction('传送回城', { target: g.m(1, '远程小兵') })));
+    g.play('传送回城', { target: g.m(0, '卡尔玛') });
+    expect(g.p(0).board).toHaveLength(0);
+    expect(g.p(0).hand.map((c) => c.cardId)).toEqual(['ionia.karma']);
+    expect(g.p(0).mana.current).toBe(9);
+    // 重新打出时是卡面身材，战吼再触发一次
+    g.play('卡尔玛');
+    const m = g.minion(0, '卡尔玛');
+    expect([m.attack, m.health]).toEqual([2, 3]);
+    expect(g.p(0).hand).toHaveLength(1);
+  });
+
+  card('灵魄突袭', () => {
+    const g = scenario().board(1, ['雷克塞']).hand(0, ['灵魄突袭']).build();
+    expectIllegal(g.try(g.playAction('灵魄突袭', { target: g.hero(1) })));
+    g.play('灵魄突袭', { target: g.m(1, '雷克塞') });
+    expect(g.minion(1, '雷克塞').health).toBe(3);
+    expect(g.p(0).mana.current).toBe(8);
+  });
+
+  card('冥想', () => {
+    const g = scenario().hand(0, ['冥想']).build();
+    g.play('冥想');
+    expect(g.p(0).hand).toHaveLength(2);
+    expect(g.p(0).mana.current).toBe(7);
+  });
+
+  card('狂风绝息斩', () => {
+    const g = scenario().board(0, ['魔狼']).board(1, ['雷克塞', '魔狼']).hand(0, ['狂风绝息斩']).build();
+    g.play('狂风绝息斩');
+    expect(g.boardNames(1)).toEqual(['雷克塞']);
+    expect(g.minion(1, '雷克塞').health).toBe(3);
+    expect(g.minion(0, '魔狼').health).toBe(2);
+    expect(g.p(0).mana.current).toBe(4);
+  });
+});
+
+describe('诺克萨斯和艾欧尼亚的英雄技能', () => {
   card('诺克萨斯断头台', () => {
     const g = scenario().classes('noxus', 'demacia').build();
     expect(g.legal().filter((a) => a.kind === 'hero_power')).toEqual([{ kind: 'hero_power' }]);
@@ -492,11 +833,14 @@ describe('覆盖', () => {
     expect(missing).toEqual([]);
   });
 
-  it('M1 卡池数量：中立 24、德玛西亚 16、弗雷尔卓德 16、英雄技能 4、衍生物 9', () => {
+  it('卡池数量：中立 24、德玛西亚 16、诺克萨斯 14、艾欧尼亚 16、弗雷尔卓德 16，共 86；英雄技能 4、衍生物 9', () => {
     const count = (pred: (c: (typeof CARD_POOL)[number]) => boolean) => CARD_POOL.filter(pred).length;
     expect(count((c) => c.class === 'neutral' && !c.token)).toBe(24);
     expect(count((c) => c.class === 'demacia' && !c.token)).toBe(16);
+    expect(count((c) => c.class === 'noxus' && !c.token)).toBe(14);
+    expect(count((c) => c.class === 'ionia' && !c.token)).toBe(16);
     expect(count((c) => c.class === 'freljord' && !c.token)).toBe(16);
+    expect(count((c) => !c.token)).toBe(86);
     expect(count((c) => c.type === 'hero_power')).toBe(4);
     expect(count((c) => c.token === true && c.type !== 'hero_power')).toBe(9);
   });

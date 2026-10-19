@@ -1165,3 +1165,22 @@ M1 基准机上没测，合并后要在 M1 上用 `bench.benchCombat(bench.fullB
   点击或空格快进仍是播放器设的三倍，和设置无关。
 - 认输：`Match.concede()` 把真实局面记为对手获胜，发一个 `game_over` 事件，表现层照常播失败演出、弹结算面板。排着的动画先快进播完。
 - 新加了 23 个界面用字，字体子集重新生成过（`pnpm font:subset`，源字体在主检出的 `assets-src/fonts/`）。
+
+## 卡组编辑器（spec 5.1、第 7 节 M5，2026-10-20）
+
+- 入口：主菜单右上角"我的卡组"（UiState.screen 为 `decks`）。`DeckScreen.tsx` 里有列表和编辑两个视图，弹窗在 `DeckDialogs.tsx`。
+- 存档 `src/ui/decks.ts`：localStorage 的 `melol.decks`，格式 `{ version: 1, decks: [{ id, name, heroClass, cards, updatedAt }] }`。
+  读写都包 try/catch，存不下时只在本次生效。读档时卡池里没有的卡跳过，列表页顶上提示是哪套、哪些 id；版本不认识或格式坏了时
+  当成空的，原始内容先备份到 `melol.decks.backup`，免得下次保存时被覆盖。
+- 规则：`addProblem`（加一张卡时的原因：同名最多 2 张、只能用本职业和中立卡、卡组已满 30 张、衍生物不能放）和 `deckProblems`
+  （整套卡组的问题）给的是中文提示，结论和 `src/cards` 的 `validateDeck` 一致，`tests/decks.test.ts` 两边对照。
+  `isPlayable` 要求两边都没有问题。
+- 编辑：改动先在页面里，点"保存"（或 Ctrl/Cmd+S）才写存档；有未保存的改动时离开会问。预组卡组只读，可以"复制并修改"。
+  键盘：卡池网格和卡组列表各占一个 Tab 位，里面用方向键，Enter 加入或移除，Delete 移除，"/" 跳到搜索框，Esc 返回（搜索框里先清空）。
+- 2D 卡面 `CardThumb.tsx`：底图直接用对局里 3D 卡牌的那张 canvas 贴图（`scene/canvasArt.ts` 的 `cardFaceTexture`），画进 DOM canvas；
+  费用、名字、攻击生命、正文用 DOM 叠，位置按贴图 512×716 的坐标换算。原画晚到时贴图会重画，这里每 300ms 看一眼 `texture.version`。
+- 开局：主菜单职业卡下面一排"卡组"，列出预组和这个职业的自组卡组；不满 30 张或不合规的显示成灰色、不能选。
+  `startMatch` 的第 5 个参数是卡组 id，`deckForMatch` 取卡组，自组卡组不存在或不能用时退回预组。对手仍用预组。
+  主菜单职业卡从 480 高改成 440，给这一排腾位置。
+- 新弹窗里的输入框按 Enter 创建时要 `preventDefault`：不拦的话，新打开的编辑页聚焦到第一张卡后，同一次按键会把这张卡点进卡组。
+- 界面新加了约 50 个字，字体子集重新生成过（现在 712 个字）。

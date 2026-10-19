@@ -7,6 +7,7 @@ import { useUi, type Screen } from '../app/store';
 import { GameLog } from './GameLog';
 import { HoverCardPanel } from './HoverCard';
 import { LoadingScreen } from './LoadingScreen';
+import { DeckScreen } from './DeckScreen';
 import { MainMenu } from './MainMenu';
 import { MulliganOverlay } from './MulliganOverlay';
 import { PauseMenu, useEscOpensPauseMenu } from './PauseMenu';
@@ -56,6 +57,7 @@ export function UiRoot({ app }: { app: GameApp }) {
     if (s === 'boot') return <LoadingScreen mode="boot" />;
     if (s === 'loading') return <LoadingScreen mode="match" />;
     if (s === 'menu') return <MainMenu app={app} />;
+    if (s === 'decks') return <DeckScreen app={app} />;
     return (
       <>
         <HoverCardPanel />

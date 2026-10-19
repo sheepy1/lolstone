@@ -1,6 +1,6 @@
 // 主菜单（spec 5.1）：选我方职业（第一版用预组卡组）、AI 职业和难度，开始。
 // 整页能用键盘操作：Tab 在三组选项和开始按钮之间切换，方向键在组内选择，Enter 随时开始对局。
-import { useEffect, useRef, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { PRESET_DECKS } from '../cards';
 import { allHeroClasses, type HeroClassDef } from '../engine';
 import type { GameApp } from '../app/game';
@@ -11,6 +11,7 @@ import { MenuBackdrop, Stage } from './hextech';
 import { CLASS_BLURBS, DIFFICULTIES } from './menuData';
 import { RadioGroup, type RadioProps } from './RadioGroup';
 import { setSettings } from './settings';
+import { DECK_SIZE, deckProblems, isPlayable, loadDecks, onDecksChange, PRESET_STYLE } from './decks';
 
 // 第一次点击或按键之后浏览器才允许出声（spec 5.7），那时再起菜单音乐；从对局回到主菜单时直接起。
 let audioUnlocked = false;
@@ -38,7 +39,8 @@ export function MainMenu({ app }: { app: GameApp }) {
   const pick = <K extends 'humanClass' | 'aiClass' | 'difficulty'>(key: K, id: (typeof menu)[K]) => {
     if (menu[key] === id) return;
     playSfx('ui.click');
-    setUi((s) => ({ menu: { ...s.menu, [key]: id } }));
+    // 换职业时卡组回到这个职业的预组
+    setUi((s) => ({ menu: { ...s.menu, [key]: id, ...(key === 'humanClass' ? { humanDeck: null } : {}) } }));
     // 难度同时是设置里的默认值
     if (key === 'difficulty') setSettings({ difficulty: id as typeof menu.difficulty });
   };
@@ -48,16 +50,28 @@ export function MainMenu({ app }: { app: GameApp }) {
     started.current = true;
     unlockAudio();
     playSfx('ui.button');
-    void app.startMatch(menu.humanClass, menu.aiClass, undefined, menu.difficulty);
+    void app.startMatch(menu.humanClass, menu.aiClass, undefined, menu.difficulty, deckId === 'preset' ? null : deckId);
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
     unlockAudio();
     // 设置按钮和回放链接上的 Enter 照常点它们自己
-    if (e.key === 'Enter' && !(e.target as HTMLElement).closest('.mm-settings, .mm-replay')) {
+    if (e.key === 'Enter' && !(e.target as HTMLElement).closest('.mm-settings, .mm-decks, .mm-replay')) {
       e.preventDefault();
       start();
     }
+  };
+
+  // 这个职业的自组卡组：合规的可以选，不满 30 张或不合规的显示出来但不能选
+  const [, bump] = useState(0);
+  useEffect(() => onDecksChange(() => bump((n) => n + 1)), []);
+  const mine = loadDecks().decks.filter((d) => d.heroClass === menu.humanClass);
+  const usable = mine.filter(isPlayable);
+  const deckId = usable.some((d) => d.id === menu.humanDeck) ? menu.humanDeck! : 'preset';
+  const pickDeck = (id: string) => {
+    if (id === deckId) return;
+    playSfx('ui.click');
+    setUi((s) => ({ menu: { ...s.menu, humanDeck: id === 'preset' ? null : id } }));
   };
 
   const me = CLASS_BLURBS[menu.humanClass];
@@ -72,6 +86,16 @@ export function MainMenu({ app }: { app: GameApp }) {
           <div className="hx-subtitle">峡 谷 战 局</div>
         </header>
 
+        <button
+          className="hx-btn mm-decks"
+          onPointerEnter={hover}
+          onClick={() => {
+            playSfx('ui.click');
+            setUi({ screen: 'decks' });
+          }}
+        >
+          我的卡组
+        </button>
         <button
           className="hx-btn mm-settings"
           onPointerEnter={hover}
@@ -94,6 +118,34 @@ export function MainMenu({ app }: { app: GameApp }) {
               <ClassCard key={id} def={classes.find((c) => c.id === id)!} checked={checked} index={i} props={props} />
             )}
           />
+        </div>
+
+        <div className="mm-deckbar">
+          <span className="mm-deckbar-label">卡组</span>
+          <RadioGroup
+            label="卡组"
+            items={['preset', ...usable.map((d) => d.id)]}
+            value={deckId}
+            onChange={pickDeck}
+            render={(id, checked, props) => {
+              const d = usable.find((x) => x.id === id);
+              return (
+                <button key={id} className={`mm-deck ${checked ? 'on' : ''}`} {...props}>
+                  {d ? d.name : `预组 · ${PRESET_STYLE[menu.humanClass]}`}
+                </button>
+              );
+            }}
+          />
+          {mine
+            .filter((d) => !isPlayable(d))
+            .map((d) => (
+              <span key={d.id} className="mm-deck disabled" aria-disabled="true" title={deckProblems(d.cards, d.heroClass)[0]}>
+                {d.name}
+                <small>
+                  {d.cards.length}/{DECK_SIZE}
+                </small>
+              </span>
+            ))}
         </div>
 
         <div className="hx-panel mm-bar">

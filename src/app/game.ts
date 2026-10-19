@@ -19,6 +19,7 @@ import { KEYWORD_NAMES } from '../presentation/keywordText';
 import { describe, LogNames } from '../ui/logText';
 import type { Difficulty } from '../ui/menuData';
 import { getSettings, onSettingsChange } from '../ui/settings';
+import { deckForMatch, isPreset } from '../ui/decks';
 import { l0ChooseAction } from '../ai/l0';
 import { Match } from './match';
 import { getUi, setUi, type Panel } from './store';
@@ -127,16 +128,18 @@ export class GameApp {
 
   // 开一局：先在加载页预载两套卡组的美术和语音，再进对局。
   // seed 不给时随机；给了就能复现同一局（调试、自动化验证用，自动驾驶的随机数也从头开始）。
-  // difficulty 是 AI 难度（spec 4.1）：l0 随机，l1 贪心。
-  async startMatch(humanClass: HeroClass, aiClass: HeroClass, seed?: number, difficulty: Difficulty = 'l1'): Promise<void> {
+  // difficulty 是 AI 难度（spec 4.1）：l0 随机，l1 贪心。humanDeck 是我方的自组卡组 id，null 或不能用时用预组。
+  async startMatch(humanClass: HeroClass, aiClass: HeroClass, seed?: number, difficulty: Difficulty = 'l1', humanDeck: string | null = null): Promise<void> {
     initAudio();
     this.teardown();
     const loadStart = performance.now();
-    const decks: [string[], string[]] = [[...(PRESET_DECKS[humanClass] ?? [])], [...(PRESET_DECKS[aiClass] ?? [])]];
+    // 我方可以用自组卡组（不存在或不合规时退回预组），对手用预组
+    const mine = deckForMatch(humanClass, humanDeck);
+    const decks: [string[], string[]] = [[...mine.cards], [...(PRESET_DECKS[aiClass] ?? [])]];
     setUi((s) => ({
       screen: 'loading',
       loading: { progress: 0, label: '载入英雄美术和语音' },
-      menu: { ...s.menu, humanClass, aiClass, difficulty },
+      menu: { ...s.menu, humanClass, aiClass, difficulty, humanDeck: isPreset(mine.id) ? null : mine.id },
       result: null,
       log: [],
       error: null,

@@ -2,8 +2,7 @@
 // - 横幅：镜头前一条暗色带子，上下两道金线，中间 SDF 大字，滑入时一道光扫过去；
 // - 先后手徽记：一枚金色六边形徽章，翻转后停在"先手"或"后手"；
 // - 从牌库飞进手牌的弧线飞行，飞到 40% 到 70% 之间绕长轴翻面；
-// - 震屏 S1、S2、S3（分镜 1.4：相机位置叠加衰减噪声）。
-// 战斗手感那一路也会用震屏；这里的实现只给回合流程和胜负用，参数照分镜表。
+// 震屏在 fx/screen.ts（和战斗事件共用一份）。
 import gsap from 'gsap';
 import * as THREE from 'three';
 import { Text } from 'troika-three-text';
@@ -312,38 +311,6 @@ export function flyFromDeck(card: CardView, deck: Vec3, opts: { flip: boolean; o
     ease: 'back.out(1.4)',
     immediateRender: false,
   });
-  return t;
-}
-
-// 震屏（分镜 1.4）：相机位置叠加衰减噪声。幅度按画面高的百分比，换算成镜头到台面中心距离上的世界单位。
-// S3 再带一下白闪（亮度加 15%，flash 秒）。
-export const SHAKE = {
-  S1: { amp: 0.003, time: 0.12 },
-  S2: { amp: 0.008, time: 0.2 },
-  S3: { amp: 0.015, time: 0.32 },
-};
-
-export function screenShake(stage: Stage, level: keyof typeof SHAKE, flash = 0.06): gsap.core.Timeline {
-  const t = gsap.timeline();
-  const { amp, time } = SHAKE[level];
-  const dist = stage.camera.position.distanceTo(stage.cameraTarget);
-  const height = 2 * dist * Math.tan(THREE.MathUtils.degToRad(stage.camera.fov / 2));
-  const a = amp * height;
-  const st = { k: 1 };
-  const s = stage.cameraShake;
-  t.to(st, {
-    k: 0,
-    duration: time,
-    ease: 'none',
-    onUpdate: () => {
-      s.set((Math.random() * 2 - 1) * a * st.k, (Math.random() * 2 - 1) * a * st.k, (Math.random() * 2 - 1) * a * 0.5 * st.k);
-    },
-    onComplete: () => s.set(0, 0, 0),
-  });
-  if (level === 'S3' && flash > 0) {
-    t.to(stage.look, { brightness: 0.15, duration: 0.01 }, 0);
-    t.to(stage.look, { brightness: 0, duration: flash, ease: 'power1.in' }, 0.01);
-  }
   return t;
 }
 

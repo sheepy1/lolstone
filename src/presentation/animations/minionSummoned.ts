@@ -5,10 +5,13 @@
 import gsap from 'gsap';
 import { playSfx, playVoice } from '../../audio';
 import { championOf } from '../../assets/manifest';
-import { getCard } from '../../engine';
+import { getCard, type Side } from '../../engine';
 import { dispose } from '../../scene/dispose';
 import { ring } from '../fx/effects';
+import { shakeAt } from '../fx/screen';
 import { boardSlot } from '../layout';
+import type { ViewState } from '../viewState';
+import { statusEnter } from './combat';
 import type { AnimModule } from './types';
 import { flash, pointOf, syncTo, tl } from './util';
 
@@ -23,10 +26,11 @@ export const PLAY_MINION = {
   settle: 0.27, // 压扁回弹时长
   shockwaveCost: 5, // 这个费用及以上落地加冲击波
   shakeCost: 6, // 这个费用及以上落地加镜头轻震（S1）
-  shake: 0.04, // 镜头轻震幅度
 };
 
 const dustCount = (cost: number) => (cost <= 3 ? 8 : cost <= 6 ? 14 : 20);
+
+const keywordsOf = (v: ViewState, side: Side, id: number) => v.players[side].board.find((m) => m.instanceId === id)?.keywords ?? [];
 
 export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before, after }) => {
   const t = tl();
@@ -39,6 +43,7 @@ export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before
     t.call(() => {
       const m = e.target.kind === 'minion' ? scene.minion(e.target.instanceId) : undefined;
       if (m) flash(m.flash, 0xffffff, 0.9, 0.35);
+      if (m) statusEnter(scene, m.instanceId, keywordsOf(after, e.side, m.instanceId));
     }, undefined, 0.05);
     return { tl: t };
   }
@@ -65,6 +70,7 @@ export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before
     const m = scene.minion(id);
     if (!m) return;
     m.body.visible = true;
+    statusEnter(scene, id, keywordsOf(after, e.side, id)); // 带潜行、圣盾、嘲讽入场时各自的进入表现（战斗事件 E18、E19）
     m.body.position.y = hoverY + P.chargeLift;
     m.body.scale.set(0.95, 0.95, 0.95);
     gsap.to(m.body.position, { y: 0, duration: P.smash, ease: 'expo.in' });
@@ -87,7 +93,7 @@ export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before
   // 冲击波还用贴地的光环：预设里最接近的 spark_heavy 是打击火花（朝镜头的白闪加四散的火星），
   // 放在落点上读起来像"被打了一下"，不像重物落地，白闪还会盖住头像
   if (cost >= P.shockwaveCost) t.add(ring(scene.layers.fx, () => ({ x: slot.x, y: 0.02, z: slot.z }), 0xd8c08a, 170, 0.45), '<');
-  if (cost >= P.shakeCost) t.add(scene.shake(P.shake), '<');
+  if (cost >= P.shakeCost) t.add(shakeAt(scene, 1), '<');
   t.call(() => {
     const champ = championOf(e.cardId);
     if (champ) playVoice(champ, 'choose');

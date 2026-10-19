@@ -11,6 +11,7 @@
     "arena": "tsx src/cli/arena.ts",
     "fetch:art": "node scripts/fetch-art.ts",
     "fetch:voice": "node scripts/fetch-voice.ts",
+    "fetch:icons": "node scripts/fetch-icons.ts",
     "dev": "vite",
     "build": "tsc --noEmit -p tsconfig.web.json && vite build",
     "preview": "vite preview",

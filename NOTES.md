@@ -347,3 +347,37 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
   泰达米尔和易数据没改，由表现层按 (卡牌 id, 触发时机) 映射。
 - 测试：`tests/fxid.test.ts`（透传、没写时键不出现、9 张卡各一条、卡池里带 fxId 的恰好是这 9 张、校验），
   测试专用卡 `test.fxid_*` 在 `tests/helpers/testCards.ts`。
+
+## 非英雄卡的配图（fetch-icons）
+
+`scripts/data/card-art.json` 是映射表：没有 champion 字段的 47 张卡（小兵、野怪、亚龙、法术、衍生物）、4 个英雄技能、11 个关键词，
+每项写来源、裁切建议、选图理由和备选。`scripts/fetch-icons.ts` 按它下载，`scripts/art-review.ts` 出逐张对照页。还没接进卡面和场景，
+等 M3 定稿后再接：卡面原画窗口读 `art`（按 `crop` 裁），场上随从头像读 `icon`，清单是 `public/art/icons-manifest.json`。
+
+### 来源
+
+- 峡谷单位（小兵、野怪、亚龙、男爵、虚空幼虫和虚空螨）：CommunityDragon 的 `characters/<单位>/hud/<名>_square.png`，128×128。
+  目录可以用 `https://raw.communitydragon.org/json/latest/game/assets/characters/<单位>/hud/` 列出来，返回 JSON。
+  虚空幼虫对应 `sru_horde`（Voidgrub），虚空蠕虫对应 `sru_horde_mini`（Voidmite）。
+- 技能、被动、物品、召唤师技能图标：Data Dragon，64×64，地址带版本号。回城图标 Data Dragon 没有，用 CommunityDragon 的
+  `game/assets/spells/icons2d/recallhome.png`。
+- 皮肤原画：Data Dragon `cdn/img/champion/splash/<Key>_<编号>.jpg`，1215×717，和竖版原画一样不带版本号，带了返回 403。
+- 符文之地传说（Legends of Runeterra）卡牌原画：`https://dd.b.pvp.net/7_10_0/<set>/en_us/img/cards/<卡号>-full.png`，2048×1024。
+  卡号和 set 查 `https://dd.b.pvp.net/latest/<set>/en_us/data/<set>-en_us.json`（zh_cn 返回 403，en_us 能用）；set 有
+  set1 到 set9 以及 set6cde、set7b，卡号前两位不能直接推出 set（06 开头的分在 set6 和 set6cde）。服务器是没有 CDN 的 S3，
+  单张 15 到 100 秒，所以 http.ts 加了 `timeoutMs`，这类来源放宽到 10 分钟。
+
+### 选图的取舍（用户 2026-10-19 定）
+
+- 中立卡有官方大图的用大图：蓝色哨兵、山脉、海洋、云端亚龙、远古巨龙用符文之地传说的同名卡原画。其余中立卡和虚空蠕虫先用峡谷头像
+  （128 像素，放进原画窗口偏糊），映射表里带 `generate`（生成要求）和 `generatePriority`（先后，纳什男爵第一，其余按费用从高到低），
+  `fetch-icons.ts` 跑完会按先后列出来。失去坐骑的克烈、法力药水也在这个清单里，排最后。
+- 场上随从头像（`icon`）一律用峡谷头像，有大图的卡也一样。
+- 法术优先用符文之地传说里效果或名字对得上的卡（审判、大杀四方、回城、魔法水晶箭等），再退到皮肤原画。英雄本人的原皮原画已经
+  被随从卡或职业英雄用了，法术要用皮肤原画时换别的皮肤，避免两张卡同图。符文之地传说已确认可以作为来源，spec 5.9 由设计会话补。
+- 符文之地传说的法术原画是黑底上的圆形画面，`crop.zoom` 设 1.55（窗口宽高比 1:0.86 时四角刚好落在圆里）；单位原画是满幅的，不用放大。
+- 英雄技能图标不和任何法术、关键词同图：召集用盖伦 W「勇气」（spec 5.9 原来写的 GarenE 是法术「审判」的图标），诺克萨斯断头台用
+  德莱厄斯 W「致残打击」（DariusExecute 给了法术「处决」）。灵魄（阿狸 Q）和法术灵魄突袭（阿狸 R、灵魂莲华阿狸原画）本来就不同图。
+  映射表里所有主选图（icon 和 art）两两不重复。
+- 嘲讽用拉莫斯 E「狂乱嘲讽」。spec 5.4 写的 W 是笔误，设计会话会改。
+- spec 5.9 写 fetch-icons 输出到 `public/art/icons/`，实际按卡牌、英雄技能、关键词分成 `cards/`、`heropowers/`、`keywords/` 三个目录。

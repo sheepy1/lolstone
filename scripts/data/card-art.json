@@ -1,0 +1,1412 @@
+{
+  "$schema_note": "没有英雄原画的卡、英雄技能、关键词的配图映射。scripts/fetch-icons.ts 按它下载。字段说明见 scripts/fetch-icons.ts 开头的注释。",
+  "lorVersion": "7_10_0",
+  "cards": {
+    "neutral.melee_minion": {
+      "name": "近战小兵",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_orderminionmelee/hud/bluemelee_square.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_orderminionmelee/hud/bluemelee_square.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "LoL 里蓝方近战兵的头像。官方没有更大的小兵原画。",
+      "alts": [
+        {
+          "type": "cdragon",
+          "path": "game/assets/characters/sru_orderminionmelee/hud/bluemelee_square_classic.png",
+          "note": "旧版造型"
+        }
+      ],
+      "generate": "蓝方近战小兵举剑持盾",
+      "generatePriority": 12
+    },
+    "neutral.caster_minion": {
+      "name": "远程小兵",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_orderminionranged/hud/bluerange_square.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_orderminionranged/hud/bluerange_square.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "蓝方远程兵头像。官方没有更大的小兵原画。",
+      "alts": [
+        {
+          "type": "cdragon",
+          "path": "game/assets/characters/sru_orderminionranged/hud/bluerange_square_classic.png",
+          "note": "旧版造型"
+        }
+      ],
+      "generate": "蓝方远程小兵举着发光的法杖",
+      "generatePriority": 13
+    },
+    "neutral.rift_scuttler": {
+      "name": "迅捷蟹",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_crab/hud/crab_square_0.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_crab/hud/crab_square_0.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "迅捷蟹头像。符文之地传说里没有同名卡。",
+      "alts": [],
+      "generate": "峡谷河道里的大螃蟹，背壳像石头",
+      "generatePriority": 10
+    },
+    "neutral.ancient_krug": {
+      "name": "石甲虫",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_krug/hud/ancientkrug_square.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_krug/hud/ancientkrug_square.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "远古石甲虫（大石头人）头像。",
+      "alts": [],
+      "generate": "远古石头人，身上长着青苔",
+      "generatePriority": 8
+    },
+    "neutral.murk_wolf": {
+      "name": "魔狼",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_murkwolf/hud/greatermurkwolf_square.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_murkwolf/hud/greatermurkwolf_square.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "远古魔狼头像。",
+      "alts": [
+        {
+          "type": "lor",
+          "set": "set5",
+          "code": "05FR001T1",
+          "note": "符文之地传说「魔狼狂战士」，弗雷尔卓德的狼人，不是峡谷那只狼"
+        }
+      ],
+      "generate": "两头幽暗的灰蓝色狼，眼睛发光",
+      "generatePriority": 9
+    },
+    "neutral.void_larva": {
+      "name": "虚空幼虫",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_horde/hud/sru_voidgrub_square.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_horde/hud/sru_voidgrub_square.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "峡谷的虚空幼虫（Voidgrub）头像，名字和单位都对得上。",
+      "alts": [
+        {
+          "type": "lor",
+          "set": "set6",
+          "code": "06SH007",
+          "note": "符文之地传说「虚空异生体」，大图，造型不是峡谷的幼虫"
+        }
+      ],
+      "generate": "紫色发光的虚空幼虫，像带甲的蛆",
+      "generatePriority": 11
+    },
+    "neutral.gromp": {
+      "name": "魔沼蛙",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_gromp/hud/gromp_square.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_gromp/hud/gromp_square.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "魔沼蛙头像。",
+      "alts": [
+        {
+          "type": "lor",
+          "set": "set5",
+          "code": "05BC168T1",
+          "note": "符文之地传说「巨型魔沼蛙」，班德尔城画风"
+        }
+      ],
+      "generate": "巨大的绿色沼泽蛤蟆蹲在石头上",
+      "generatePriority": 7
+    },
+    "neutral.blue_sentinel": {
+      "name": "蓝色哨兵",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_blue/hud/bluesentinel_square.png"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set4",
+        "code": "04MT004",
+        "crop": {
+          "focus": [
+            0.5,
+            0.45
+          ]
+        }
+      },
+      "reason": "符文之地传说同名卡「蓝色哨兵」，就是峡谷的蓝 buff 石像。有官方大图的中立卡用大图（用户 2026-10-19 定），场上头像仍用峡谷 hud 头像。",
+      "alts": [
+        {
+          "type": "cdragon",
+          "path": "game/assets/characters/sru_blue/hud/bluesentinel_square.png",
+          "note": "峡谷头像"
+        }
+      ]
+    },
+    "neutral.siege_minion": {
+      "name": "炮车",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_orderminionsiege/hud/bluemechcannon_square.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_orderminionsiege/hud/bluemechcannon_square.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "蓝方炮车头像。",
+      "alts": [
+        {
+          "type": "cdragon",
+          "path": "game/assets/characters/sru_orderminionsiege/hud/blue_minion_classic_siege_square.png",
+          "note": "旧版造型"
+        }
+      ],
+      "generate": "蓝方机械炮车，炮口发光",
+      "generatePriority": 6
+    },
+    "neutral.red_brambleback": {
+      "name": "猩红印记",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_red/hud/brambleback_square.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_red/hud/brambleback_square.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "红 buff 野怪（红色荆棘背）头像。",
+      "alts": [],
+      "generate": "背上燃着火焰荆棘的巨型石兽",
+      "generatePriority": 5
+    },
+    "neutral.rift_herald": {
+      "name": "峡谷先锋",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_riftherald/hud/sruriftherald_square.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_riftherald/hud/sruriftherald_square.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "峡谷先锋头像。",
+      "alts": [],
+      "generate": "紫色独眼虚空甲壳生物，冲撞姿态",
+      "generatePriority": 3
+    },
+    "neutral.infernal_drake": {
+      "name": "炼狱亚龙",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_dragon_fire/hud/dragon_square_fire.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_dragon_fire/hud/dragon_square_fire.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "炼狱亚龙头像。符文之地传说没有炼狱亚龙的卡，先用峡谷头像，以后生成大图。",
+      "alts": [
+        {
+          "type": "lor",
+          "set": "set8",
+          "code": "08RU014T5",
+          "note": "符文之地传说「炼狱之力」，远古巨龙的技能卡，画面是火龙"
+        }
+      ],
+      "generate": "浑身熔岩和火焰的四足亚龙，喷火",
+      "generatePriority": 4
+    },
+    "neutral.mountain_drake": {
+      "name": "山脉亚龙",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_dragon_earth/hud/dragon_square_earth.png"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set5",
+        "code": "05DE015",
+        "crop": {
+          "focus": [
+            0.5,
+            0.45
+          ]
+        }
+      },
+      "reason": "符文之地传说同名卡「山脉亚龙」。有官方大图的中立卡用大图（用户 2026-10-19 定），场上头像仍用峡谷 hud 头像。",
+      "alts": [
+        {
+          "type": "cdragon",
+          "path": "game/assets/characters/sru_dragon_earth/hud/dragon_square_earth.png",
+          "note": "峡谷头像"
+        }
+      ]
+    },
+    "neutral.ocean_drake": {
+      "name": "海洋亚龙",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_dragon_water/hud/dragon_square_water.png"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set8",
+        "code": "08IO012",
+        "crop": {
+          "focus": [
+            0.5,
+            0.45
+          ]
+        }
+      },
+      "reason": "符文之地传说同名卡「海洋亚龙」。有官方大图的中立卡用大图（用户 2026-10-19 定），场上头像仍用峡谷 hud 头像。",
+      "alts": [
+        {
+          "type": "cdragon",
+          "path": "game/assets/characters/sru_dragon_water/hud/dragon_square_water.png",
+          "note": "峡谷头像"
+        }
+      ]
+    },
+    "neutral.cloud_drake": {
+      "name": "云端亚龙",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_dragon_air/hud/dragon_air_square.png"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set8",
+        "code": "08DE025",
+        "crop": {
+          "focus": [
+            0.52,
+            0.42
+          ],
+          "zoom": 1.6,
+          "note": "龙在画面里很小，放大让它占满窗口"
+        }
+      },
+      "reason": "符文之地传说同名卡「云端亚龙」。龙在画面里偏小，焦点放在龙身上。有官方大图的中立卡用大图（用户 2026-10-19 定），场上头像仍用峡谷 hud 头像。",
+      "alts": [
+        {
+          "type": "cdragon",
+          "path": "game/assets/characters/sru_dragon_air/hud/dragon_air_square.png",
+          "note": "峡谷头像"
+        }
+      ]
+    },
+    "neutral.super_minion": {
+      "name": "超级兵",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_orderminionsuper/hud/bluemechmelee_square.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_orderminionsuper/hud/bluemechmelee_square.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "蓝方超级兵头像。",
+      "alts": [
+        {
+          "type": "cdragon",
+          "path": "game/assets/characters/sru_orderminionsuper/hud/blue_minion_classic_super_square.png",
+          "note": "旧版造型"
+        }
+      ],
+      "generate": "蓝方机甲超级兵，厚重装甲，向前冲锋",
+      "generatePriority": 2
+    },
+    "neutral.elder_dragon": {
+      "name": "远古巨龙",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_dragon_elder/hud/dragon_square_elder.png"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set8",
+        "code": "08RU014",
+        "crop": {
+          "focus": [
+            0.5,
+            0.45
+          ]
+        }
+      },
+      "reason": "符文之地传说同名卡「远古巨龙」。画面偏暗，龙是剪影。有官方大图的中立卡用大图（用户 2026-10-19 定），场上头像仍用峡谷 hud 头像。",
+      "alts": [
+        {
+          "type": "cdragon",
+          "path": "game/assets/characters/sru_dragon_elder/hud/dragon_square_elder.png",
+          "note": "峡谷头像"
+        }
+      ]
+    },
+    "neutral.baron_nashor": {
+      "name": "纳什男爵",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_baron/hud/baron_square.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_baron/hud/baron_square.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "纳什男爵头像。符文之地传说没有男爵的卡。10 费的招牌卡，生成大图排第一。",
+      "alts": [],
+      "generate": "紫色巨型虚空蛇形生物从巢穴里探出身子，满嘴獠牙，峡谷河道背景",
+      "generatePriority": 1
+    },
+    "demacia.light_shield": {
+      "name": "光盾",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "LuxPrismaticWave"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01DE032",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "效果是给圣盾，对应拉克丝 W「曲光屏障」。符文之地传说「曲光屏障」卡效果也是给屏障。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "Lux",
+          "skin": 0,
+          "note": "拉克丝原皮原画"
+        }
+      ]
+    },
+    "demacia.iron_oath": {
+      "name": "铁誓",
+      "icon": {
+        "type": "ddragon-passive",
+        "file": "Poppy_Passive.png"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01DE044",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "单体 +2/+2。卡名的「铁」对波比的被动「钢铁大使」；原画用符文之地传说的德玛西亚增益法术「加倍英勇」。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "Poppy",
+          "skin": 5,
+          "note": "军神战甲 波比"
+        },
+        {
+          "type": "ddragon-spell",
+          "key": "GarenW",
+          "note": "盖伦 W「勇气」图标"
+        }
+      ]
+    },
+    "demacia.rally": {
+      "name": "集结",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "JarvanIVDemacianStandard"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01DE035",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "全体 +1/+1。图标用嘉文四世 E「德邦军旗」；原画用符文之地传说「为了德玛西亚！」，效果也是全体增益。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "JarvanIV",
+          "skin": 0,
+          "note": "嘉文四世原皮原画"
+        }
+      ]
+    },
+    "demacia.judgment": {
+      "name": "审判",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "GarenE"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01DE007",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "卡名就是盖伦 E「审判」。符文之地传说同名卡画的就是盖伦转圈。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "Garen",
+          "skin": 0,
+          "note": "盖伦原皮原画"
+        }
+      ]
+    },
+    "demacia.demacian_justice": {
+      "name": "德玛西亚正义",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "GarenR"
+      },
+      "art": {
+        "type": "ddragon-splash",
+        "champion": "Garen",
+        "skin": 13,
+        "crop": {
+          "focus": [
+            0.5,
+            0.35
+          ]
+        }
+      },
+      "reason": "卡名就是盖伦大招。原皮原画已经是盖伦英雄头像的来源，换神王盖伦，巨剑从天而降，远看认得出。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "Garen",
+          "skin": 0,
+          "note": "盖伦原皮"
+        },
+        {
+          "type": "lor",
+          "set": "set1",
+          "code": "01DE012T2",
+          "note": "符文之地传说「盖伦的审判」"
+        }
+      ]
+    },
+    "noxus.flying_axe": {
+      "name": "飞斧",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "DravenSpinning"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01NX020T1",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "德莱文 Q「旋转飞斧」。符文之地传说「旋转飞斧」卡就是这把斧头。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "Draven",
+          "skin": 0,
+          "note": "德莱文原皮"
+        }
+      ]
+    },
+    "noxus.blood_rage": {
+      "name": "血怒",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "DravenFury"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01NX019",
+        "crop": {
+          "focus": [
+            0.5,
+            0.32
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "本回合 +3 攻击。符文之地传说「蛮力」的效果正好是本回合 +3 攻击；图标用德莱文 W「血性冲刺」，名字带血。",
+      "alts": []
+    },
+    "noxus.execute": {
+      "name": "处决",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "DariusExecute"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01NX022",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "消灭一个受伤的随从，和符文之地传说「诺克萨斯断头台」（消灭一个受伤单位）完全一样，画的是德莱厄斯大招。图标用德莱厄斯 R；诺克萨斯英雄技能已改用他的 W，不再同图。",
+      "alts": [
+        {
+          "type": "lor",
+          "set": "set1",
+          "code": "01NX004",
+          "note": "符文之地传说「剔除」"
+        }
+      ]
+    },
+    "noxus.decimate": {
+      "name": "大杀四方",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "DariusCleave"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01NX002",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "卡名就是德莱厄斯 Q「大杀四方」，符文之地传说同名卡画的也是他。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "Darius",
+          "skin": 0,
+          "note": "德莱厄斯原皮"
+        }
+      ]
+    },
+    "noxus.might_of_noxus": {
+      "name": "诺克萨斯之力",
+      "icon": {
+        "type": "ddragon-passive",
+        "file": "Darius_Icon_Hemorrhage.png"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set2",
+        "code": "02NX003",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "单体 4 点伤害。符文之地传说「诺克萨斯狂热」是诺克萨斯的直伤法术；图标用德莱厄斯被动（叠满就是「诺克萨斯之力」）。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "Darius",
+          "skin": 1,
+          "note": "铁血帝皇 德莱厄斯"
+        }
+      ]
+    },
+    "ionia.ghostblade": {
+      "name": "鬼切",
+      "icon": {
+        "type": "ddragon-item",
+        "id": "3142"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01IO022",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "给潜行。图标用物品「幽梦之灵」（英文 Ghostblade）；原画用符文之地传说「鬼魅」，效果是给隐匿。",
+      "alts": []
+    },
+    "ionia.recall": {
+      "name": "传送回城",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/spells/icons2d/recallhome.png"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01IO011",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "符文之地传说同名卡「回城」，效果一样是把友方单位召回手牌。图标用 LoL 回城按钮。",
+      "alts": [
+        {
+          "type": "cdragon",
+          "path": "game/assets/spells/icons2d/icon_spell_summonerspell_recall_01.png",
+          "note": "另一版回城图标"
+        }
+      ]
+    },
+    "ionia.spirit_rush": {
+      "name": "灵魄突袭",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "AhriR"
+      },
+      "art": {
+        "type": "ddragon-splash",
+        "champion": "Ahri",
+        "skin": 27,
+        "crop": {
+          "focus": [
+            0.55,
+            0.4
+          ]
+        }
+      },
+      "reason": "卡名就是阿狸大招。原皮原画是阿狸英雄头像的来源，换灵魂莲华阿狸，和「灵魄」的名字也对得上。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "Ahri",
+          "skin": 0,
+          "note": "阿狸原皮"
+        }
+      ]
+    },
+    "ionia.meditate": {
+      "name": "冥想",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "Meditate"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set2",
+        "code": "02IO009",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "抽两张。卡名对易的 W「冥想」；原画用符文之地传说「深度冥想」，效果也是抽两张。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "MasterYi",
+          "skin": 0,
+          "note": "易原皮"
+        }
+      ]
+    },
+    "ionia.last_breath": {
+      "name": "狂风绝息斩",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "YasuoR"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01IO015T2",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "卡名就是亚索大招。原画用符文之地传说「亚索的斩钢闪」：亚索剪影加满屏旋风，远看就是风。亚索原皮原画已经是亚索随从卡的原画，不再用。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "Yasuo",
+          "skin": 9,
+          "note": "黑夜使者 亚索"
+        },
+        {
+          "type": "ddragon-splash",
+          "champion": "Yasuo",
+          "skin": 36,
+          "note": "灵魂莲华 亚索，画面太安静"
+        }
+      ]
+    },
+    "freljord.hawkshot": {
+      "name": "鹰击长空",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "AsheSpiritOfTheHawk"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01FR022",
+        "crop": {
+          "focus": [
+            0.5,
+            0.45
+          ]
+        }
+      },
+      "reason": "卡名就是艾希 E。原画用符文之地传说弗雷尔卓德的「预兆之鹰」，画面是一只鹰。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "Ashe",
+          "skin": 0,
+          "note": "艾希原皮"
+        }
+      ]
+    },
+    "freljord.winters_approach": {
+      "name": "凛冬将至",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "SejuaniW"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set6cde",
+        "code": "06FR041",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "获得一个空法力水晶。符文之地传说「凛冬之触」效果正好是「获得一个空的法力宝石」。图标用瑟庄妮 W「凛冬之怒」。",
+      "alts": []
+    },
+    "freljord.glacial_fissure": {
+      "name": "冰川裂隙",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "BraumRWrapper"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01FR001",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "卡名就是布隆大招，效果冻结所有敌方随从。原画用符文之地传说「急冻」：一只手被冻成冰，冻结的意思最直白。布隆原皮已经是布隆随从卡的原画。",
+      "alts": [
+        {
+          "type": "lor",
+          "set": "set1",
+          "code": "01FR030",
+          "note": "符文之地传说「脆弱钢铁」，碎冰"
+        },
+        {
+          "type": "lor",
+          "set": "set1",
+          "code": "01FR019",
+          "note": "符文之地传说「凛冬之息」，云里的人脸，不好认"
+        },
+        {
+          "type": "ddragon-splash",
+          "champion": "Braum",
+          "skin": 1,
+          "note": "屠龙勇士 布隆"
+        }
+      ]
+    },
+    "freljord.crystal_arrow": {
+      "name": "魔法水晶箭",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "EnchantedCrystalArrow"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01FR038T3",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "卡名就是艾希大招，符文之地传说同名卡。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "Ashe",
+          "skin": 0,
+          "note": "艾希原皮"
+        }
+      ]
+    },
+    "freljord.blizzard": {
+      "name": "暴风雪",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "GlacialStorm"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01FR024T5",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ],
+          "zoom": 1.55,
+          "note": "符文之地传说的法术原画是黑底上的圆形画面，放大 1.55 倍让窗口四角落在圆内"
+        }
+      },
+      "reason": "全体 2 点伤害加冻结。图标和原画都用艾尼维亚大招「冰川风暴」，原画是符文之地传说的同名技能卡，一个冰蓝色漩涡。",
+      "alts": [
+        {
+          "type": "lor",
+          "set": "set1",
+          "code": "01FR042",
+          "note": "符文之地传说「严寒之风」，风雪里的人"
+        },
+        {
+          "type": "lor",
+          "set": "set1",
+          "code": "01FR020",
+          "note": "符文之地传说「雪崩」，一团雪云"
+        }
+      ]
+    },
+    "token.demacian_soldier": {
+      "name": "德玛西亚士兵",
+      "icon": null,
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01DE006",
+        "crop": {
+          "focus": [
+            0.5,
+            0.4
+          ]
+        }
+      },
+      "reason": "LoL 没有德玛西亚士兵的单位图。用符文之地传说的德玛西亚先锋军士兵。场上头像从原画裁。",
+      "alts": [
+        {
+          "type": "lor",
+          "set": "set1",
+          "code": "01DE020",
+          "note": "先锋军守卫"
+        },
+        {
+          "type": "lor",
+          "set": "set1",
+          "code": "01DE001",
+          "note": "先锋军旗手"
+        }
+      ]
+    },
+    "token.valor": {
+      "name": "瓦罗",
+      "icon": {
+        "type": "ddragon-passive",
+        "file": "Quinn_Passive.png"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set2",
+        "code": "02DE006T2",
+        "crop": {
+          "focus": [
+            0.5,
+            0.45
+          ]
+        }
+      },
+      "reason": "符文之地传说同名卡「华洛」（瓦罗），奎因的鹰。图标用奎因被动「侵扰」，画的是瓦罗。",
+      "alts": []
+    },
+    "token.zed_shadow": {
+      "name": "影分身",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "ZedW"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01IO009T1",
+        "crop": {
+          "focus": [
+            0.5,
+            0.45
+          ]
+        }
+      },
+      "reason": "符文之地传说「活体影子」就是劫的影分身。图标用劫 W「影奥义！分身」。",
+      "alts": []
+    },
+    "token.kled_dismounted": {
+      "name": "失去坐骑的克烈",
+      "icon": {
+        "type": "ddragon-passive",
+        "file": "Kled_P.png"
+      },
+      "art": {
+        "type": "ddragon-splash",
+        "champion": "Kled",
+        "skin": 1,
+        "crop": {
+          "focus": [
+            0.45,
+            0.4
+          ]
+        }
+      },
+      "reason": "官方没有克烈下马的原画。图标用克烈被动「怯战蜥蜴斯嘎尔」（下马机制本身）；原画先用爵士克烈皮肤（还骑着斯嘎尔），和克烈随从卡（原皮）区分开。理想的是下马的克烈，需要生成。",
+      "generate": "约德尔人克烈徒步举着枪，身后的蜥蜴斯嘎尔正在逃跑",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "Kled",
+          "skin": 0,
+          "note": "克烈原皮"
+        }
+      ],
+      "generatePriority": 15
+    },
+    "token.sion_undead": {
+      "name": "亡骨赛恩",
+      "icon": {
+        "type": "ddragon-passive",
+        "file": "Sion_Passive1.png"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set5",
+        "code": "05NX001T1",
+        "crop": {
+          "focus": [
+            0.5,
+            0.4
+          ]
+        }
+      },
+      "reason": "赛恩被动「死亡荣耀」就是死后变成亡骨继续打，图标用它；原画用符文之地传说「重生的赛恩」。",
+      "alts": [
+        {
+          "type": "ddragon-splash",
+          "champion": "Sion",
+          "skin": 0,
+          "note": "赛恩原皮"
+        }
+      ]
+    },
+    "token.anivia_egg": {
+      "name": "冰凤凰蛋",
+      "icon": {
+        "type": "ddragon-passive",
+        "file": "Anivia_P.png"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set1",
+        "code": "01FR024T4",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ]
+        }
+      },
+      "reason": "艾尼维亚被动「寒霜涅槃」就是变蛋，图标用它；符文之地传说的「凤凰蛋」卡就是这颗蛋。",
+      "alts": []
+    },
+    "token.squirrel": {
+      "name": "松鼠",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "LuluW"
+      },
+      "art": {
+        "type": "lor",
+        "set": "set3",
+        "code": "03IO008T1",
+        "crop": {
+          "focus": [
+            0.5,
+            0.5
+          ]
+        }
+      },
+      "reason": "璐璐 W「奇思妙想」把人变成小动物，图标用它；符文之地传说有同名卡「松鼠」。",
+      "alts": []
+    },
+    "token.void_worm": {
+      "name": "虚空蠕虫",
+      "icon": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_horde_mini/hud/sru_voidmite_square.png"
+      },
+      "art": {
+        "type": "cdragon",
+        "path": "game/assets/characters/sru_horde_mini/hud/sru_voidmite_square.png",
+        "crop": "整张，128×128 放大，偏糊；以后生成大图"
+      },
+      "reason": "虚空幼虫死后分裂出的虚空螨（Voidmite），和卡的设定一致。",
+      "alts": [
+        {
+          "type": "lor",
+          "set": "set6",
+          "code": "06SH007",
+          "note": "符文之地传说「虚空异生体」"
+        }
+      ],
+      "generate": "小号的紫色虚空虫",
+      "generatePriority": 14
+    },
+    "token.mana_potion": {
+      "name": "法力药水",
+      "icon": {
+        "type": "ddragon-item",
+        "id": "772004"
+      },
+      "art": {
+        "type": "ddragon-item",
+        "id": "772004",
+        "crop": "整张，64×64 放大，很糊"
+      },
+      "reason": "LoL 物品「法力药水」的图标。官方没有大图。",
+      "generate": "一瓶发蓝光的法力药水，海克斯风格的玻璃瓶",
+      "alts": [
+        {
+          "type": "ddragon-spell",
+          "key": "SummonerMana",
+          "note": "召唤师技能「清晰术」"
+        }
+      ],
+      "generatePriority": 16
+    }
+  },
+  "heroPowers": {
+    "demacia.hero_power": {
+      "name": "召集",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "GarenW"
+      },
+      "reason": "盖伦 W「勇气」，图标是德玛西亚的盾徽，最接近「召集士兵」。不用 GarenE，因为它就是法术「审判」的图标。盖伦的 Q「致命打击」是单体攻击、被动「坚韧」是回血，都不贴近召唤。",
+      "alts": [
+        {
+          "type": "ddragon-spell",
+          "key": "GarenQ",
+          "note": "盖伦 Q「致命打击」"
+        },
+        {
+          "type": "ddragon-passive",
+          "file": "Garen_Passive.png",
+          "note": "盖伦被动「坚韧」"
+        }
+      ]
+    },
+    "noxus.hero_power": {
+      "name": "诺克萨斯断头台",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "DariusNoxianTacticsONH"
+      },
+      "reason": "德莱厄斯 W「致残打击」，一记加强的单体重击，最接近「对敌方英雄造成 2 点伤害」。不用 DariusExecute（法术「处决」用了）；Q「大杀四方」和被动「出血」也分别被法术「大杀四方」「诺克萨斯之力」用了；E「无情铁手」是拉人。",
+      "alts": [
+        {
+          "type": "ddragon-spell",
+          "key": "DariusAxeGrabCone",
+          "note": "德莱厄斯 E「无情铁手」"
+        }
+      ]
+    },
+    "ionia.hero_power": {
+      "name": "灵魄",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "AhriQ"
+      },
+      "reason": "spec 5.9 指定阿狸 Q「欺诈宝珠」。法术「灵魄突袭」用的是阿狸 R 的图标和灵魂莲华阿狸原画，两边不同图。",
+      "alts": []
+    },
+    "freljord.hero_power": {
+      "name": "寒冰箭",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "Volley"
+      },
+      "reason": "spec 5.9 指定艾希 W「万箭齐发」，冰箭带减速。法术里没有用到它。",
+      "alts": []
+    }
+  },
+  "keywords": {
+    "taunt": {
+      "name": "嘲讽",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "PuncturingTaunt"
+      },
+      "reason": "拉莫斯 E「狂乱嘲讽」。spec 5.4 写的 W 是笔误（已确认，设计会话会改），W 是「尖刺防御」。",
+      "alts": [
+        {
+          "type": "ddragon-spell",
+          "key": "DefensiveBallCurl",
+          "note": "拉莫斯 W「尖刺防御」"
+        }
+      ]
+    },
+    "charge": {
+      "name": "冲锋",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "SummonerHaste"
+      },
+      "reason": "spec 5.4 指定召唤师技能「幽灵疾步」（疾跑）。",
+      "alts": []
+    },
+    "rush": {
+      "name": "突袭",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "SummonerFlash"
+      },
+      "reason": "入场就能打随从，用「闪现」表示立刻贴脸。和冲锋的疾步区分开。",
+      "alts": [
+        {
+          "type": "ddragon-spell",
+          "key": "YasuoE",
+          "note": "亚索 E「踏前斩」"
+        }
+      ]
+    },
+    "divine_shield": {
+      "name": "圣盾",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "SummonerBarrier"
+      },
+      "reason": "召唤师技能「屏障」，金色护盾，一眼认得出。",
+      "alts": [
+        {
+          "type": "ddragon-item",
+          "id": "3102",
+          "note": "女妖面纱：挡掉第一个技能，机制最接近圣盾"
+        }
+      ]
+    },
+    "stealth": {
+      "name": "潜行",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "TwitchHideInShadows"
+      },
+      "reason": "图奇 Q「埋伏」，LoL 里最典型的隐身技能。",
+      "alts": [
+        {
+          "type": "ddragon-passive",
+          "file": "TeemoPassive.png",
+          "note": "提莫被动「游击队军备」"
+        }
+      ]
+    },
+    "windfury": {
+      "name": "风怒",
+      "icon": {
+        "type": "ddragon-passive",
+        "file": "MasterYi_Passive1.png"
+      },
+      "reason": "易的被动「双重打击」，名字就是攻击两次。",
+      "alts": [
+        {
+          "type": "ddragon-item",
+          "id": "3124",
+          "note": "鬼索的狂暴之刃"
+        }
+      ]
+    },
+    "lifesteal": {
+      "name": "吸血",
+      "icon": {
+        "type": "ddragon-item",
+        "id": "1053"
+      },
+      "reason": "物品「吸血鬼节杖」，LoL 里最基础的吸血装备。",
+      "alts": [
+        {
+          "type": "ddragon-item",
+          "id": "3072",
+          "note": "饮血剑"
+        }
+      ]
+    },
+    "poisonous": {
+      "name": "剧毒",
+      "icon": {
+        "type": "ddragon-passive",
+        "file": "Twitch_Passive.png"
+      },
+      "reason": "spec 5.4 指定图奇被动「死亡毒液」。",
+      "alts": [
+        {
+          "type": "ddragon-spell",
+          "key": "TeemoE",
+          "note": "提莫 E「毒性射击」"
+        }
+      ]
+    },
+    "spell_damage": {
+      "name": "法术伤害",
+      "icon": {
+        "type": "ddragon-item",
+        "id": "3089"
+      },
+      "reason": "物品「灭世者的死亡之帽」，放大法强。",
+      "alts": [
+        {
+          "type": "ddragon-item",
+          "id": "1052",
+          "note": "增幅典籍"
+        }
+      ]
+    },
+    "freeze": {
+      "name": "冻结",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "LissandraR"
+      },
+      "reason": "丽桑卓大招「冰封陵墓」，把目标冻在冰里不能动。",
+      "alts": [
+        {
+          "type": "ddragon-passive",
+          "file": "Ashe_P.png",
+          "note": "艾希被动「冰霜射击」"
+        }
+      ]
+    },
+    "silence": {
+      "name": "沉默",
+      "icon": {
+        "type": "ddragon-spell",
+        "key": "SorakaE"
+      },
+      "reason": "索拉卡 E「星体结界」，LoL 里典型的沉默技能。",
+      "alts": [
+        {
+          "type": "ddragon-spell",
+          "key": "SummonerBoost",
+          "note": "召唤师技能「净化」：移除负面效果"
+        }
+      ]
+    }
+  }
+}

@@ -6,6 +6,7 @@ import {
   CAMERA,
   CARD_H,
   CARD_W,
+  fitCanvas,
   handSlot,
   heroPowerSlot,
   heroSlot,
@@ -131,6 +132,64 @@ describe('布局', () => {
         expect(b.y0 + (b.y1 - b.y0) * 0.45).toBeLessThan(H);
         expect(cardBox(handSlot('far', i, n)).y0).toBeGreaterThanOrEqual(0);
       }
+    }
+  });
+});
+
+describe('对方手牌', () => {
+  it('1 到 10 张都整张在画面里，上边留 4% 以上，不压对方的枢纽、生命数字、英雄技能、法力条', () => {
+    const keep: [string, Box][] = [
+      ['生命数字', nexusHpBox('far')],
+      ['头像', nexusDiscBox('far')],
+      ['英雄技能', heroPowerBox('far')],
+      ['法力条', manaBox('far')],
+    ];
+    for (let n = 1; n <= 10; n++) {
+      for (let i = 0; i < n; i++) {
+        const b = cardBox(handSlot('far', i, n));
+        expect(b.y0, `${n} 张的第 ${i} 张离上边太近`).toBeGreaterThanOrEqual(H * 0.04);
+        expect(b.x0).toBeGreaterThanOrEqual(0);
+        expect(b.x1).toBeLessThanOrEqual(W);
+        for (const [name, box] of keep) expect(overlaps(b, box), `${n} 张的第 ${i} 张压住了对方${name}`).toBe(false);
+      }
+    }
+  });
+
+  it('扇形展开看得出张数：相邻两张错开至少 45% 的牌宽', () => {
+    for (let n = 2; n <= 10; n++) {
+      for (let i = 0; i < n - 1; i++) {
+        const a = cardBox(handSlot('far', i, n));
+        const b = cardBox(handSlot('far', i + 1, n));
+        expect((b.x0 - a.x0) / (a.x1 - a.x0), `${n} 张的第 ${i}、${i + 1} 张挤在一起`).toBeGreaterThanOrEqual(0.45);
+      }
+    }
+  });
+});
+
+describe('画布适配窗口', () => {
+  // 各种窗口：16:9、比 16:9 高（笔记本竖着拉高、4:3）、比 16:9 宽（带浏览器工具栏的笔记本、带鱼屏）、比 1280 还窄
+  const windows: [number, number][] = [
+    [1920, 1080],
+    [1440, 1000],
+    [1280, 1024],
+    [1512, 738],
+    [2560, 1080],
+    [1280, 720],
+    [1100, 900],
+    [800, 1000],
+  ];
+  it('画布始终是 16:9、整个在窗口里、居中，所以 3D 取景和按 1920×1080 核对的布局一样', () => {
+    for (const [ww, wh] of windows) {
+      const f = fitCanvas(ww, wh);
+      expect(Math.abs(f.w / f.h - ASPECT), `${ww}×${wh}`).toBeLessThan(0.01);
+      expect(f.w).toBeLessThanOrEqual(ww);
+      expect(f.h).toBeLessThanOrEqual(wh);
+      expect(f.left).toBeGreaterThanOrEqual(0);
+      expect(f.top).toBeGreaterThanOrEqual(0);
+      expect(Math.abs(f.left * 2 + f.w - ww)).toBeLessThanOrEqual(1);
+      expect(Math.abs(f.top * 2 + f.h - wh)).toBeLessThanOrEqual(1);
+      // 窗口有一边贴满：不会无故缩小
+      expect(f.w >= ww - 1 || f.h >= wh - 1, `${ww}×${wh} 两边都留了空`).toBe(true);
     }
   });
 });

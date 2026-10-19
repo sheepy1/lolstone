@@ -15,7 +15,7 @@ import {
 } from 'postprocessing';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { ASPECT, CAMERA } from '../presentation/layout';
+import { ASPECT, CAMERA, fitCanvas } from '../presentation/layout';
 import { BLOOM_LAYER } from '../presentation/fx/materials';
 
 export type FrameHook = (dt: number, t: number) => void;
@@ -39,7 +39,6 @@ class GainEffect extends Effect {
 }
 
 const MAX_DPR = 2;
-const MIN_WIDTH = 1280;
 
 export class Stage {
   readonly renderer: THREE.WebGLRenderer;
@@ -115,22 +114,13 @@ export class Stage {
 
   // 画布在窗口里的 16:9 矩形
   resize(): void {
-    const ww = window.innerWidth;
-    const wh = window.innerHeight;
-    let w = Math.max(Math.min(ww, wh * ASPECT), Math.min(MIN_WIDTH, ww));
-    let h = w / ASPECT;
-    if (h > wh) {
-      h = wh;
-      w = h * ASPECT;
-    }
-    w = Math.floor(w);
-    h = Math.floor(h);
+    const { w, h, left, top } = fitCanvas(window.innerWidth, window.innerHeight);
     this.renderer.setSize(w, h);
     this.composer.setSize(w, h);
     const c = this.renderer.domElement;
     c.style.position = 'absolute';
-    c.style.left = `${Math.floor((ww - w) / 2)}px`;
-    c.style.top = `${Math.floor((wh - h) / 2)}px`;
+    c.style.left = `${left}px`;
+    c.style.top = `${top}px`;
   }
 
   onFrame(fn: FrameHook): () => void {

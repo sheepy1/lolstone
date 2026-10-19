@@ -9,11 +9,30 @@ export type Slot = { pos: Vec3; rot: Vec3; scale: number };
 // 分辨率基准 1920×1080（spec 5.4）：画布按 16:9 等比缩放，最窄 1280 宽。
 export const ASPECT = 16 / 9;
 
-// 固定透视镜头，从我方一侧斜着俯视棋盘。俯角 atan(18 / 11) ≈ 58.6°（spec 5.4：50° 到 60°）。
+// 画布在浏览器窗口里的位置和大小：始终是 16:9，取窗口里放得下的最大矩形，居中（多出来的部分留黑边）。
+// 窗口比 16:9 高就上下留边，比 16:9 宽就左右留边，所以 3D 画面的取景在任何窗口比例下都一样，
+// 布局测试按 16:9 核对就覆盖了所有窗口。窗口宽度够时画布最窄 1280，但不会超出窗口
+export const MIN_CANVAS_WIDTH = 1280;
+
+export function fitCanvas(ww: number, wh: number): { w: number; h: number; left: number; top: number } {
+  let w = Math.max(Math.min(ww, wh * ASPECT), Math.min(MIN_CANVAS_WIDTH, ww));
+  let h = w / ASPECT;
+  if (h > wh) {
+    h = wh;
+    w = h * ASPECT;
+  }
+  w = Math.floor(w);
+  h = Math.floor(h);
+  return { w, h, left: Math.floor((ww - w) / 2), top: Math.floor((wh - h) / 2) };
+}
+
+// 固定透视镜头，从我方一侧斜着俯视棋盘。俯角 atan(18 / 11.3) ≈ 57.9°（spec 5.4：50° 到 60°）。
+// 视角 39.5°、看向 z = 1.1：比最初的 38° 和 1.4 稍微往远处、往外让一点，对方手牌上边留得出 4% 以上的空，
+// 我方手牌仍然露出六成左右（tests/presentation-layout.test.ts 核对）
 export const CAMERA = {
-  fov: 38,
+  fov: 39.5,
   pos: { x: 0, y: 18, z: 12.4 },
-  target: { x: 0, y: 0, z: 1.4 },
+  target: { x: 0, y: 0, z: 1.1 },
 };
 // 镜头视线和水平面的夹角
 export const CAMERA_PITCH = Math.atan2(CAMERA.pos.y - CAMERA.target.y, CAMERA.pos.z - CAMERA.target.z);
@@ -53,6 +72,8 @@ const flat = { x: -Math.PI / 2, y: 0, z: 0 }; // 平放在台面上，正面朝�
 // 立起来朝向镜头
 const facing = (tilt = 0): Vec3 => ({ x: -CAMERA_PITCH + tilt, y: 0, z: 0 });
 
+const FAR_HAND_X = -0.8;
+
 // 我方手牌：在台面近处边缘外侧，朝镜头立着，排成扇形；张数多时自动收紧。不悬停时下沉到画面底边，
 // 只露出上面约七成（费用、原画、名字），不挡我方枢纽、英雄技能和法力条（tests/presentation-layout.test.ts 核对）。
 // 对方手牌：在远处台面边缘，牌背朝上斜放。
@@ -68,11 +89,13 @@ export function handSlot(p: Placement, index: number, count: number): Slot {
       scale: 1.3,
     };
   }
-  const step = Math.min(0.75, count > 1 ? 6 / (count - 1) : 0);
+  // 整把牌都要在画面里，上边留出至少 4% 画面高（用户试玩时上半截被画面上边缘切掉过）；扇形整体往左偏一点，
+  // 10 张时也不压到右边对方法力条的数字；每张至少露出 45% 的宽度，看得出张数（tests/presentation-layout.test.ts 核对）
+  const step = Math.min(0.85, count > 1 ? 5.6 / (count - 1) : 0);
   return {
-    pos: v(offset * step, 0.25 + index * 0.012, -7.2 - offset * offset * 0.02),
+    pos: v(FAR_HAND_X + offset * step, 0.5 + index * 0.012, -6.8 - offset * offset * 0.02),
     rot: { x: -Math.PI / 2 + 0.35, y: 0, z: Math.PI + offset * 0.05 },
-    scale: 0.75,
+    scale: 0.68,
   };
 }
 

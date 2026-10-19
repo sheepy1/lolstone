@@ -1349,24 +1349,6 @@ canvas 绘制、几何细节。旧版（M3 骨架）的代码留着，地址带 
 M1 的 GPU 大约慢 2.5 到 3 倍，按比例估计 1080p 约 8 到 10ms，像素比 2 的满场约 15 到 17ms，接近 16.7ms 的线；
 合并后要在 M1 上用 /dev/fx 实测，超了先把 M1 上的像素比降到 1.5。
 
-## 每开一局 GPU 纹理净增（2026-10-20 夜间回归）
-
-- 现象：开一局再回主菜单，`renderer.info.memory.textures` 每次净增几张，几何体不增。
-- 查法：给 three 的 EventDispatcher 打补丁。渲染器初始化一张贴图时会给它挂 'dispose' 监听，借这个时机登记；
-  收到 'dispose' 事件时注销。几轮"开局、回主菜单"之后，看留下了哪些、在哪一局建的。
-- 漏掉的两样，都是 `scene/dispose.ts` 的 releaseGpu 没放：
-  - 投影方向光的阴影贴图：每局一张 2048×2048 的深度贴图，约 16 MB 显存。原来不调灯光的 dispose，现在遍历到灯光就调；
-  - 水面的法线贴图：每局一张。原来只放 map、emissiveMap、alphaMap 三种贴图，现在按属性值放掉材质上挂的全部贴图
-    （normalMap、roughnessMap、envMap……），共用的跳过。
-- 着色器 uniform 里的贴图仍然不放：troika 文字的材质在 uniform 里放着全局的 SDF 字体图集。
-- 舞台的反射贴图（stage.reflections）标成了共用，各局材质的 envMap 指向它，不能跟着一局放掉。
-- 修完后连开 5 局再回主菜单，纹理一直是 38、几何体一直是 28。
-- 有意常驻、不算泄漏的：
-  - 卡面和头像缓存：按卡牌 id 缓存，只在第一次见到新卡时增加，同一套卡组打几局后就不再长；
-  - troika 的 SDF 字体图集：一张 2048 宽的 canvas 贴图，按需要加高；
-  - 后处理的两张深度贴图：跟着舞台，只建一次。
-- 测试：tests/presentation-dispose.test.ts 在 Node 里核对：全部贴图槽都放；共用的、uniform 里的不放；灯光的阴影贴图放掉。
-
 ## 招牌卡专属特效（M4，docs/m4-signature-fx.md，2026-10-20）
 
 11 张招牌卡各有一个专属模块，在 `src/presentation/signature/`。没注册的卡、数据里写了 fxId 但这边没做的卡，照常走默认模块（fx 类型兜底）。

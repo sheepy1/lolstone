@@ -37,9 +37,11 @@ import { FLOW } from '../../presentation/fx/flow';
 import { MANA_FX } from '../../scene/tableParts';
 import { AI_PACE } from '../../app/match';
 import { SAMPLE, sampleEvents } from '../sampleEvents';
+import { addSpellPanel } from '../spellPanel';
+import { DEV_SPELL_CARDS } from '../spellScenarios';
 
 gsap.registerPlugin(GSDevTools);
-installDefaultPool();
+installDefaultPool(DEV_SPELL_CARDS);
 
 // 固定种子的 L0 对 L0 打到中盘：双方场上都有随从、轮到玩家 0，作为调试台的基准棋盘
 function benchState(): GameState {
@@ -250,6 +252,7 @@ tune('飘字 FLOAT_TEXT', FLOAT_TEXT as unknown as Params);
 tune('裂纹 CRACKS', CRACKS as unknown as Params);
 tune('画面反馈 SCREEN', SCREEN as unknown as Params);
 combat.close();
+addSpellPanel(gui, { stage, baseState, build, playEvents, busy: () => !!bench?.director.busy, log: (s) => (log.textContent = s) });
 const pace = gui.addFolder('节奏');
 pace.add(settings, 'timeScale', 0.05, 2, 0.05).name('全局速度（慢放）').onChange(applySettings);
 pace.add(settings, 'duration', 0.25, 3, 0.05).name('整步时长倍数').onChange(applySettings);

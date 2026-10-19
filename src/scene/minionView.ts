@@ -7,14 +7,17 @@ import { getCard, type Keyword } from '../engine';
 import { MINION_HEIGHT, MINION_SIZE } from '../presentation/layout';
 import { EDGE_GLOW, flashMaterial, fresnelMaterial, glowMaterial, hdr, markBloom } from '../presentation/fx/materials';
 import type { ViewMinion } from '../presentation/viewState';
-import { makeLabelCanvas, portraitTexture } from './canvasArt';
+import { drawKeywordIcon, makeLabelCanvas, portraitTexture, strokeText } from './canvasArt';
 import { MINION_BASE, MINION_RIM, MINION_TOP, UNIT_BOX, UNIT_SPHERE } from './geometry';
 import { StatBadge, type BadgeKind } from './statBadge';
-import { COLORS, FONT_CN } from './theme';
+import { COLORS, FONT_CN, FONT_NUM } from './theme';
 import { shared } from './dispose';
 
+// 底座上沿的 buff 小图标：LoL 的技能、物品、被动图标（card-art.json 的 keywords，spec 5.4）。
+// 图标没加载好或缺失时画纯色方块加一个字（label、color）。潜行按 spec 5.4 也有一个"视野被遮"的图标。
 const ICONS: { k: Keyword; label: string; color: string }[] = [
   { k: 'taunt', label: '嘲', color: '#f0c040' },
+  { k: 'stealth', label: '潜', color: '#9090b0' },
   { k: 'poisonous', label: '毒', color: '#58c040' },
   { k: 'lifesteal', label: '吸', color: '#d0304a' },
   { k: 'windfury', label: '风', color: '#80d8e8' },
@@ -170,9 +173,9 @@ export class MinionView extends THREE.Group {
     if (key === this.hudKey) return;
     this.hudKey = key;
     // 底座上沿的 buff 小图标
-    const icons = ICONS.filter((i) => m.keywords.includes(i.k)).map((i) => ({ label: i.label, color: i.color }));
-    if (spellDamage > 0) icons.push({ label: `法${spellDamage}`, color: '#9a6cff' });
-    if (m.silenced) icons.push({ label: '默', color: '#808080' });
+    const icons: { k: string; label: string; color: string; badge?: string }[] = ICONS.filter((i) => m.keywords.includes(i.k));
+    if (spellDamage > 0) icons.push({ k: 'spell_damage', label: `法${spellDamage}`, color: '#9a6cff', badge: `+${spellDamage}` });
+    if (m.silenced) icons.push({ k: 'silence', label: '默', color: '#808080' });
     const a = this.icons.g;
     a.clearRect(0, 0, ICON_W, ICON_H);
     const shown = icons.slice(0, 6);
@@ -182,6 +185,20 @@ export class MinionView extends THREE.Group {
       a.beginPath();
       a.roundRect(x - 3, 4, 60, 56, 10);
       a.fill();
+      // 图标稍后才加载好时整排重画
+      const drawn = drawKeywordIcon(a, ic.k, x, 7, 54, 50, 9, () => {
+        this.hudKey = '';
+        if (this.last) this.drawHud(this.last);
+      });
+      if (drawn) {
+        a.strokeStyle = '#c8aa6e';
+        a.lineWidth = 3;
+        a.beginPath();
+        a.roundRect(x, 7, 54, 50, 9);
+        a.stroke();
+        if (ic.badge) strokeText(a, ic.badge, x + 40, 44, 24, '#ffffff', FONT_NUM, 0.2);
+        return;
+      }
       a.fillStyle = ic.color;
       a.strokeStyle = '#101010';
       a.lineWidth = 3;

@@ -7,13 +7,13 @@
 // 生命低于 10 时，b 的小灯从后往前逐颗熄灭、剩下的不稳地闪；a、c 的水晶闪烁。输掉时发光部分碎掉。
 import gsap from 'gsap';
 import * as THREE from 'three';
-import { getCard, getHeroClass, type HeroClass } from '../engine';
+import { getHeroClass, type HeroClass } from '../engine';
 import { NEXUS } from '../presentation/layout';
 import { EDGE_GLOW, flashMaterial, glowMaterial, markBloom } from '../presentation/fx/materials';
-import { makeLabelCanvas, portraitTexture, strokeText, hexPath } from './canvasArt';
+import { heroPowerTexture, portraitTexture } from './canvasArt';
 import { NexusLamps } from './nexusLamps';
 import { StatBadge } from './statBadge';
-import { COLORS, FONT_CN, FONT_NUM, REGION_COLORS } from './theme';
+import { COLORS, REGION_COLORS } from './theme';
 import { shared } from './dispose';
 
 export type NexusStyle = 'a' | 'b' | 'c';
@@ -179,7 +179,7 @@ const powerGeo = shared(new THREE.CylinderGeometry(0.62, 0.66, 0.24, 6));
 const powerTopGeo = shared(new THREE.CircleGeometry(0.6, 6));
 const powerRingGeo = shared(new THREE.TorusGeometry(0.78, 0.05, 8, 6));
 
-// 英雄技能：台面上的六棱柱，顶面画技能名和费用；用过盖灰，能用时一圈绿色发光边。
+// 英雄技能：台面上的六棱柱，顶面是技能图标和费用（canvasArt.ts 的 heroPowerTexture）；用过盖灰，能用时一圈绿色发光边。
 export class HeroPowerView extends THREE.Group {
   readonly body = new THREE.Group();
   private readonly topMat: THREE.MeshStandardMaterial;
@@ -188,29 +188,11 @@ export class HeroPowerView extends THREE.Group {
 
   constructor(cls: HeroClass, side: 0 | 1) {
     super();
-    const def = getCard(getHeroClass(cls).heroPower);
     const col = REGION_COLORS[cls];
-    const label = makeLabelCanvas(256, 256);
-    const g = label.g;
-    hexPath(g, 128, 128, 124);
-    g.fillStyle = `#${col.inner.toString(16).padStart(6, '0')}`;
-    g.fill();
-    hexPath(g, 128, 128, 100);
-    g.lineWidth = 8;
-    g.strokeStyle = `#${col.accent.toString(16).padStart(6, '0')}`;
-    g.stroke();
-    // 名字长的（诺克萨斯断头台）缩小字号，放得进六边形
-    strokeText(g, def.name, 128, 140, def.name.length > 3 ? Math.floor(190 / def.name.length) : 64, '#ffffff', FONT_CN, 0.12);
-    g.beginPath();
-    g.arc(128, 48, 30, 0, Math.PI * 2);
-    g.fillStyle = '#2f8cff';
-    g.fill();
-    strokeText(g, String(def.cost), 128, 50, 40, '#fff', FONT_NUM);
-    label.texture.needsUpdate = true;
     const prism = new THREE.Mesh(powerGeo, new THREE.MeshStandardMaterial({ color: col.frame, roughness: 0.4, metalness: 0.6 }));
     prism.position.y = 0.12;
     prism.castShadow = true;
-    this.topMat = new THREE.MeshStandardMaterial({ map: label.texture, roughness: 0.5 });
+    this.topMat = new THREE.MeshStandardMaterial({ map: heroPowerTexture(cls), roughness: 0.5 });
     const top = new THREE.Mesh(powerTopGeo, this.topMat);
     top.rotation.x = -Math.PI / 2;
     top.position.y = 0.245;

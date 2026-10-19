@@ -119,6 +119,13 @@ export class CardView extends THREE.Group {
     this.texts.setDim(on);
   }
 
+  // 去掉清漆层。悬停大卡浮在镜头前、正对着方向光的镜面反射方向，清漆把整张卡面照成一片白，原画看不清；
+  // 它不需要转动时流动的高光，关掉清漆只留漫反射。
+  setMatte(): void {
+    this.front.material.clearcoat = 0;
+    this.front.material.needsUpdate = true;
+  }
+
   setMarked(on: boolean): void {
     this.mark.visible = on;
   }

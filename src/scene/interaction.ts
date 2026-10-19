@@ -589,14 +589,15 @@ export class Interaction {
     if (this.canvas.dataset.cursor !== kind) this.canvas.dataset.cursor = kind;
   }
 
-  // 按当前状态选指针：拿着牌、拉着箭头时固定；输入锁定（对方回合、动画）时等待；
+  // 按当前状态选指针：拿着牌、拉着箭头时固定；对方回合时等待；
+  // 我方出牌后的动画锁定期间保持默认指针，不闪沙漏（用户试玩后的要求）；
   // 否则看指针下的东西现在能不能操作：能点、能拖的亮起，自己回合里出不了的手牌显示不可用。
   private syncCursor(): void {
     const m = this.mode;
     if (m.k === 'drag') return this.setCursor('grab');
     if (m.k === 'aim') return this.setCursor('target');
     const legal = this.host.legal();
-    if (!legal) return this.setCursor(this.host.waiting() || this.host.busy() ? 'wait' : 'default');
+    if (!legal) return this.setCursor(this.host.waiting() ? 'wait' : 'default');
     const hit = this.hoverPick;
     const view = this.scene.view;
     if (!hit) return this.setCursor('default');

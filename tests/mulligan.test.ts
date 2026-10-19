@@ -70,6 +70,21 @@ describe('换牌', () => {
     expect(r.events.map((e) => e.kind).slice(0, 4)).toEqual(['mulligan_done', 'mulligan_done', 'game_start', 'turn_start']);
   });
 
+  it('先补抽再洗回：换掉的牌不会被立刻抽回来', () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const { state } = newGame(seed, 0);
+      const replacedIds = state.players[0].hand.map((c) => c.instanceId);
+      const r = applyAction(mulligan(state, 1, []), { kind: 'mulligan', player: 0, replace: [0, 1, 2] });
+      if (!r.ok) throw new Error(r.error);
+      const done = r.events.find((e) => e.kind === 'mulligan_done' && e.side === 0);
+      const drawnIds = done && done.kind === 'mulligan_done' ? done.drawn.map((c) => c.instanceId) : [];
+      expect(drawnIds).toHaveLength(3);
+      expect(drawnIds.some((id) => replacedIds.includes(id))).toBe(false);
+      // 补抽的就是换牌前牌库顶的三张
+      expect(drawnIds).toEqual(state.players[0].deck.slice(0, 3).map((c) => c.instanceId));
+    }
+  });
+
   it('换全部：换掉的牌洗回牌库，补抽同样张数，牌库张数不变', () => {
     const { state } = newGame(3, 0);
     let s = mulligan(state, 1, []);

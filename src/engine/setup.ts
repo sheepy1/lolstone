@@ -102,17 +102,18 @@ export function submitMulligan(ctx: Ctx, action: Extract<Action, { kind: 'mullig
   if (ctx.state.players.every((x) => x.mulliganDone)) finishMulligan(ctx);
 }
 
-// 把换掉的牌洗回牌库、补抽同样张数（新牌放回原来的位置），然后开始先手的第一回合。
+// 先从牌库顶补抽同样张数（新牌放回原来的位置），再把换掉的牌洗回牌库，然后开始先手的第一回合。
+// 先抽后洗，换掉的牌不会被立刻抽回来。
 function finishMulligan(ctx: Ctx): void {
   const state = ctx.state;
   for (const side of [0, 1] as const) {
     const p = state.players[side];
     const replace = p.mulliganReplace ?? [];
     const replaced = replace.map((i) => p.hand[i]);
-    let deck = p.deck;
-    if (replaced.length > 0) [deck, state.rng] = shuffle(state.rng, [...p.deck, ...replaced]);
-    const drawn = deck.slice(0, replaced.length);
-    p.deck = deck.slice(replaced.length);
+    const drawn = p.deck.slice(0, replaced.length);
+    let deck = p.deck.slice(replaced.length);
+    if (replaced.length > 0) [deck, state.rng] = shuffle(state.rng, [...deck, ...replaced]);
+    p.deck = deck;
     const hand = [...p.hand];
     replace.forEach((handIndex, k) => {
       hand[handIndex] = drawn[k];

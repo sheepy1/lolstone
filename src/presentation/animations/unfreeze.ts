@@ -30,5 +30,6 @@ export const unfreeze: AnimModule<'unfreeze'> = (e, { scene, after }) => {
     F.crack,
   );
   hold(t, F.thawTotal, 0);
-  return { tl: t, order: x, stagger: F.stagger };
+  // 收尾：冰片飞散、落地消融这一段（分镜 1.7 的组间重叠）
+  return { tl: t, order: x, stagger: F.stagger, tail: F.thawTotal - F.crack };
 };

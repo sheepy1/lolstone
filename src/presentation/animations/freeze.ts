@@ -47,5 +47,6 @@ export const freeze: AnimModule<'freeze'> = (e, { scene, after }) => {
   );
   hold(t, F.total, 0);
   const cues: Cue[] = [{ channel: 'boardflash', at: F.growAt, weight: 1, run: () => {}, many: () => boardFlash(scene, FX_PALETTE.ice) }];
-  return { tl: t, cues, order: x, stagger: F.stagger };
+  // 收尾：闪光之后（分镜 1.7 的组间重叠）
+  return { tl: t, cues, order: x, stagger: F.stagger, tail: F.total - F.flashAt };
 };

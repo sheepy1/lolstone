@@ -9,7 +9,7 @@ import { BOARD_ART } from './artStyle';
 import { laneValue } from './boardTextures';
 import { shared } from './dispose';
 import { stoneMaterial } from './groundMaterial';
-import { freedom, riverCenter, terrainHeight, WATER_LEVEL } from './terrain';
+import { END_TURN_PIER, freedom, riverCenter, terrainHeight, WATER_LEVEL } from './terrain';
 
 const GOLD = 0xc8aa6e;
 const metalMat = shared(new THREE.MeshStandardMaterial({ color: 0x2a2e34, roughness: 0.45, metalness: 0.75 }));
@@ -447,7 +447,8 @@ export function plinths(): THREE.Group {
     add(out, lip, goldMat, h.x, 0.025, h.z, false);
   }
   const e = endTurnSlot().pos;
-  const pier = add(out, new THREE.CylinderGeometry(1.5, 1.75, 0.6, 6), plinthStone, e.x, -0.28, e.z);
-  pier.scale.x = 1.25;
+  const P = END_TURN_PIER;
+  const pier = add(out, new THREE.CylinderGeometry(P.rTop, P.rBottom, P.height, 6), plinthStone, e.x, P.top - P.height / 2, e.z);
+  pier.scale.x = P.scaleX;
   return out;
 }

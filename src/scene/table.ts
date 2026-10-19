@@ -270,6 +270,7 @@ export class TableScene {
       this.inspect = new CardView(-1, cardId);
       this.inspect.userData.pick = undefined; // 不参与拾取
       this.inspect.traverse((o) => (o.castShadow = false)); // 浮在镜头前的大卡不往棋盘上投影
+      this.inspect.setMatte();
       this.layers.top.add(this.inspect);
     }
     const c = this.inspect;

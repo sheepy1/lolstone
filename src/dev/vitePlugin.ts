@@ -1,5 +1,5 @@
 // 只在开发服务器里生效的 Vite 插件（apply: 'serve'，不进生产构建）：
-// - /dev/fx 打开动画调试台（src/dev/fx/index.html）；
+// - /dev/fx 打开动画调试台（src/dev/fx/index.html）；/dev/art 是卡牌配图总览（src/dev/art/index.html）；
 // - POST /__dev/screenshot?name=xxx 把页面传来的 PNG（data URL）存到 .dev-output/xxx.png，自动化验证截原尺寸画面用。
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -14,6 +14,10 @@ export function melolDevPlugin(): Plugin {
         const url = req.url ?? '';
         if (url === '/dev/fx' || url.startsWith('/dev/fx/') || url.startsWith('/dev/fx?')) {
           req.url = `/src/dev/fx/index.html${url.includes('?') ? url.slice(url.indexOf('?')) : ''}`;
+          return next();
+        }
+        if (url === '/dev/art' || url.startsWith('/dev/art?')) {
+          req.url = `/src/dev/art/index.html${url.includes('?') ? url.slice(url.indexOf('?')) : ''}`;
           return next();
         }
         if (url.startsWith('/__dev/screenshot') && req.method === 'POST') {

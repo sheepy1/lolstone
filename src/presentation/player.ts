@@ -2,10 +2,11 @@
 // 播完把场景对到这一步之后的显示局面。快进（spec 5.3）把全局时间线调到三倍速，队列播空后恢复。
 import gsap from 'gsap';
 import type { TableScene } from '../scene/table';
-import { ANIMATIONS, type AnimRegistry } from './animations';
+import { ANIMATIONS, type Anim, type AnimContext, type AnimRegistry } from './animations';
 import { composeStep } from './compose';
 import type { StepPlayer } from './director';
 import type { PresentationEvent } from './events';
+import { SIGNATURES, signatureAnims, type SignatureTable } from './signature';
 
 export const FAST_FORWARD = 3;
 
@@ -41,7 +42,7 @@ function delay(seconds: number): Promise<void> {
   return new Promise((resolve) => gsap.delayedCall(seconds, resolve));
 }
 
-export function createGsapPlayer(scene: TableScene, registry: AnimRegistry = ANIMATIONS): GsapPlayer {
+export function createGsapPlayer(scene: TableScene, registry: AnimRegistry = ANIMATIONS, signatures: SignatureTable = SIGNATURES): GsapPlayer {
   let speed = 1;
   let seq = 0;
   const tune: StepTuning = { duration: 1, ease: null };
@@ -52,10 +53,10 @@ export function createGsapPlayer(scene: TableScene, registry: AnimRegistry = ANI
     const last = after[after.length - 1];
     scene.markViews(after, id);
     const viewer = before.viewer;
-    const anims = step.events.map((e, i) => {
-      const module = registry[e.kind] as (ev: PresentationEvent, ctx: Parameters<AnimRegistry['draw']>[1]) => ReturnType<AnimRegistry['draw']>;
-      return module(e, { scene, before: i === 0 ? before : after[i - 1], after: after[i], viewer, step: step.events, index: i });
-    });
+    const ctxOf = (i: number): AnimContext => ({ scene, before: i === 0 ? before : after[i - 1], after: after[i], viewer, step: step.events, index: i });
+    const byDefault = (e: PresentationEvent, i: number) => (registry[e.kind] as (ev: PresentationEvent, ctx: AnimContext) => Anim)(e, ctxOf(i));
+    // 招牌卡专属特效（signature/）：这一步里有注册过的 fxId 时那几个事件交给专属模块，其余照常
+    const anims = signatureAnims(step.events, ctxOf, byDefault, signatures) ?? step.events.map(byDefault);
     const master = composeStep(anims);
     api.onTimeline?.(master);
     let markReady = () => {};

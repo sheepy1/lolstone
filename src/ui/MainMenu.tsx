@@ -1,6 +1,6 @@
 // 主菜单（spec 5.1）：选我方职业（第一版用预组卡组）、AI 职业和难度，开始。
 // 整页能用键盘操作：Tab 在三组选项和开始按钮之间切换，方向键在组内选择，Enter 随时开始对局。
-import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { PRESET_DECKS } from '../cards';
 import { allHeroClasses, type HeroClassDef } from '../engine';
 import type { GameApp } from '../app/game';
@@ -9,6 +9,8 @@ import { iconUrl, loadingArtUrl } from '../assets/manifest';
 import { initAudio, playMusic, playSfx } from '../audio';
 import { MenuBackdrop, Stage } from './hextech';
 import { CLASS_BLURBS, DIFFICULTIES } from './menuData';
+import { RadioGroup, type RadioProps } from './RadioGroup';
+import { setSettings } from './settings';
 
 // 第一次点击或按键之后浏览器才允许出声（spec 5.7），那时再起菜单音乐；从对局回到主菜单时直接起。
 let audioUnlocked = false;
@@ -37,6 +39,8 @@ export function MainMenu({ app }: { app: GameApp }) {
     if (menu[key] === id) return;
     playSfx('ui.click');
     setUi((s) => ({ menu: { ...s.menu, [key]: id } }));
+    // 难度同时是设置里的默认值
+    if (key === 'difficulty') setSettings({ difficulty: id as typeof menu.difficulty });
   };
 
   const start = () => {
@@ -49,7 +53,8 @@ export function MainMenu({ app }: { app: GameApp }) {
 
   const onKeyDown = (e: KeyboardEvent) => {
     unlockAudio();
-    if (e.key === 'Enter') {
+    // 设置按钮和回放链接上的 Enter 照常点它们自己
+    if (e.key === 'Enter' && !(e.target as HTMLElement).closest('.mm-settings, .mm-replay')) {
       e.preventDefault();
       start();
     }
@@ -66,6 +71,17 @@ export function MainMenu({ app }: { app: GameApp }) {
           <div className="hx-logo">MeLoL</div>
           <div className="hx-subtitle">峡 谷 战 局</div>
         </header>
+
+        <button
+          className="hx-btn mm-settings"
+          onPointerEnter={hover}
+          onClick={() => {
+            playSfx('ui.click');
+            app.openPanel('settings');
+          }}
+        >
+          设置
+        </button>
 
         <SectionLabel top={262}>选择你的职业</SectionLabel>
         <div className="mm-classes" ref={firstCard}>
@@ -173,60 +189,5 @@ function ClassCard({ def, checked, index, props }: { def: HeroClassDef; checked:
         已选
       </span>
     </button>
-  );
-}
-
-type RadioProps = {
-  role: 'radio';
-  'aria-checked': boolean;
-  tabIndex: number;
-  onClick: () => void;
-  onPointerEnter: () => void;
-  onKeyDown: (e: KeyboardEvent<HTMLElement>) => void;
-};
-
-// 单选组：选中的那一项可以 Tab 到，方向键在组内移动并直接选中（WAI-ARIA radio group 的做法）。
-function RadioGroup<T extends string>({
-  label,
-  items,
-  value,
-  onChange,
-  render,
-}: {
-  label: string;
-  items: readonly T[];
-  value: T;
-  onChange: (v: T) => void;
-  render: (item: T, checked: boolean, props: RadioProps, index: number) => ReactNode;
-}) {
-  const move = (e: KeyboardEvent<HTMLElement>, from: number) => {
-    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
-    let next: number | null = step === undefined ? null : (from + step + items.length) % items.length;
-    if (e.key === 'Home') next = 0;
-    if (e.key === 'End') next = items.length - 1;
-    if (next === null) return;
-    e.preventDefault();
-    onChange(items[next]!);
-    const group = e.currentTarget.closest('[role="radiogroup"]');
-    group?.querySelectorAll<HTMLElement>('[role="radio"]')[next]?.focus();
-  };
-  return (
-    <div role="radiogroup" aria-label={label} className="hx-radiogroup">
-      {items.map((item, i) =>
-        render(
-          item,
-          item === value,
-          {
-            role: 'radio',
-            'aria-checked': item === value,
-            tabIndex: item === value ? 0 : -1,
-            onClick: () => onChange(item),
-            onPointerEnter: hover,
-            onKeyDown: (e) => move(e, i),
-          },
-          i,
-        ),
-      )}
-    </div>
   );
 }

@@ -7,12 +7,16 @@ import { allHeroClasses } from '../engine';
 import { UiRoot } from '../ui/UiRoot';
 import '../ui/styles.css';
 import '../ui/menu.css';
+import '../ui/overlay.css';
 import '../ui/cursors.css';
 import { MENU_FONT } from '../ui/hextech';
+import { getSettings } from '../ui/settings';
 import { GameApp } from './game';
 import { setUi } from './store';
 
 installDefaultPool();
+// 主菜单的 AI 难度从设置里的默认值开始
+setUi((s) => ({ menu: { ...s.menu, difficulty: getSettings().difficulty } }));
 const app = new GameApp();
 createRoot(document.getElementById('ui')!).render(<UiRoot app={app} />);
 

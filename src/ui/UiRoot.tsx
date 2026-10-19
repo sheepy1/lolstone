@@ -1,4 +1,5 @@
-// React 文字界面的根，叠在 Three.js 画布上面一层（spec 6.1）：加载页、主菜单、换牌页、结算页、悬停卡面、日志。
+// React 文字界面的根，叠在 Three.js 画布上面一层（spec 6.1）：加载页、主菜单、换牌页、结算页、悬停卡面、日志，
+// 以及叠在页面上的对局菜单和设置页。
 // 换页时上一页不立刻消失：在新页上面淡出 0.45 秒（m4-first-minutes 第 1 步：加载完不能直接切到主菜单）。
 import { useEffect, useState, type ReactNode } from 'react';
 import type { GameApp } from '../app/game';
@@ -8,7 +9,9 @@ import { HoverCardPanel } from './HoverCard';
 import { LoadingScreen } from './LoadingScreen';
 import { MainMenu } from './MainMenu';
 import { MulliganOverlay } from './MulliganOverlay';
+import { PauseMenu, useEscOpensPauseMenu } from './PauseMenu';
 import { ResultPanel } from './ResultPanel';
+import { SettingsPanel } from './SettingsPanel';
 import { StatusBar } from './StatusBar';
 
 const LEAVE_MS = 450;
@@ -46,7 +49,9 @@ function useScreenLayers(screen: Screen): { current: Screen; leaving: Screen | n
 export function UiRoot({ app }: { app: GameApp }) {
   const screen = useUi((s) => s.screen);
   const error = useUi((s) => s.error);
+  const panels = useUi((s) => s.panels);
   const { current, leaving, fading } = useScreenLayers(screen);
+  useEscOpensPauseMenu(app);
   const render = (s: Screen): ReactNode => {
     if (s === 'boot') return <LoadingScreen mode="boot" />;
     if (s === 'loading') return <LoadingScreen mode="match" />;
@@ -71,6 +76,8 @@ export function UiRoot({ app }: { app: GameApp }) {
           {render(s)}
         </div>
       ))}
+      {screen === 'match' && panels.includes('pause') && <PauseMenu app={app} />}
+      {panels[panels.length - 1] === 'settings' && <SettingsPanel app={app} />}
       {error && <div className="error-toast">{error}</div>}
     </>
   );

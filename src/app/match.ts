@@ -111,6 +111,14 @@ export class Match {
     return null;
   }
 
+  // 认输（spec 5.1 对局菜单）：真实局面直接记为对手获胜，发和正常分出胜负时一样的 game_over 事件，
+  // 表现层照常播失败演出、弹结算面板。之后 humanToAct 为 false，输入锁定。
+  concede(): void {
+    if (this.over) return;
+    this.state = { ...this.state, phase: 'over', winner: this.aiSide };
+    this.push([{ kind: 'game_over', group: 0, winner: this.aiSide }]);
+  }
+
   private push(events: GameEvent[]): void {
     const masked = maskEvents(events, this.human);
     this.onBatch?.(masked, this.state);

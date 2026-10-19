@@ -5,6 +5,9 @@ import type { Difficulty } from '../ui/menuData';
 
 export type Screen = 'boot' | 'menu' | 'loading' | 'match';
 
+// 叠在页面上的面板，后打开的在上面：对局菜单（pause）里可以再打开设置。对局中有任何面板打开时游戏暂停。
+export type Panel = 'pause' | 'settings';
+
 export type HoverCard = {
   cardId: string;
   // 场上随从的当前数值（和卡面不同时显示）
@@ -26,6 +29,7 @@ export type UiState = {
   log: string[];
   logOpen: boolean;
   status: { busy: boolean; myTurn: boolean; speed: number; renderer: string; replay: boolean };
+  panels: Panel[];
   error: string | null;
 };
 
@@ -39,6 +43,7 @@ let state: UiState = {
   log: [],
   logOpen: false,
   status: { busy: false, myTurn: false, speed: 1, renderer: '', replay: false },
+  panels: [],
   error: null,
 };
 

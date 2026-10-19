@@ -1,5 +1,6 @@
 // 效果触发（战吼、亡语、连击、回合开始/结束、击杀、脚本）。
-// - 有选定目标（战吼、连击选目标，m4-storyboard E08，400ms）：来源亮一下，从来源拉出一道拱起的金色光线，头部 150ms 先到；
+// - 有选定目标（战吼、连击选目标，m4-storyboard E08，400ms）：来源亮一下，从来源拉出一道拱起的光线（造型和目标箭头一致，
+//   颜色按动作：伤害红橙、增益金、冻结冰蓝），头部 150ms 先到；
 //   命中处白闪加 spark_light 6 粒；光线 170ms 淡出。动作本身的事件（伤害、冻结、增益）是下一组，按组间重叠在命中闪附近开始，
 //   不等光线消失。
 // - 没有目标：来源亮一圈、标出时机（"战吼""亡语"……）。回合开始、回合结束的效果（娑娜、斯维因、纳什男爵、冰凤凰蛋）
@@ -8,7 +9,7 @@
 import { playSfx } from '../../audio';
 import type { SourceRef, TargetRef, TriggerTiming } from '../../engine';
 import type { TableScene } from '../../scene/table';
-import { beam } from '../fx/beam';
+import { beam, beamColor } from '../fx/beam';
 import { floatText, ring } from '../fx/effects';
 import { showcaseSlot } from '../layout';
 import type { AnimModule } from './types';
@@ -58,7 +59,8 @@ export const trigger: AnimModule<'trigger'> = (e, { scene }) => {
   });
   if (e.target) {
     const target = pointOf(scene, e.target);
-    const b = beam(scene.layers.fx, from, target, GOLD);
+    // 光线的颜色按来源卡牌作用在目标上的动作：伤害红橙、增益金、冻结冰蓝，其余金色
+    const b = beam(scene.layers.fx, scene.stage.camera, from, target, beamColor(e.source));
     t.add(b.tl, TRIGGER.lead);
     // 命中闪：目标白闪，spark_light 6 粒
     t.call(

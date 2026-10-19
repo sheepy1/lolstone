@@ -7,12 +7,16 @@
 //   脉动，吸附时从大一圈回弹。非法目标和空地：箭头去色、变暗，不吸附；指着非法目标时头部加一个禁止标记。
 // - 手感：头部用弹簧追目标点（参数和拖牌同一组，由调用方传入），身体在开始的 bodyLag 秒里从来源长出来（头部先到、身体后补）；
 //   取消时头部沿弧线缩回来源再隐藏。
+// 拱弧、能量带、头部、投影、光团的造型在 arc.ts（触发光线 beam.ts 也用它），这里是瞄准的状态、准星和禁止标记。
 // 几何体在构造时一次建好，之后每帧只改顶点数组，不新建对象；整个箭头随场景销毁（releaseGpu）一起释放。
 // 参数集中在 ARROW，/dev/fx 的"目标箭头"面板可调。
 import * as THREE from 'three';
 import type { CardDef, EffectAction } from '../../engine';
 import type { Vec3 } from '../layout';
-import { hdr, markBloom } from './materials';
+import { arcControls as arcControlsWith, ArcVisual, bezier, canvasTexture, newCtrl, type ArcStyle, type Ctrl } from './arc';
+import { hdr } from './materials';
+
+export { bezier };
 
 export type Point = Vec3;
 
@@ -25,7 +29,7 @@ export const ARROW_COLORS: Record<ArrowTone, number> = {
   default: 0xff3b3b,
 };
 
-export const ARROW = {
+export const ARROW: ArcStyle & Record<string, number> = {
   glow: 2.4, // 能量带和头部的 HDR 倍数
   archBase: 1.3, // 拱高 = archBase + archPerUnit × 距离，最高 archMax（控制点的抬高；弧线最高点约为它的 0.75）
   archPerUnit: 0.32,
@@ -52,12 +56,6 @@ export const ARROW = {
   sourceGlow: 0.8, // 来源光团的大小
 };
 
-const SEGMENTS = 48;
-// 投影：方向光每下降 1 单位，影子在水平面上移多少（太阳在 (-7, 16, 9)，见 table.ts 的 addLights）；影子贴着台面略高一点，
-// 不被地形的细小起伏埋掉
-const SUN_SLOPE = { x: 7 / 16, z: -9 / 16 };
-const SHADOW_Y = 0.06;
-
 /** 一次瞄准的用途决定箭头颜色。attack：随从攻击；否则看卡牌效果里作用在"选中目标"上的第一个动作。 */
 export function arrowTone(kind: 'attack' | 'card', def: CardDef | null): ArrowTone {
   if (kind === 'attack') return 'damage';
@@ -75,57 +73,11 @@ export function arrowTone(kind: 'attack' | 'card', def: CardDef | null): ArrowTo
 }
 
 /** 箭头弧线的四个控制点（三次贝塞尔）：起点、两个抬高的控制点、终点。 */
-export function arcControls(a: THREE.Vector3, b: THREE.Vector3, out: [THREE.Vector3, THREE.Vector3, THREE.Vector3, THREE.Vector3]): void {
-  const dist = Math.hypot(b.x - a.x, b.z - a.z);
-  const h = Math.min(ARROW.archMax, ARROW.archBase + ARROW.archPerUnit * dist);
-  const top = Math.max(a.y, b.y);
-  out[0].copy(a);
-  out[1].copy(a).lerp(b, 0.22);
-  out[1].y = top + h;
-  // 第二个控制点靠近终点、低一些：末段朝下扎向目标，头部斜着指进去
-  out[2].copy(a).lerp(b, 0.9);
-  out[2].y = top + h * 0.7;
-  out[3].copy(b);
+export function arcControls(a: THREE.Vector3, b: THREE.Vector3, out: Ctrl, style: ArcStyle = ARROW): void {
+  arcControlsWith(a, b, out, style);
 }
 
-export function bezier(p: readonly THREE.Vector3[], t: number, out: THREE.Vector3): THREE.Vector3 {
-  const u = 1 - t;
-  const k0 = u * u * u;
-  const k1 = 3 * u * u * t;
-  const k2 = 3 * u * t * t;
-  const k3 = t * t * t;
-  return out.set(
-    p[0]!.x * k0 + p[1]!.x * k1 + p[2]!.x * k2 + p[3]!.x * k3,
-    p[0]!.y * k0 + p[1]!.y * k1 + p[2]!.y * k2 + p[3]!.y * k3,
-    p[0]!.z * k0 + p[1]!.z * k1 + p[2]!.z * k2 + p[3]!.z * k3,
-  );
-}
-
-function bezierTangent(p: readonly THREE.Vector3[], t: number, out: THREE.Vector3): THREE.Vector3 {
-  const u = 1 - t;
-  const k0 = -3 * u * u;
-  const k1 = 3 * u * u - 6 * u * t;
-  const k2 = 6 * u * t - 3 * t * t;
-  const k3 = 3 * t * t;
-  return out
-    .set(
-      p[0]!.x * k0 + p[1]!.x * k1 + p[2]!.x * k2 + p[3]!.x * k3,
-      p[0]!.y * k0 + p[1]!.y * k1 + p[2]!.y * k2 + p[3]!.y * k3,
-      p[0]!.z * k0 + p[1]!.z * k1 + p[2]!.z * k2 + p[3]!.z * k3,
-    )
-    .normalize();
-}
-
-// ---------- 贴图 ----------
-
-function canvasTexture(size: number, draw: (g: CanvasRenderingContext2D, s: number) => void): THREE.CanvasTexture {
-  const c = document.createElement('canvas');
-  c.width = c.height = size;
-  draw(c.getContext('2d')!, size);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
+// ---------- 准星、禁止标记 ----------
 
 // 准星：和 public/cursors/target.svg 同一个造型（金色圈、四个刻度、中心菱形），中心菱形用白色，由材质染成箭头的颜色
 function drawReticle(g: CanvasRenderingContext2D, s: number, part: 'gold' | 'core'): void {
@@ -198,89 +150,6 @@ function drawForbid(g: CanvasRenderingContext2D, s: number): void {
   g.stroke();
 }
 
-function drawGlow(g: CanvasRenderingContext2D, s: number): void {
-  const grad = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-  grad.addColorStop(0, 'rgba(255,255,255,1)');
-  grad.addColorStop(0.25, 'rgba(255,255,255,0.55)');
-  grad.addColorStop(1, 'rgba(255,255,255,0)');
-  g.fillStyle = grad;
-  g.fillRect(0, 0, s, s);
-}
-
-// 投影的横截面：中间深、两边透明
-function drawShadow(g: CanvasRenderingContext2D, s: number): void {
-  const grad = g.createLinearGradient(0, 0, 0, s);
-  grad.addColorStop(0, 'rgba(0,0,0,0)');
-  grad.addColorStop(0.3, 'rgba(0,0,0,1)');
-  grad.addColorStop(0.7, 'rgba(0,0,0,1)');
-  grad.addColorStop(1, 'rgba(0,0,0,0)');
-  g.fillStyle = grad;
-  g.fillRect(0, 0, s, s);
-}
-
-// ---------- 材质 ----------
-
-// 能量带：uv.x 是从来源量起的弧长（世界单位），uv.y 是横向 0 到 1。着色器里分三层：
-// band 是带子本身（半透明、两边柔），core 是中线的亮芯，diamond 是一节节朝目标流动的菱形（每节里菱形占 72%，中间挖空，
-// 像海克斯的镂空金属框）。着色器字符串里不写中文注释：界面字体子集的扫描会把字符串里的字算进去。
-function bodyMaterial(): THREE.ShaderMaterial {
-  return new THREE.ShaderMaterial({
-    uniforms: {
-      color: { value: new THREE.Color() },
-      time: { value: 0 },
-      diamonds: { value: ARROW.diamonds },
-      flow: { value: ARROW.flow },
-      reveal: { value: 1 },
-      length: { value: 1 },
-    },
-    vertexShader: /* glsl */ `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }`,
-    fragmentShader: /* glsl */ `
-      uniform vec3 color;
-      uniform float time, diamonds, flow, reveal, length;
-      varying vec2 vUv;
-      void main() {
-        float s = vUv.x / max(length, 0.001);
-        if (s > reveal) discard;
-        float across = abs(vUv.y - 0.5) * 2.0;
-        float band = (1.0 - smoothstep(0.55, 1.0, across)) * 0.45;
-        float core = 1.0 - smoothstep(0.0, 0.3, across);
-        float f = fract(vUv.x * diamonds - time * flow);
-        float d = abs(f - 0.5) * 2.0 / 0.72;
-        float outer = 1.0 - smoothstep(0.86, 1.0, across + d);
-        float hole = 1.0 - smoothstep(0.38, 0.5, across + d);
-        float diamond = outer * (1.0 - hole * 0.75);
-        float startFade = smoothstep(0.0, 0.07, s);
-        float a = max(max(band, core * 0.75), diamond) * startFade;
-        if (a < 0.06) discard;
-        vec3 c = color * (0.45 + 0.35 * core + 0.9 * diamond) + vec3(0.25) * diamond * (1.0 - hole);
-        gl_FragColor = vec4(c, a);
-      }`,
-    transparent: true,
-    side: THREE.DoubleSide,
-    toneMapped: false,
-  });
-}
-
-// 海克斯箭头的外形（局部坐标：y 朝前，尖端在 y = 1）
-function headShape(scale: number): THREE.Shape {
-  const s = new THREE.Shape();
-  const p = (x: number, y: number) => [x * scale, y * scale] as const;
-  s.moveTo(...p(0, 1));
-  s.lineTo(...p(0.5, 0.12));
-  s.lineTo(...p(0.2, 0.26));
-  s.lineTo(...p(0.12, 0));
-  s.lineTo(...p(-0.12, 0));
-  s.lineTo(...p(-0.2, 0.26));
-  s.lineTo(...p(-0.5, 0.12));
-  s.closePath();
-  return s;
-}
-
 type State = 'hidden' | 'aiming' | 'retracting';
 export type AimState = 'target' | 'free' | 'illegal';
 
@@ -301,94 +170,33 @@ export class TargetArrow extends THREE.Group {
   private reticleSize = 0;
   private snapAge = 99;
   private readonly reticleAt = new THREE.Vector3();
+  private readonly ctrl = newCtrl();
+  private readonly color = new THREE.Color();
+  private readonly grey = new THREE.Color();
+  private readonly acc = new THREE.Vector3();
 
-  private readonly ctrl: [THREE.Vector3, THREE.Vector3, THREE.Vector3, THREE.Vector3] = [
-    new THREE.Vector3(),
-    new THREE.Vector3(),
-    new THREE.Vector3(),
-    new THREE.Vector3(),
-  ];
-  private readonly pts = Array.from({ length: SEGMENTS + 1 }, () => new THREE.Vector3());
-  private readonly tans = Array.from({ length: SEGMENTS + 1 }, () => new THREE.Vector3());
-  private readonly tmp = { a: new THREE.Vector3(), b: new THREE.Vector3(), c: new THREE.Vector3(), r: new THREE.Vector3(), m: new THREE.Matrix4(), grey: new THREE.Color() };
-
-  private readonly body: THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial>;
-  private readonly shadow: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
-  private readonly headGroup = new THREE.Group();
-  private readonly headFill: THREE.MeshBasicMaterial;
-  private readonly headRim: THREE.MeshBasicMaterial;
+  private readonly arc = new ArcVisual(ARROW);
   private readonly reticle = new THREE.Group();
   private readonly reticleCore: THREE.MeshBasicMaterial;
-  private readonly reticleGold: THREE.MeshBasicMaterial;
   private readonly forbid: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
-  private readonly glow: THREE.Sprite;
 
   constructor() {
     super();
-    const n = (SEGMENTS + 1) * 2;
-    const ribbon = (): THREE.BufferGeometry => {
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3).setUsage(THREE.DynamicDrawUsage));
-      g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(n * 2), 2).setUsage(THREE.DynamicDrawUsage));
-      const idx: number[] = [];
-      for (let i = 0; i < SEGMENTS; i++) {
-        const a = i * 2;
-        idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
-      }
-      g.setIndex(idx);
-      return g;
-    };
-    this.body = new THREE.Mesh(ribbon(), bodyMaterial());
-    this.body.frustumCulled = false;
-    markBloom(this.body);
-    this.shadow = new THREE.Mesh(
-      ribbon(),
-      new THREE.MeshBasicMaterial({ map: canvasTexture(64, drawShadow), color: 0x000000, transparent: true, opacity: ARROW.shadow, depthWrite: false, side: THREE.DoubleSide }),
-    );
-    this.shadow.frustumCulled = false;
-    this.shadow.renderOrder = 1;
-
-    // 头部三层：深色外描边、金边、发光的箭头本体，前后错开一点避免闪烁
-    const shape = headShape(1);
-    const shapeGeo = new THREE.ShapeGeometry(shape);
-    // 头部三层都不做深度测试、按 renderOrder 画在最上面：头部扎进目标时不被底座、准星挡住
-    const onTop = { side: THREE.DoubleSide, transparent: true, depthTest: false } as const;
-    const dark = new THREE.Mesh(shapeGeo, new THREE.MeshBasicMaterial({ color: 0x07090c, ...onTop }));
-    dark.renderOrder = 20;
-    dark.scale.setScalar(1.26);
-    dark.position.set(0, -0.12, -0.004);
-    this.headRim = new THREE.MeshBasicMaterial({ color: hdr(0xe0b25e, 1.5), toneMapped: false, ...onTop });
-    const rim = new THREE.Mesh(shapeGeo, this.headRim);
-    rim.renderOrder = 21;
-    rim.scale.setScalar(1.12);
-    rim.position.set(0, -0.06, -0.002);
-    this.headFill = new THREE.MeshBasicMaterial({ color: new THREE.Color(), toneMapped: false, ...onTop });
-    const fill = new THREE.Mesh(shapeGeo, this.headFill);
-    fill.renderOrder = 22;
-    this.headGroup.add(dark, rim, fill);
-
-    // 准星：金圈和刻度一层（不染色），中心菱形一层（染成箭头颜色）
+    // 准星：金圈和刻度一层（不染色），中心菱形一层（染成箭头颜色）。不做深度测试、不进泛光（泛光要写深度），
+    // 自身用 HDR 颜色发亮，压在目标上面；箭头头部再画在准星上面
     const plane = new THREE.PlaneGeometry(1, 1);
-    this.reticleGold = new THREE.MeshBasicMaterial({
-      map: canvasTexture(256, (g, s) => drawReticle(g, s, 'gold')),
-      color: hdr(0xffffff, 1.35),
-      transparent: true,
-      depthWrite: false,
-      depthTest: false,
-      toneMapped: false,
-    });
-    this.reticleCore = new THREE.MeshBasicMaterial({
-      map: canvasTexture(256, (g, s) => drawReticle(g, s, 'core')),
-      color: new THREE.Color(),
-      transparent: true,
-      depthWrite: false,
-      depthTest: false,
-      toneMapped: false,
-    });
-    const gold = new THREE.Mesh(plane, this.reticleGold);
+    const reticleMat = (part: 'gold' | 'core', color: THREE.Color) =>
+      new THREE.MeshBasicMaterial({
+        map: canvasTexture(256, (g, s) => drawReticle(g, s, part)),
+        color,
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        toneMapped: false,
+      });
+    this.reticleCore = reticleMat('core', new THREE.Color());
+    const gold = new THREE.Mesh(plane, reticleMat('gold', hdr(0xffffff, 1.35)));
     const core = new THREE.Mesh(plane, this.reticleCore);
-    core.position.z = 0.01;
-    // 准星不做深度测试、不进泛光（泛光要写深度），自身用 HDR 颜色发亮，压在目标上面；箭头头部再画在准星上面
     gold.renderOrder = 3;
     core.renderOrder = 4;
     this.reticle.add(gold, core);
@@ -398,12 +206,7 @@ export class TargetArrow extends THREE.Group {
     this.forbid.renderOrder = 23;
     this.forbid.visible = false;
 
-    this.glow = new THREE.Sprite(
-      new THREE.SpriteMaterial({ map: canvasTexture(128, drawGlow), color: new THREE.Color(), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }),
-    );
-    this.glow.renderOrder = 11;
-
-    this.add(this.shadow, this.body, this.headGroup, this.reticle, this.forbid, this.glow);
+    this.add(this.arc, this.reticle, this.forbid);
     this.visible = false;
   }
 
@@ -431,16 +234,14 @@ export class TargetArrow extends THREE.Group {
    */
   aimAt(to: Point, state: AimState, reticle?: { at: Point; size: number }): void {
     if (this.state !== 'aiming') return;
-    const snapped = state === 'target';
-    if (snapped && (this.aimState !== 'target' || !this.reticleAt.equals(this.tmp.a.set(reticle!.at.x, reticle!.at.y, reticle!.at.z)))) this.snapAge = 0;
+    const snapped = state === 'target' && !!reticle;
+    if (snapped && (this.aimState !== 'target' || !this.reticleAt.equals(this.acc.set(reticle.at.x, reticle.at.y, reticle.at.z)))) this.snapAge = 0;
     this.aimState = state;
     this.goal.set(to.x, Math.max(to.y, 0.3) + (snapped ? 0.12 : 0.25), to.z);
-    if (snapped && reticle) {
+    if (snapped) {
       this.reticleAt.set(reticle.at.x, reticle.at.y, reticle.at.z);
       this.reticleSize = reticle.size;
     }
-    this.reticle.visible = snapped;
-    this.forbid.visible = state === 'illegal';
   }
 
   /** 取消：头部沿弧线缩回来源，再隐藏。 */
@@ -449,8 +250,6 @@ export class TargetArrow extends THREE.Group {
     this.state = 'retracting';
     this.retractT = 0;
     this.retractFrom.copy(this.head);
-    this.reticle.visible = false;
-    this.forbid.visible = false;
   }
 
   /** 确认（攻击、出牌开始）：立即隐藏，后续由动画接手。 */
@@ -475,7 +274,7 @@ export class TargetArrow extends THREE.Group {
       const steps = Math.max(1, Math.ceil(dt / (1 / 120)));
       const h = dt / steps;
       for (let i = 0; i < steps; i++) {
-        const a = this.tmp.a.copy(this.head).sub(this.goal).multiplyScalar(-w * w).addScaledVector(this.vel, -2 * this.springDamping * w);
+        const a = this.acc.copy(this.head).sub(this.goal).multiplyScalar(-w * w).addScaledVector(this.vel, -2 * this.springDamping * w);
         this.vel.addScaledVector(a, h);
         this.head.addScaledVector(this.vel, h);
       }
@@ -488,122 +287,58 @@ export class TargetArrow extends THREE.Group {
     this.rebuild(camera);
   }
 
-  private color(out: THREE.Color, intensity: number): THREE.Color {
+  // 箭头颜色：指着合法目标时是用途色，否则去色
+  private toneColor(out: THREE.Color): THREE.Color {
     out.setHex(ARROW_COLORS[this.tone]);
     if (this.aimState !== 'target') {
       const l = out.r * 0.3 + out.g * 0.59 + out.b * 0.11;
-      out.lerp(this.tmp.grey.setRGB(l, l, l), ARROW.grey);
-      intensity *= ARROW.dim;
+      out.lerp(this.grey.setRGB(l, l, l), ARROW.grey);
     }
-    return out.multiplyScalar(intensity);
+    return out;
   }
 
   private rebuild(camera: THREE.Camera): void {
-    const { a, b } = this.tmp;
-    const len = this.head.distanceTo(this.from);
-    const show = len > 0.35;
-    this.body.visible = show;
-    this.shadow.visible = show;
-    this.headGroup.visible = show;
     const retracting = this.state === 'retracting';
-
-    // 颜色
-    const bodyMat = this.body.material;
-    this.color(bodyMat.uniforms.color!.value as THREE.Color, ARROW.glow);
-    bodyMat.uniforms.time!.value = this.time;
-    bodyMat.uniforms.diamonds!.value = ARROW.diamonds;
-    bodyMat.uniforms.flow!.value = ARROW.flow;
-    bodyMat.uniforms.reveal!.value = retracting ? 1 : Math.min(1, this.age / Math.max(0.001, ARROW.bodyLag));
-    this.color(this.headFill.color, ARROW.glow);
-    this.headRim.color.setHex(0xe0b25e).multiplyScalar(this.aimState === 'target' ? 1.5 : 0.7);
-    this.shadow.material.opacity = ARROW.shadow * (this.aimState === 'target' ? 1 : 0.7);
-
-    // 来源光团：开始时猛亮一下，之后缓慢起伏
-    const flare = Math.max(0, 1 - this.age / 0.3);
-    const gs = ARROW.sourceGlow * (1 + 0.6 * flare + 0.08 * Math.sin(this.time * 7)) * (retracting ? 1 - Math.min(1, this.retractT) : 1);
-    this.glow.position.copy(this.from);
-    this.glow.scale.setScalar(gs);
-    this.color(this.glow.material.color, 1.6 + flare);
-
-    if (!show) {
-      // 头部还没离开来源：准星、禁止标记都不显示（位置还没算，会停在上一次的地方）
-      this.reticle.visible = false;
-      this.forbid.visible = false;
-      return;
-    }
-    this.reticle.visible = this.aimState === 'target' && !retracting;
-    this.forbid.visible = this.aimState === 'illegal' && !retracting;
-
-    // 弧线：终点是头部的后端（头部本身单独画），这样身体和头部接得上
+    const onTarget = this.aimState === 'target';
+    const reveal = retracting ? 1 : Math.min(1, this.age / Math.max(0.001, ARROW.bodyLag));
     arcControls(this.from, this.head, this.ctrl);
-    bezierTangent(this.ctrl, 1, b);
-    const headLen = ARROW.headLength;
-    const end = a.copy(this.head).addScaledVector(b, -headLen * 0.55);
-    arcControls(this.from, end, this.ctrl);
-
-    const pos = this.body.geometry.getAttribute('position') as THREE.BufferAttribute;
-    const uv = this.body.geometry.getAttribute('uv') as THREE.BufferAttribute;
-    const spos = this.shadow.geometry.getAttribute('position') as THREE.BufferAttribute;
-    const suv = this.shadow.geometry.getAttribute('uv') as THREE.BufferAttribute;
-    const camPos = camera.position;
-    let arc = 0;
-    for (let i = 0; i <= SEGMENTS; i++) {
-      const t = i / SEGMENTS;
-      const p = bezier(this.ctrl, t, this.pts[i]!);
-      const tan = bezierTangent(this.ctrl, t, this.tans[i]!);
-      if (i > 0) arc += p.distanceTo(this.pts[i - 1]!);
-      // 朝镜头的带子：横向 = 切线 × 视线
-      const side = this.tmp.c.subVectors(camPos, p).cross(tan).normalize();
-      const w = (ARROW.width0 + (ARROW.width1 - ARROW.width0) * t) / 2;
-      pos.setXYZ(i * 2, p.x + side.x * w, p.y + side.y * w, p.z + side.z * w);
-      pos.setXYZ(i * 2 + 1, p.x - side.x * w, p.y - side.y * w, p.z - side.z * w);
-      uv.setXY(i * 2, arc, 0);
-      uv.setXY(i * 2 + 1, arc, 1);
-      // 投影：顺着方向光（table.ts 的太阳在 (-7, 16, 9)）压到台面上，所以影子和弧线在画面上错开、看得出悬空；
-      // 横向取水平面里垂直于切线的方向，越高越宽
-      const hx = -tan.z;
-      const hz = tan.x;
-      const hl = Math.hypot(hx, hz) || 1;
-      const sw = w * (1.1 + p.y * 0.25);
-      const sx = p.x + p.y * SUN_SLOPE.x;
-      const sz = p.z + p.y * SUN_SLOPE.z;
-      spos.setXYZ(i * 2, sx + (hx / hl) * sw, SHADOW_Y, sz + (hz / hl) * sw);
-      spos.setXYZ(i * 2 + 1, sx - (hx / hl) * sw, SHADOW_Y, sz - (hz / hl) * sw);
-      suv.setXY(i * 2, t, 0);
-      suv.setXY(i * 2 + 1, t, 1);
-    }
-    for (const attr of [pos, uv, spos, suv]) attr.needsUpdate = true;
-    bodyMat.uniforms.length!.value = arc;
-
-    // 头部：尖端在 head，沿末端切线朝前，面朝镜头
-    const reveal = bodyMat.uniforms.reveal!.value as number;
-    this.headGroup.visible = reveal >= 1 || retracting;
-    // 头部正对镜头，指向取末端切线在画面上的方向：末段朝下扎向目标时切线几乎顺着视线，按 3D 切线摆会被压扁成一小点
-    bezierTangent(this.ctrl, 1, b);
-    const toCam = this.tmp.c.subVectors(camPos, this.head).normalize();
-    b.addScaledVector(toCam, -b.dot(toCam));
-    if (b.lengthSq() < 1e-6) b.set(0, 0, -1).addScaledVector(toCam, -toCam.z);
-    b.normalize();
-    const right = this.tmp.r.crossVectors(b, toCam);
-    this.tmp.m.makeBasis(right, b, toCam);
-    this.headGroup.quaternion.setFromRotationMatrix(this.tmp.m);
-    this.headGroup.scale.set(ARROW.headWidth, headLen, ARROW.headWidth);
-    this.headGroup.position.copy(this.head).addScaledVector(b, -headLen);
+    // 来源光团：开始时猛亮一下，之后缓慢起伏；缩回时跟着变小
+    const flare = Math.max(0, 1 - this.age / 0.3);
+    const glow = (1 + 0.6 * flare + 0.08 * Math.sin(this.time * 7)) * (retracting ? 1 - Math.min(1, this.retractT) : 1);
+    this.arc.draw({
+      from: this.from,
+      ctrl: this.ctrl,
+      headT: 1,
+      bodyReveal: reveal,
+      showHead: reveal >= 1 || retracting,
+      color: this.toneColor(this.color),
+      intensity: onTarget ? 1 : ARROW.dim,
+      rim: onTarget ? 1.5 : 0.7,
+      alpha: 1,
+      glow,
+      time: this.time,
+      camera,
+    });
+    const show = this.head.distanceTo(this.from) > 0.35;
+    // 头部还没离开来源时，准星、禁止标记都不显示
+    this.reticle.visible = show && onTarget && !retracting;
+    this.forbid.visible = show && this.aimState === 'illegal' && !retracting;
 
     // 准星：在目标身上朝镜头，脉动，吸附时从大一圈回弹，缓慢转动
     if (this.reticle.visible) {
       const k = Math.min(1, this.snapAge / ARROW.snapTime);
       const back = 1 + 2.2 * Math.pow(k - 1, 3) + 1.2 * Math.pow(k - 1, 2); // back.out
       const snap = ARROW.snapScale + (1 - ARROW.snapScale) * back;
-      const pulse = 1 + ARROW.pulseAmount * Math.sin((this.time / ARROW.pulse) * Math.PI * 2);
+      const wave = Math.sin((this.time / ARROW.pulse) * Math.PI * 2);
       this.reticle.position.copy(this.reticleAt);
       this.reticle.quaternion.copy(camera.quaternion);
       this.reticle.rotateZ(this.time * ARROW.spin);
-      this.reticle.scale.setScalar(this.reticleSize * snap * pulse);
-      this.color(this.reticleCore.color, 2.0 + 0.6 * Math.sin((this.time / ARROW.pulse) * Math.PI * 2));
+      this.reticle.scale.setScalar(this.reticleSize * snap * (1 + ARROW.pulseAmount * wave));
+      this.reticleCore.color.setHex(ARROW_COLORS[this.tone]).multiplyScalar(2.0 + 0.6 * wave);
     }
     if (this.forbid.visible) {
-      this.forbid.position.copy(this.head).addScaledVector(toCam.copy(camPos).sub(this.head).normalize(), 0.3);
+      const tip = this.arc.tip;
+      this.forbid.position.copy(tip).addScaledVector(this.acc.subVectors(camera.position, tip).normalize(), 0.3);
       this.forbid.quaternion.copy(camera.quaternion);
       this.forbid.scale.setScalar(0.62);
     }

@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { getCard, type Keyword } from '../engine';
 import { MINION_HEIGHT, MINION_SIZE } from '../presentation/layout';
-import { EDGE_GLOW, flashMaterial, glowMaterial, hdr, markBloom } from '../presentation/fx/materials';
+import { EDGE_GLOW, flashMaterial, fresnelMaterial, glowMaterial, hdr, markBloom } from '../presentation/fx/materials';
 import type { ViewMinion } from '../presentation/viewState';
 import { makeLabelCanvas, portraitTexture } from './canvasArt';
 import { MINION_BASE, MINION_RIM, MINION_TOP, UNIT_BOX, UNIT_SPHERE } from './geometry';
@@ -44,29 +44,7 @@ const iceMat = shared(new THREE.MeshStandardMaterial({
 }));
 // 圣盾外壳：只有边缘亮（菲涅尔），正中几乎透明，头像和两个徽章透过外壳看得清。
 // 不写深度、不进泛光：写深度会把壳里后画的徽章数字挡掉，整个壳泛光会把底座洗成一片白（发光的是生命徽章外圈的护盾环）
-const shellMat = shared(new THREE.ShaderMaterial({
-  uniforms: { color: { value: hdr(0xfff2b0, 1.6) } },
-  vertexShader: `
-    varying vec3 vN;
-    varying vec3 vV;
-    void main() {
-      vec4 mv = modelViewMatrix * vec4(position, 1.0);
-      vN = normalize(normalMatrix * normal);
-      vV = normalize(-mv.xyz);
-      gl_Position = projectionMatrix * mv;
-    }`,
-  fragmentShader: `
-    uniform vec3 color;
-    varying vec3 vN;
-    varying vec3 vV;
-    void main() {
-      float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 3.0);
-      gl_FragColor = vec4(color * (0.03 + 0.85 * f), 1.0);
-    }`,
-  transparent: true,
-  blending: THREE.AdditiveBlending,
-  depthWrite: false,
-}));
+const shellMat = shared(fresnelMaterial(hdr(0xfff2b0, 1.6)));
 const smokeTex = shared((() => {
   const c = document.createElement('canvas');
   c.width = c.height = 128;

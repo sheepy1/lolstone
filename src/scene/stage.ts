@@ -11,6 +11,7 @@ import {
   ToneMappingMode,
 } from 'postprocessing';
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { ASPECT, CAMERA } from '../presentation/layout';
 import { BLOOM_LAYER } from '../presentation/fx/materials';
 
@@ -30,6 +31,9 @@ export class Stage {
   // 镜头的基准位置；震屏在它上面加偏移
   readonly cameraBase = new THREE.Vector3(CAMERA.pos.x, CAMERA.pos.y, CAMERA.pos.z);
   readonly cameraShake = new THREE.Vector3();
+  // 给少数玻璃、金属小件单独用的反射贴图（一间亮灯的房间预滤波成 PMREM）。不设成场景的 environment，
+  // 其余物件的光照不变；随舞台一直留着，换局不释放
+  readonly reflections: THREE.Texture;
 
   constructor(private readonly host: HTMLElement) {
     // postprocessing 自己做抗锯齿（多重采样）和色调映射，渲染器本身关掉这两样
@@ -62,6 +66,10 @@ export class Stage {
     this.bloom.selection.layer = BLOOM_LAYER;
     this.bloom.ignoreBackground = true;
     this.composer.addPass(new EffectPass(this.camera, this.bloom, new ToneMappingEffect({ mode: ToneMappingMode.ACES_FILMIC })));
+
+    const pmrem = new THREE.PMREMGenerator(r);
+    this.reflections = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmrem.dispose();
 
     this.resize();
     window.addEventListener('resize', () => this.resize());

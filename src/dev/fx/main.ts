@@ -11,6 +11,7 @@ import { installDefaultPool, PRESET_DECKS } from '../../cards';
 import { applyAction, createGame, listLegalActions, maskEvents, seedRng, type Action, type Fx, type GameState, type RngState, type Side } from '../../engine';
 import { PLAY_MINION } from '../../presentation/animations/minionSummoned';
 import { DRAG, Interaction } from '../../scene/interaction';
+import { NEXUS_LAMP } from '../../scene/nexusLamps';
 import { Director } from '../../presentation/director';
 import { PRESENTATION_EVENT_KINDS, type PresentationEventKind } from '../../presentation/events';
 import { createGsapPlayer, type GsapPlayer } from '../../presentation/player';
@@ -168,12 +169,38 @@ slam.add(PLAY_MINION, 'shockwaveCost', 0, 10, 1).name('冲击波费用');
 slam.add(PLAY_MINION, 'shakeCost', 0, 10, 1).name('震屏费用');
 slam.add(PLAY_MINION, 'shake', 0, 0.3, 0.005).name('震屏幅度');
 const look = gui.addFolder('枢纽方案（切换会重新加载）');
-const nexus = { style: new URLSearchParams(location.search).get('nexus') ?? 'c' };
+const nexus = { style: new URLSearchParams(location.search).get('nexus') ?? 'b' };
 look.add(nexus, 'style', ['a', 'b', 'c']).name('方案').onChange((v: string) => {
   const q = new URLSearchParams(location.search);
   q.set('nexus', v);
   location.search = q.toString();
 });
+
+// 方案 b 的小灯。"谁的回合""生命"只改画面，不改局面，"重置棋盘"后恢复
+const lamp = gui.addFolder('枢纽小灯 NEXUS_LAMP');
+lamp.add(NEXUS_LAMP, 'core', 0.5, 6, 0.1).name('灯芯亮度');
+lamp.add(NEXUS_LAMP, 'active', 0, 2, 0.05).name('自己回合');
+lamp.add(NEXUS_LAMP, 'idle', 0, 2, 0.05).name('对方回合');
+lamp.add(NEXUS_LAMP, 'period', 0.5, 6, 0.1).name('呼吸周期');
+lamp.add(NEXUS_LAMP, 'breath', 0, 0.6, 0.01).name('呼吸幅度');
+lamp.add(NEXUS_LAMP, 'fade', 0.05, 2, 0.05).name('换回合过渡');
+lamp.add(NEXUS_LAMP, 'lowPeriod', 0.1, 2, 0.05).name('危险闪烁周期');
+lamp.add(NEXUS_LAMP, 'lowBreath', 0, 1, 0.01).name('危险闪烁幅度');
+lamp.add(NEXUS_LAMP, 'glass', 0, 2, 0.05).name('玻璃反射');
+lamp.add(NEXUS_LAMP, 'rimGlass', 0, 1, 0.01).name('玻璃边缘白光');
+lamp.add(NEXUS_LAMP, 'rimGlow', 0, 2, 0.05).name('玻璃边缘透色');
+const lampView = { turn: '我方', health: 30 };
+const applyLampView = () => {
+  if (!bench) return;
+  const me = bench.director.displayed.viewer;
+  for (const side of [0, 1] as Side[]) {
+    const h = bench.scene.heroes[side];
+    h.setActive((lampView.turn === '我方') === (side === me));
+    h.setHealth(lampView.health, 30);
+  }
+};
+lamp.add(lampView, 'turn', ['我方', '对方']).name('谁的回合').onChange(applyLampView);
+lamp.add(lampView, 'health', 0, 30, 1).name('双方生命').onChange(applyLampView);
 
 window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyP') play();

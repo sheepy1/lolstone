@@ -12,6 +12,7 @@ import {
   maskEvents,
   maskHidden,
   other,
+  nextFloat,
   seedRng,
   type Action,
   type GameEvent,
@@ -46,7 +47,8 @@ export class Match {
   private director: Director | null = null;
   private aiRng: RngState;
   private readonly ai: AiPolicy;
-  private readonly thinkSeconds: number;
+  private readonly thinkSeconds: number | null;
+  private thinkRng: RngState;
   private pendingStart: GameEvent[];
   // 每批事件交给导演之前调用（对局日志用）
   onBatch: ((events: PresentationEvent[], state: GameState) => void) | null = null;
@@ -58,7 +60,9 @@ export class Match {
     this.human = config.human;
     this.aiSide = other(config.human);
     this.ai = config.ai ?? l1ChooseAction;
-    this.thinkSeconds = config.thinkSeconds ?? 0.7;
+    // 不指定时每个动作前随机 0.5 到 1.5 秒（m4-storyboard E27：时长随机，不然像机器）。用自己的随机数，不影响 AI 的选择
+    this.thinkSeconds = config.thinkSeconds ?? null;
+    this.thinkRng = seedRng(config.seed ^ 0x7417);
     this.aiRng = seedRng(config.seed ^ 0x5eed);
     this.initial = initialView(this.state, this.human);
   }
@@ -107,6 +111,13 @@ export class Match {
     this.director?.enqueue(masked);
   }
 
+  private nextThink(): number {
+    if (this.thinkSeconds !== null) return this.thinkSeconds;
+    const [f, next] = nextFloat(this.thinkRng);
+    this.thinkRng = next;
+    return 0.5 + f;
+  }
+
   private aiToAct(): boolean {
     const s = this.state;
     if (s.phase === 'mulligan') return !s.players[this.aiSide].mulliganDone;
@@ -124,7 +135,7 @@ export class Match {
       const r = applyAction(this.state, choice.action);
       if (!r.ok) throw new Error(`AI action rejected: ${r.error}`);
       if (this.state.phase === 'playing') {
-        const wait: PresentationEvent = { kind: 'ai_thinking', group: 0, side: this.aiSide, seconds: this.thinkSeconds };
+        const wait: PresentationEvent = { kind: 'ai_thinking', group: 0, side: this.aiSide, seconds: this.nextThink() };
         this.onBatch?.([wait], this.state);
         this.director?.enqueue([wait]);
       }

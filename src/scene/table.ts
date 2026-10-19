@@ -3,10 +3,11 @@
 // 动画模块在 sync 前后加自己的表现；手牌和随从以实例 id 为键，同一个物件从牌库一路跟到手牌、场上。
 import gsap from 'gsap';
 import * as THREE from 'three';
-import { findCard, other, type Side, type TargetRef } from '../engine';
+import { findCard, MANA_POTION_ID, other, type Side, type TargetRef } from '../engine';
 import { TargetArrow, type Point } from '../presentation/fx/arrow';
 import {
   above,
+  CAMERA,
   boardSlot,
   CARD_H,
   CARD_W,
@@ -20,18 +21,21 @@ import {
   heroSlot,
   inspectSlot,
   manaSlot,
+  mulliganPotionSlot,
   mulliganSlot,
   placementOf,
   type Placement,
   type Slot,
 } from '../presentation/layout';
+import { Text } from 'troika-three-text';
+import { cardFontUrl } from '../assets/manifest';
 import { ParticleSystem } from '../presentation/fx/particles';
 import type { ViewState } from '../presentation/viewState';
-import { CardView } from './cardView';
+import { CardView, glowMat as playableGlow } from './cardView';
 import type { CardStats } from './cardText';
 import { fadeOutAndDispose, releaseGpu } from './dispose';
 import { HeroPowerView, HeroView } from './heroView';
-import { MinionView } from './minionView';
+import { attackRimMat, MinionView } from './minionView';
 import { useLampReflections } from './nexusLamps';
 import type { Stage } from './stage';
 import { BoardView } from './board';
@@ -74,6 +78,8 @@ function moveTo(obj: THREE.Object3D, s: Slot, duration: number, ease = 'power2.o
   gsap.to(obj.scale, { x: s.scale, y: s.scale, z: s.scale, duration, ease, overwrite: 'auto' });
   return true;
 }
+
+const PULSE_BASE: [THREE.MeshBasicMaterial, THREE.Color][] = [playableGlow, attackRimMat].map((m) => [m, m.color.clone()]);
 
 export class TableScene {
   readonly root = new THREE.Group();
@@ -122,6 +128,14 @@ export class TableScene {
   // 事件动画用的粒子（presentation/fx/particles）。挂在场景根上，位置都是世界坐标；每帧跟着渲染推进，
   // 乘全局时间线的 timeScale，导演快进、调试台慢放时粒子一起快、一起慢
   readonly particles: ParticleSystem;
+  // 开局演出（E01）进行中：换牌的压暗板先不出来
+  intro = false;
+  // 为 true 时，sync 新建的手牌直接放在目标槽位上（不从牌库滑过去），由动画模块自己做从牌库飞来的那一段
+  spawnAtSlot = false;
+  // 胜负定格（E28、E29）：河水、灯、法力水晶这些常驻的小动画停下
+  frozen = false;
+  // 换牌时法力药水下面的说明
+  private potionCaption: Text | null = null;
   // 换牌阶段压暗棋盘：一块朝镜头的半透明黑板，挡在台面前、起手牌后
   private readonly shade = new THREE.Mesh(
     new THREE.PlaneGeometry(60, 40),
@@ -162,8 +176,16 @@ export class TableScene {
     this.particles = new ParticleSystem({ camera: stage.camera });
     this.root.add(this.particles.object);
     stage.scene.add(this.root);
+    // 新的一局：镜头和调色回到默认（上一局的胜负演出可能改过）
+    stage.cameraBase.set(CAMERA.pos.x, CAMERA.pos.y, CAMERA.pos.z);
+    stage.cameraTarget.set(CAMERA.target.x, CAMERA.target.y, CAMERA.target.z);
+    Object.assign(stage.look, { brightness: 0, saturation: 0, vignette: 0 });
     this.unhook = stage.onFrame((dt, t) => {
       this.particles.update(dt * gsap.globalTimeline.timeScale());
+      if (this.frozen) return;
+      // 能出的牌、能攻击的随从：绿色发光边按 1.6 秒一个周期脉动（m4-storyboard 第 2 节）。材质是共用的，全部一起脉动
+      const pulse = 0.72 + 0.28 * Math.sin((t / 1.6) * Math.PI * 2);
+      for (const [mat, base] of PULSE_BASE) mat.color.copy(base).multiplyScalar(pulse);
       this.board.tick(t);
       for (const h of this.heroes) h.tick(t);
       for (const m of this.mana) m.tick(t);
@@ -320,7 +342,8 @@ export class TableScene {
   // 把场景对到显示局面。duration 为 0 时直接跳到位。返回有没有物件需要移动。
   sync(view: ViewState, duration = LAYOUT_DURATION): boolean {
     this.view = view;
-    this.shade.visible = view.phase === 'mulligan';
+    this.shade.visible = view.phase === 'mulligan' && !this.intro;
+    this.syncPotionCaption();
     let moved = false;
     for (const side of [0, 1] as Side[]) {
       const p = view.players[side];
@@ -353,6 +376,42 @@ export class TableScene {
     this.syncBoard(this.view.viewer, duration, ease);
   }
 
+  // 换牌时法力药水下面写一行"后手补偿"，说明它为什么单独放着、为什么不能换
+  private syncPotionCaption(): void {
+    const v = this.view;
+    const potion = v.phase === 'mulligan' && !this.intro && v.players[v.viewer].hand.some((c) => c.cardId === MANA_POTION_ID);
+    if (!potion) {
+      this.potionCaption?.removeFromParent();
+      this.potionCaption?.dispose();
+      this.potionCaption = null;
+      return;
+    }
+    if (this.potionCaption) return;
+    const rows = v.players[v.viewer].hand.filter((c) => c.cardId !== MANA_POTION_ID).length;
+    const slot = mulliganPotionSlot(rows);
+    const t = new Text();
+    t.font = cardFontUrl();
+    t.text = '后手补偿 · 不能换';
+    t.fontSize = 0.26;
+    t.anchorX = 'center';
+    t.anchorY = 'middle';
+    t.color = 0xf0e6d2;
+    t.outlineWidth = '8%';
+    t.outlineColor = 0x000000;
+    // 写在药水上方：下方离镜头比压暗板远，会被压暗
+    t.position.set(slot.pos.x, slot.pos.y + 1.55, slot.pos.z - 0.6);
+    t.rotation.x = slot.rot.x;
+    t.sync();
+    this.potionCaption = t;
+    this.layers.top.add(t);
+  }
+
+  // 一个点在画面上的左右位置，换成声像（-1 最左、1 最右，spec 5.7）。画面边上的不推到底，留一点
+  panAt(p: { x: number; y: number; z: number }): number {
+    const v = new THREE.Vector3(p.x, p.y, p.z).project(this.stage.camera);
+    return Math.max(-1, Math.min(1, v.x * 0.7));
+  }
+
   // 一张我方手牌不悬停时该在的槽位（拖回手牌时的落点）
   handSlotOf(id: number): Slot | null {
     const hand = this.view.players[this.view.viewer].hand;
@@ -377,9 +436,12 @@ export class TableScene {
     }
     const mulligan = this.view.phase === 'mulligan' && p === 'near';
     const visible = hand.filter((c) => c.instanceId !== this.draggingHand);
+    // 换牌时法力药水单独放，其余起手牌按自己的张数排
+    const rows = mulligan ? visible.filter((c) => c.cardId !== MANA_POTION_ID) : visible;
     const hoveredIndex = visible.findIndex((c) => c.instanceId === this.hoveredHand);
     visible.forEach((card, i) => {
       let c = this.handCards.get(card.instanceId);
+      const spawned = !c;
       if (!c) {
         c = new CardView(card.instanceId, card.cardId);
         const from = this.handSpawn.get(card.instanceId);
@@ -392,7 +454,7 @@ export class TableScene {
       c.setCard(card.cardId);
       c.setMarked(mulligan && this.mulliganMarks.has(card.instanceId));
       let slot: Slot;
-      if (mulligan) slot = mulliganSlot(i, visible.length);
+      if (mulligan) slot = card.cardId === MANA_POTION_ID ? mulliganPotionSlot(rows.length) : mulliganSlot(rows.indexOf(card), rows.length);
       else if (p === 'near' && hoveredIndex >= 0) {
         slot = i === hoveredIndex ? handHoverSlot(i, visible.length) : handSlot(p, i, visible.length);
         if (i !== hoveredIndex) slot = { ...slot, pos: { ...slot.pos, x: slot.pos.x + handNeighborShift(i, hoveredIndex) } };
@@ -400,6 +462,10 @@ export class TableScene {
       // 悬停的牌画在最上面（它离镜头最近，深度测试本来就对；renderOrder 只防同深度闪烁）
       c.renderOrder = i === hoveredIndex ? 2 : 0;
       if (this.returningHand.has(card.instanceId)) return;
+      if (spawned && this.spawnAtSlot) {
+        put(c, slot);
+        return;
+      }
       moved = moveTo(c, slot, duration, ease) || moved;
     });
     return moved;

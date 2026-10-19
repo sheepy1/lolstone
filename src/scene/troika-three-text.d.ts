@@ -16,6 +16,9 @@ declare module 'troika-three-text' {
     lineHeight: number | 'normal';
     outlineWidth: number | string;
     letterSpacing: number;
+    fillOpacity: number;
+    outlineOpacity: number;
+    clipRect: [number, number, number, number] | null;
     outlineColor: number | string | Color;
     sdfGlyphSize: number | null;
     depthOffset: number;

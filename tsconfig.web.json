@@ -1,0 +1,11 @@
+{
+  // 浏览器侧的类型检查：带 DOM 和 JSX，覆盖整个 src（引擎也会被再检查一遍，不影响）。
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node", "vite/client"],
+    "jsx": "react-jsx"
+  },
+  "include": ["src", "tests", "vite.config.ts", "vitest.config.ts"],
+  "exclude": []
+}

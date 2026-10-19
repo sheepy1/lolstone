@@ -5,7 +5,7 @@ export { ENGINE_EVENT_KINDS } from './events';
 export { type Action, listLegalActions, actionKey, checkAction } from './actions';
 export { applyAction, type ApplyResult } from './game';
 export { createGame, type CreateGameOptions } from './setup';
-export { maskHidden, visibleState } from './mask';
+export { maskEvents, maskHidden, visibleState } from './mask';
 export { forkRng, seedRng, nextFloat, nextInt, shuffle } from './rng';
 export { installCardPool, getCard, findCard, getHeroClass, allCards, allHeroClasses } from './cardDb';
 export { setInvariantChecks, findInvariantViolations, assertInvariants } from './invariants';

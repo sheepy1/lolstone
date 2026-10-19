@@ -3,7 +3,10 @@ import { useSyncExternalStore } from 'react';
 import type { HeroClass, Side } from '../engine';
 import type { Difficulty } from '../ui/menuData';
 
-export type Screen = 'boot' | 'menu' | 'loading' | 'match';
+export type Screen = 'boot' | 'menu' | 'loading' | 'match' | 'decks';
+
+// 叠在页面上的面板，后打开的在上面：对局菜单（pause）里可以再打开设置。对局中有任何面板打开时游戏暂停。
+export type Panel = 'pause' | 'settings';
 
 export type HoverCard = {
   cardId: string;
@@ -18,7 +21,8 @@ export type HoverCard = {
 export type UiState = {
   screen: Screen;
   loading: { progress: number; label: string };
-  menu: { humanClass: HeroClass; aiClass: HeroClass; difficulty: Difficulty };
+  // humanDeck：我方用的自组卡组 id，null 时用预组
+  menu: { humanClass: HeroClass; aiClass: HeroClass; difficulty: Difficulty; humanDeck: string | null };
   // 换牌页：显示局面在换牌阶段、轮到玩家提交时打开
   mulligan: { open: boolean; marked: number };
   result: { winner: Side | 'draw'; won: boolean; turns: number } | null;
@@ -26,19 +30,21 @@ export type UiState = {
   log: string[];
   logOpen: boolean;
   status: { busy: boolean; myTurn: boolean; speed: number; renderer: string; replay: boolean };
+  panels: Panel[];
   error: string | null;
 };
 
 let state: UiState = {
   screen: 'boot',
   loading: { progress: 0, label: '' },
-  menu: { humanClass: 'demacia', aiClass: 'freljord', difficulty: 'l1' },
+  menu: { humanClass: 'demacia', aiClass: 'freljord', difficulty: 'l1', humanDeck: null },
   mulligan: { open: false, marked: 0 },
   result: null,
   hover: null,
   log: [],
   logOpen: false,
   status: { busy: false, myTurn: false, speed: 1, renderer: '', replay: false },
+  panels: [],
   error: null,
 };
 

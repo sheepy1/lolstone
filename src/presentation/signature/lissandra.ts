@@ -12,7 +12,8 @@ import type { TableScene } from '../../scene/table';
 import { FREEZE, jitter, UNIT } from '../animations/combat';
 import { flash } from '../animations/util';
 import { SIGNATURE_PRESETS } from '../fx/particles/presets';
-import { iceRise } from '../fx/statusFx';
+import { frostRing } from '../fx/iceShell';
+import { MINION_HEIGHT, MINION_SIZE } from '../layout';
 import { at, bigFlash, bigShake, claimTurn, COLOR, EASE, minionOf, sfx, span, temp, towardEnemy } from './kit';
 import { makeFrostSheet, makeTomb } from './meshes';
 import type { SignatureModule } from './registry';
@@ -25,7 +26,7 @@ export const FROZEN_TOMB = {
   fade: 0.25, // 收尾
   lean: 0.28, // 后仰（弧度）
   lift: 0.1, // 抬起（底座高）
-  tomb: { x: 1.16, y: 1.5, z: 1.16, rise: 0.12 }, // 冰棺相对冰层放大多少、往上多出多少
+  tomb: { x: 1.16, y: 1.5 }, // 冰棺比原来的方冰块（底座加 0.1 宽、底座高加 0.22 高）大多少
 };
 
 type Frz = EventOf<'freeze'>;
@@ -99,7 +100,7 @@ export const frozenTomb: SignatureModule = (c) => {
     return () => ({ x: origin.x + (x.p.x - origin.x) * st.k, y: 0, z: origin.z + (x.p.z - origin.z) * st.k });
   });
   at(t, F.raise, () => {
-    for (const f of front) scene.particles.emit(SIGNATURE_PRESETS.frost_creep, { at: f(), follow: f, count: Math.max(10, Math.round(30 / front.length)), dir: 'up' });
+    for (const f of front) scene.particles.emit(SIGNATURE_PRESETS.ice_creep, { at: f(), follow: f, count: Math.max(10, Math.round(30 / front.length)), dir: 'up' });
   });
 
   // 冰棺
@@ -107,7 +108,8 @@ export const frozenTomb: SignatureModule = (c) => {
     const tt = arrive.get(k)!;
     const first = tt === Math.min(...arrive.values());
     at(t, tt, () => {
-      scene.sync(c.ctxs[k]!.after, 0.1);
+      // 不按每个事件的显示局面同步：那是按事件顺序累积的，冰到得早的目标序号不一定小，会把还没冻上的也一起冻上。
+      // 冰壳和徽章的霜在这里逐个上，整组最后同步一次
       const m = minionOf(scene, e.target);
       scene.particles.emit('frost_spread', { at: { x: p.x, y: 0, z: p.z }, count: 18, dir: 'up' });
       sfx('combat.freeze', p.x);
@@ -117,32 +119,50 @@ export const frozenTomb: SignatureModule = (c) => {
         bigFlash(scene, COLOR.ice, down);
       }
       if (!m) return;
-      iceRise(m, F.coat);
+      m.ice.setFrozen(true);
+      m.badges.attack.setFrost(true);
+      m.badges.health.setFrost(true);
+      frostRing(scene.layers.fx, p, FREEZE.ringRadius * 1.2, FREEZE.ring);
+      m.ice.grow(F.coat);
+      gsap.delayedCall(F.coat, () => m.ice.flash(FREEZE.flash));
       encase(scene, m, F.coat);
-      flash(m.flash, COLOR.ice, 0.9, F.coat);
+      flash(m.flash, COLOR.ice, 0.5, F.coat);
       jitter(m.body, FREEZE.shakeAmp * UNIT.base, FREEZE.shakes, FREEZE.shakeTime * FREEZE.shakes);
     });
   });
 
+  at(t, lastCoat + 0.05, () => scene.sync(c.ctxs[c.ctxs.length - 1]!.after, 0.1));
   span(t, tEnd);
   return { tl: t, tail: tEnd - lastCoat, hitAt: Math.min(...arrive.values()) };
 };
 
-// 冰棺挂在随从的冰层下面：冰层长、它跟着长，冰层退（解冻）、它跟着退；冰层藏起来或随从没了，冰棺拿掉
+// 冰棺挂在随从的冰壳（MinionView.ice，fx/iceShell.ts）下面：冰壳显示它就显示；从台面往上长出来。
+// 每帧查一次：显示局面里这个随从不再冻结（解冻、沉默）或离场了，冰棺缩没拿掉，下一次普通冻结不会再出现
 function encase(scene: TableScene, m: MinionView, duration: number): void {
   const T = FROZEN_TOMB.tomb;
   const old = m.ice.getObjectByName('frozen_tomb');
-  if (old) old.removeFromParent();
+  if (old) removeTomb(old);
   const tomb = makeTomb(scene);
   tomb.name = 'frozen_tomb';
   m.ice.add(tomb);
-  tomb.position.y = T.rise;
-  tomb.scale.set(T.x * 0.7, T.y, T.z * 0.7);
-  gsap.to(tomb.scale, { x: T.x, z: T.z, duration, ease: 'back.out(2)' });
+  const w = (MINION_SIZE + 0.1) * T.x;
+  const h = (MINION_HEIGHT + 0.22) * T.y;
+  const st = { k: 0.02, s: 0.7 };
+  const apply = () => {
+    tomb.scale.set(w * st.s, h * st.k, w * st.s);
+    tomb.position.y = (h * st.k) / 2;
+  };
+  apply();
+  gsap.to(st, { k: 1, duration, ease: 'power2.out', onUpdate: apply });
+  gsap.to(st, { s: 1, duration, ease: 'back.out(2)', onUpdate: apply });
+  const frozen = () => scene.view.players[m.side].board.find((x) => x.instanceId === m.instanceId)?.frozen ?? false;
+  // 整组最后才同步显示局面，所以等显示局面第一次报冻结之后才开始按它判断
+  let armed = false;
   const stop = scene.stage.onFrame(() => {
-    if (tomb.parent === m.ice && m.ice.visible && scene.minion(m.instanceId) === m) return;
-    removeTomb(tomb);
+    armed ||= frozen();
+    if (tomb.parent === m.ice && scene.minion(m.instanceId) === m && (!armed || frozen())) return;
     stop();
+    gsap.to(tomb.scale, { x: 0.01, y: 0.01, z: 0.01, duration: 0.15, ease: 'power1.in', onComplete: () => removeTomb(tomb) });
   });
 }
 

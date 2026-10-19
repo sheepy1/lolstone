@@ -1904,7 +1904,7 @@ const slash_burst: PresetDef = {
 };
 
 // 冰的蔓延（frost_spread 的连续变体，丽桑卓）：跟着地面冰的前沿走，一路从地上冒出冰晶和寒雾，发射 0.35 秒
-const frost_creep: PresetDef = {
+const ice_creep: PresetDef = {
   count: 30,
   dir: 'up',
   color: FX_PALETTE.ice,
@@ -1967,4 +1967,4 @@ const frost_creep: PresetDef = {
   ],
 };
 
-export const SIGNATURE_PRESETS = { wind_spiral, blizzard_fall, slash_ring, slash_burst, frost_creep } satisfies Record<string, PresetDef>;
+export const SIGNATURE_PRESETS = { wind_spiral, blizzard_fall, slash_ring, slash_burst, ice_creep } satisfies Record<string, PresetDef>;

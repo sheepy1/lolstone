@@ -72,8 +72,9 @@ export const handOfBaron: SignatureModule = (c) => {
     first = false;
     at(t, tt, () => {
       if (once) sfx('card.buff', p.x);
-      scene.sync(c.ctxs[k]!.after, 0.05);
+      // 数字先临时跳到增益后的值（显示局面按事件顺序累积，光环到达的先后和事件顺序不一样），整组最后同步一次
       const m = e.target.kind === 'minion' ? scene.minion(e.target.instanceId) : undefined;
+      m?.showHealth(e.healthAfter); // MinionView 只能临时改一个数，攻击在整组同步时跟上
       scene.particles.emit('buff_ring', { at: { x: p.x, y: 0, z: p.z }, color: COLOR.baron });
       if (!m) return;
       portraitGlow(m, COLOR.baron, 0.9, B.buff);
@@ -81,6 +82,7 @@ export const handOfBaron: SignatureModule = (c) => {
       if (e.health !== 0) m.badges.health.pop(e.health > 0 ? TINT.buff : TINT.debuff);
     });
   }
+  at(t, lastBuff + 0.05, () => scene.sync(c.ctxs[c.ctxs.length - 1]!.after, 0.05));
   span(t, tEnd);
   return { tl: t, tail: tEnd - lastBuff };
 };

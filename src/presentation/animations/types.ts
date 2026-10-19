@@ -33,7 +33,8 @@ export type Cue = {
 // 有攻击的一步不错开，攻击方和被攻击方同一个命中帧。
 // tail：时间线最后多少秒是收尾（回弹、淡出、让位、残留），m4-storyboard 1.7 的组间重叠按它算：这一步里最后结束的事件
 // 收尾进行到 60% 时，下一组就可以开始。有 impact 的一步不看 tail：最后一个命中帧之后都算收尾。其余不写时算 0（不重叠）。
-export type Anim = { tl: gsap.core.Timeline; impact?: number; cues?: Cue[]; order?: number; stagger?: number; tail?: number };
+// readyAt：下一组最早在这个事件时间线的哪个时刻开始，比 tail 的 60% 规则优先（取更早的）。死亡后紧跟亡语时用它。
+export type Anim = { tl: gsap.core.Timeline; impact?: number; cues?: Cue[]; order?: number; stagger?: number; tail?: number; readyAt?: number };
 
 export type AnimModule<K extends PresentationEventKind> = (e: PresentationEventOf<K>, ctx: AnimContext) => Anim;
 

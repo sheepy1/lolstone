@@ -1,12 +1,10 @@
 // 四条音量通道（spec 5.7）：主音量、音乐、音效、语音。设置存在 localStorage，设置页（M5）改这里。
 import { Howler } from 'howler';
+import { VOLUME_DEFAULTS as DEFAULTS, type Channel, type Volumes } from './defaults';
 
-export type Channel = 'master' | 'music' | 'sfx' | 'voice';
-
-export type Volumes = Record<Channel, number>;
+export type { Channel, Volumes } from './defaults';
 
 const STORAGE_KEY = 'melol.volumes';
-const DEFAULTS: Volumes = { master: 0.8, music: 0.5, sfx: 0.8, voice: 0.9 };
 
 let volumes: Volumes = load();
 

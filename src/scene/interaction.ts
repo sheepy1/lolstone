@@ -5,12 +5,11 @@
 import gsap from 'gsap';
 import * as THREE from 'three';
 import { playSfx } from '../audio';
-import { actionKey, getCard, type Action, type TargetRef } from '../engine';
-import type { Point } from '../presentation/fx/arrow';
-import { BOARD_ROW_HALF, boardInsertIndex, boardRowZ, boardSlot, CARD_H, CARD_W, castSlot, CAMERA_PITCH, HAND_ZONE_Z } from '../presentation/layout';
+import { actionKey, getCard, getHeroClass, type Action, type TargetRef } from '../engine';
+import { ARROW, ARROW_COLORS, arrowTone, type Point } from '../presentation/fx/arrow';
+import { BOARD_ROW_HALF, boardInsertIndex, boardRowZ, boardSlot, CARD_H, CARD_W, castSlot, CAMERA_PITCH, HAND_ZONE_Z, NEXUS } from '../presentation/layout';
 import type { CardView } from './cardView';
 import type { TableScene } from './table';
-import { COLORS } from './theme';
 
 export type HoverInfo =
   | { kind: 'minion'; instanceId: number; side: 0 | 1 }
@@ -43,6 +42,7 @@ type Aim = {
   from: Point;
   options: { target: TargetRef; action: Action }[];
   release: boolean; // 松手即提交（攻击、拖着的法术）；false 时点一下目标提交
+  source?: TargetRef; // 攻击者自己：指针还停在它身上时箭头算指着空地，不显示禁止标记
   onCancel: () => void;
   spellCard?: { card: CardView; handIndex: number }; // 拖着的定向法术，拖回手牌区回到拖牌状态
 };
@@ -251,7 +251,7 @@ export class Interaction {
       const options = legal
         .filter((a): a is Extract<Action, { kind: 'attack' }> => a.kind === 'attack' && sameRef(a.attacker, attacker))
         .map((a) => ({ target: a.target, action: a as Action }));
-      if (options.length > 0) this.startAim({ from: this.scene.pointOf(attacker), options, release: true, onCancel: () => {} });
+      if (options.length > 0) this.startAim({ from: this.scene.pointOf(attacker), options, release: true, source: attacker, onCancel: () => {} });
       return;
     }
 
@@ -316,7 +316,7 @@ export class Interaction {
         // 拖回手牌区：回到拖牌状态
         const { card, handIndex } = m.spellCard;
         const options = (this.host.legal() ?? []).filter((a) => a.kind === 'play_card' && a.handIndex === handIndex);
-        this.scene.arrow.stop();
+        this.scene.arrow.retract();
         this.scene.setTargetMarks(null);
         gsap.killTweensOf([card.position, card.rotation, card.scale]);
         this.beginSpring(card);
@@ -324,10 +324,7 @@ export class Interaction {
         this.syncCursor();
         return;
       }
-      const t = this.targetOf(this.pick());
-      const opt = t && m.options.find((o) => sameRef(o.target, t));
-      const to = opt ? this.scene.pointOf(opt.target) : table ? { x: table.x, y: 0.3, z: table.z } : m.from;
-      this.scene.arrow.update(to, !!opt);
+      this.aimArrow(m, table);
       return;
     }
     if (e.target !== this.canvas) return;
@@ -381,6 +378,7 @@ export class Interaction {
 
   // 每帧推进拖牌的弹簧：阻尼弹簧跟随指针，速度决定倾角和翻滚，拿起的高度决定投影大小和深浅
   private tick(dt: number): void {
+    this.scene.arrow.tick(dt, this.scene.stage.camera);
     const m = this.mode;
     if (m.k !== 'drag') return;
     const sp = this.spring;
@@ -516,8 +514,47 @@ export class Interaction {
     this.setHover(null);
     this.mode = { k: 'aim', ...a };
     this.syncCursor();
-    this.scene.arrow.start(a.from, COLORS.target);
-    this.scene.setTargetMarks({ targets: a.options.map((o) => o.target) });
+    const tone = this.aimTone(a.options[0]?.action);
+    this.scene.arrow.start(a.from, tone, { frequency: DRAG.frequency, damping: DRAG.damping });
+    // 合法目标的细边和箭头同色（默认红用伤害的红橙）
+    this.scene.setTargetMarks({ targets: a.options.map((o) => o.target), color: ARROW_COLORS[tone === 'default' ? 'damage' : tone] });
+  }
+
+  // 箭头颜色按这次瞄准的用途：随从攻击是伤害色；出牌、英雄技能看卡牌效果作用在选中目标上的动作
+  private aimTone(action: Action | undefined) {
+    if (!action || action.kind === 'attack') return arrowTone('attack', null);
+    const view = this.scene.view;
+    if (action.kind === 'play_card') {
+      const c = view.players[view.viewer].hand[action.handIndex];
+      return arrowTone('card', c ? getCard(c.cardId) : null);
+    }
+    if (action.kind === 'hero_power') return arrowTone('card', getCard(getHeroClass(view.players[view.viewer].heroClass).heroPower));
+    return arrowTone('card', null);
+  }
+
+  // 箭头指向指针下的东西：合法目标吸附过去并出准星；能选但不在这次选项里的随从、英雄算非法目标；其余是空地
+  private aimArrow(m: Aim, table: THREE.Vector3 | null): void {
+    const t = this.targetOf(this.pick());
+    const opt = t && m.options.find((o) => sameRef(o.target, t));
+    this.scene.setTargetFocus(opt ? opt.target : null);
+    if (opt) {
+      const r = this.reticleOf(opt.target);
+      this.scene.arrow.aimAt(r.at, 'target', r);
+      return;
+    }
+    const to = table ? { x: table.x, y: 0.3, z: table.z } : m.from;
+    this.scene.arrow.aimAt(to, t && !(m.source && sameRef(t, m.source)) ? 'illegal' : 'free');
+  }
+
+  // 准星套在哪里、多大：随从是底座顶面中心；英雄是枢纽上的头像圆盘
+  private reticleOf(ref: TargetRef): { at: Point; size: number } {
+    if (ref.kind === 'hero') {
+      const h = this.scene.heroes[ref.side];
+      const p = h.localToWorld(new THREE.Vector3(NEXUS.discPos.x, NEXUS.discPos.y, NEXUS.discPos.z));
+      return { at: { x: p.x, y: p.y, z: p.z }, size: ARROW.reticleHero };
+    }
+    const p = this.scene.pointOf(ref);
+    return { at: { x: p.x, y: p.y + 0.05, z: p.z }, size: ARROW.reticleMinion };
   }
 
   private commit(action: Action): void {
@@ -547,7 +584,8 @@ export class Interaction {
     const m = this.mode;
     this.mode = { k: 'idle' };
     this.syncCursor();
-    this.scene.arrow.stop();
+    // 箭头缩回来源再消失，不是一下子没了
+    this.scene.arrow.retract();
     this.scene.setTargetMarks(null);
     if (m.k === 'drag') this.returnCard(m.card);
     else if (m.k === 'aim') m.onCancel();

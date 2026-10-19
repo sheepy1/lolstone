@@ -10,9 +10,8 @@ import gsap from 'gsap';
 import type { EventOf } from '../../engine';
 import { FREEZE, jitter, UNIT } from '../animations/combat';
 import type { Cue } from '../animations/types';
-import { flash } from '../animations/util';
 import { SIGNATURE_PRESETS } from '../fx/particles/presets';
-import { iceRise } from '../fx/statusFx';
+import { frostRing } from '../fx/iceShell';
 import { at, bigFlash, bigShake, byX, claimTurn, COLOR, dimLights, EASE, minionOf, place, rowZ, sfx, span, temp } from './kit';
 import { makeFrostSheet } from './meshes';
 import { prelude } from './prelude';
@@ -33,7 +32,7 @@ type Dmg = EventOf<'damage'>;
 
 export const glacialStorm: SignatureModule = (c) => {
   const first = c.events[0]!;
-  if (first.kind === 'spell_cast') return prelude(c, { color: COLOR.ice, preset: 'frost_spread', count: 20, scale: 0.8, sounds: ['spell.frost'] });
+  if (first.kind === 'spell_cast') return prelude(c, { fx: 'frost', color: COLOR.ice, preset: 'frost_spread', count: 20, scale: 0.8, sounds: ['spell.frost'] });
   const { scene } = c;
   const t = gsap.timeline();
   if (first.kind === 'freeze') {
@@ -41,9 +40,10 @@ export const glacialStorm: SignatureModule = (c) => {
     const last = c.ctxs[c.ctxs.length - 1]!.after;
     at(t, 0, () => {
       scene.sync(last, 0.1);
+      // 伤害那一步没覆上冰的（比如那一步被跳过），这里补长一次
       for (const e of c.events) {
         const m = minionOf(scene, 'target' in e ? e.target : null);
-        if (m && m.ice.scale.y < 0.05) iceRise(m, 0.15);
+        if (m && !m.ice.visible) m.ice.grow(0.2);
       }
     });
     span(t, 0.05);
@@ -93,9 +93,12 @@ export const glacialStorm: SignatureModule = (c) => {
       const m = minionOf(scene, e.target);
       scene.particles.emit('frost_spread', { at: { x: p.x, y: 0, z: p.z }, count: 12, dir: 'up' });
       scene.particles.emit('ice_shatter', { at: { x: p.x, y: 0.5, z: p.z }, count: 6 });
+      frostRing(scene.layers.fx, p, FREEZE.ringRadius, FREEZE.ring);
       if (m) {
-        iceRise(m, FREEZE.coat);
-        flash(m.flash, COLOR.ice, 0.8, FREEZE.coat);
+        // 显示局面要到冻结那一组才冻住；先把冰壳记成冻住，后面那组同步时就不会把正在长的冰棱重置
+        m.ice.setFrozen(true);
+        m.ice.grow(FREEZE.grow);
+        gsap.delayedCall(FREEZE.flashAt - FREEZE.growAt, () => m.ice.flash(FREEZE.flash));
         m.badges.attack.setFrost(true);
         m.badges.health.setFrost(true);
         jitter(m.body, FREEZE.shakeAmp * UNIT.base, FREEZE.shakes, FREEZE.shakeTime * FREEZE.shakes);

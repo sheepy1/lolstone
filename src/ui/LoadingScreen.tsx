@@ -8,6 +8,7 @@ import { useUi } from '../app/store';
 import { loadingArtUrl } from '../assets/manifest';
 import { MenuBackdrop, Stage } from './hextech';
 import { CLASS_BLURBS, difficultyName, randomTip } from './menuData';
+import { getDeck } from './decks';
 
 const MAX_RATE = 1.6; // 每秒最多走多少（0 到 1）
 
@@ -56,10 +57,11 @@ function BootTitle() {
 }
 
 function Faceoff() {
-  const { humanClass, aiClass, difficulty } = useUi((s) => s.menu);
+  const { humanClass, aiClass, difficulty, humanDeck } = useUi((s) => s.menu);
+  const deckName = humanDeck ? getDeck(humanDeck)?.name : null;
   return (
     <div className="ld-faceoff">
-      <Contender cls={humanClass} side="left" caption="你" />
+      <Contender cls={humanClass} side="left" caption={deckName ? `你 · ${deckName}` : '你'} />
       <div className="ld-vs">
         <span>VS</span>
       </div>

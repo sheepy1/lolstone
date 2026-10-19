@@ -18,9 +18,11 @@ import { TableScene } from '../scene/table';
 import { KEYWORD_NAMES } from '../presentation/keywordText';
 import { describe, LogNames } from '../ui/logText';
 import type { Difficulty } from '../ui/menuData';
+import { getSettings, onSettingsChange } from '../ui/settings';
+import { deckForMatch, isPreset } from '../ui/decks';
 import { l0ChooseAction } from '../ai/l0';
 import { Match } from './match';
-import { getUi, setUi } from './store';
+import { getUi, setUi, type Panel } from './store';
 
 const LOG_LIMIT = 400;
 // 对局加载页的最短停留时间（毫秒）
@@ -56,6 +58,49 @@ export class GameApp {
     setUi((s) => ({ status: { ...s.status, renderer: this.stage!.rendererName } }));
     // 调试入口：在控制台看显示局面、对局状态
     (window as unknown as { melol: unknown }).melol = this;
+    onSettingsChange(() => this.applyBaseSpeed());
+  }
+
+  // ---------- 面板、暂停、动画速度 ----------
+
+  // 打开一个面板（对局菜单或设置）。对局中有面板打开时游戏暂停。
+  openPanel(panel: Panel): void {
+    setUi((s) => ({ panels: [...s.panels.filter((p) => p !== panel), panel] }));
+    this.syncPause();
+  }
+
+  // 关掉最上面的面板；all 为 true 时全部关掉。面板都关掉后游戏继续。
+  closePanel(all = false): void {
+    setUi((s) => ({ panels: all ? [] : s.panels.slice(0, -1) }));
+    this.syncPause();
+  }
+
+  get paused(): boolean {
+    return gsap.globalTimeline.paused();
+  }
+
+  // 暂停就是停住 GSAP 的全局时间线：对局里所有动画（包括 AI 思考的等待）都在上面，导演等当前这一步播完才放下一步，
+  // AI 的动作在队列里排着，所以动画停住，AI 也不再行动。输入由盖在画布上的面板挡住。
+  private syncPause(): void {
+    const ui = getUi();
+    gsap.globalTimeline.paused(!!this.session && ui.screen === 'match' && ui.panels.length > 0);
+  }
+
+  // 设置里的动画速度：导演有事件在播时全局时间线按这个倍数走，空闲时回到 1 倍（河面、按钮脉动这些环境循环不跟着变快）。
+  // 快进时播放器把时间线设成三倍，不受这个设置影响；播完 resetSpeed 回到 1 倍，下一次有事件时这里再按设置调。
+  private applyBaseSpeed(): void {
+    const s = this.session;
+    if (s && s.player.speed === 1) gsap.globalTimeline.timeScale(s.director.busy ? getSettings().animSpeed : 1);
+  }
+
+  // 认输：对局菜单里确认后调用。暂停解除，排着的动画快进播完，然后播失败演出。
+  concede(): void {
+    const s = this.session;
+    if (!s?.match || s.match.over) return;
+    this.closePanel(true);
+    s.match.concede();
+    if (s.director.busy) s.player.fastForward();
+    this.onDirector();
   }
 
   get current(): Session | null {
@@ -83,16 +128,18 @@ export class GameApp {
 
   // 开一局：先在加载页预载两套卡组的美术和语音，再进对局。
   // seed 不给时随机；给了就能复现同一局（调试、自动化验证用，自动驾驶的随机数也从头开始）。
-  // difficulty 是 AI 难度（spec 4.1）：l0 随机，l1 贪心。
-  async startMatch(humanClass: HeroClass, aiClass: HeroClass, seed?: number, difficulty: Difficulty = 'l1'): Promise<void> {
+  // difficulty 是 AI 难度（spec 4.1）：l0 随机，l1 贪心。humanDeck 是我方的自组卡组 id，null 或不能用时用预组。
+  async startMatch(humanClass: HeroClass, aiClass: HeroClass, seed?: number, difficulty: Difficulty = 'l1', humanDeck: string | null = null): Promise<void> {
     initAudio();
     this.teardown();
     const loadStart = performance.now();
-    const decks: [string[], string[]] = [[...(PRESET_DECKS[humanClass] ?? [])], [...(PRESET_DECKS[aiClass] ?? [])]];
+    // 我方可以用自组卡组（不存在或不合规时退回预组），对手用预组
+    const mine = deckForMatch(humanClass, humanDeck);
+    const decks: [string[], string[]] = [[...mine.cards], [...(PRESET_DECKS[aiClass] ?? [])]];
     setUi((s) => ({
       screen: 'loading',
       loading: { progress: 0, label: '载入英雄美术和语音' },
-      menu: { ...s.menu, humanClass, aiClass, difficulty },
+      menu: { ...s.menu, humanClass, aiClass, difficulty, humanDeck: isPreset(mine.id) ? null : mine.id },
       result: null,
       log: [],
       error: null,
@@ -172,12 +219,13 @@ export class GameApp {
     s.interaction.destroy();
     s.keywordHover.destroy();
     s.player.resetSpeed();
+    gsap.globalTimeline.paused(false);
     // 先停掉这一局的全部动画：GSAP 里只有对局场景的动画。留着的循环动画（河面反光、按钮脉动）会去改
     // 已经销毁的 Pixi 对象，在 GSAP 的帧回调里抛错，下一局的动画就全部停住
     for (const anim of gsap.globalTimeline.getChildren(false, true, true)) anim.kill();
     s.scene.dispose();
     this.session = null;
-    setUi({ hover: null, mulligan: { open: false, marked: 0 }, status: { ...getUi().status, replay: false, busy: false } });
+    setUi({ hover: null, panels: [], mulligan: { open: false, marked: 0 }, status: { ...getUi().status, replay: false, busy: false } });
   }
 
   backToMenu(): void {
@@ -230,6 +278,7 @@ export class GameApp {
     if (!s) return;
     const { director, match, player, scene } = s;
     const view = director.displayed;
+    this.applyBaseSpeed();
     if (this.autoplayOn) {
       if (director.busy && player.speed === 1) player.fastForward();
       if (!director.busy && match?.humanToAct()) setTimeout(() => this.autoStep(), 30);

@@ -32,7 +32,7 @@ export const LAST_BREATH = {
 type Dmg = EventOf<'damage'>;
 
 export const lastBreath: SignatureModule = (c) => {
-  if (c.events[0]!.kind === 'spell_cast') return prelude(c, { color: COLOR.wind, preset: 'slash_trail', count: 18, scale: 0.8, sounds: ['spell.physical'] });
+  if (c.events[0]!.kind === 'spell_cast') return prelude(c, { fx: 'physical', color: COLOR.wind, preset: 'slash_trail', count: 18, scale: 0.8, sounds: ['spell.physical'] });
   const L = LAST_BREATH;
   const { scene } = c;
   const t = gsap.timeline();

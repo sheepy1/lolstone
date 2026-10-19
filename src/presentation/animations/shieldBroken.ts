@@ -21,5 +21,6 @@ export const shieldBroken: AnimModule<'shield_broken'> = (e, { scene, after }) =
   t.add(syncTo(scene, after, 0.1), S.shardTime);
   hold(t, 0.4, 0);
   const cues: Cue[] = [{ channel: 'impact:shield', at: 0, weight: 1, run: () => sfxAt('combat.shield_break', x) }];
-  return { tl: t, cues, order: x, stagger: 0.04 };
+  // 收尾：外壳碎片飞完之后
+  return { tl: t, cues, order: x, stagger: 0.04, tail: 0.4 - S.shardTime };
 };

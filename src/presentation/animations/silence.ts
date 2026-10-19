@@ -31,5 +31,6 @@ export const silence: AnimModule<'silence'> = (e, { scene, after }) => {
     B.strip,
   );
   hold(t, 0.4, 0);
-  return { tl: t, order: x, stagger: B.stagger };
+  // 收尾：状态收掉、徽章弹起之后
+  return { tl: t, order: x, stagger: B.stagger, tail: B.silenceTail };
 };

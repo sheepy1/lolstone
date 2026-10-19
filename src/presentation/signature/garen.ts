@@ -51,7 +51,7 @@ const HOLY_GLOW = 0xffe08a; // 德玛西亚正义：圣光金
 const swordLength = () => SWORD.blade + 0.17 + 0.66 + 0.25;
 
 export const judgment: SignatureModule = (c) => {
-  if (c.events[0]!.kind === 'spell_cast') return prelude(c, { color: STEEL_GLOW, preset: 'slash_trail', count: 18, scale: 0.8, sounds: ['spell.physical', 'hero_power.demacia'] });
+  if (c.events[0]!.kind === 'spell_cast') return prelude(c, { fx: 'physical', color: STEEL_GLOW, preset: 'slash_trail', count: 18, scale: 0.8, sounds: ['spell.physical', 'hero_power.demacia'] });
   const J = JUDGMENT;
   const { scene } = c;
   const t = gsap.timeline();
@@ -180,7 +180,7 @@ export const judgment: SignatureModule = (c) => {
 };
 
 export const demacianJustice: SignatureModule = (c) => {
-  if (c.events[0]!.kind === 'spell_cast') return prelude(c, { color: HOLY_GLOW, preset: 'holy_pillar', count: 10, scale: 0.5, sounds: ['spell.holy'] });
+  if (c.events[0]!.kind === 'spell_cast') return prelude(c, { fx: 'holy', color: HOLY_GLOW, preset: 'holy_pillar', count: 10, scale: 0.5, sounds: ['spell.holy'] });
   const J = JUSTICE;
   const { scene } = c;
   const t = gsap.timeline();

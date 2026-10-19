@@ -211,7 +211,10 @@ export class Interaction {
     if (this.mode.k !== 'idle' || !hit) return;
 
     if (hit.kind === 'end_turn') {
-      if (this.scene.endTurn.mode === 'mine' && legal.some((a) => a.kind === 'end_turn')) this.commit({ kind: 'end_turn' });
+      if (this.scene.endTurn.mode === 'mine' && legal.some((a) => a.kind === 'end_turn')) {
+        this.scene.endTurn.press();
+        this.commit({ kind: 'end_turn' });
+      }
       return;
     }
 
@@ -542,6 +545,7 @@ export class Interaction {
       this.scene.hoveredHand = handId;
       this.scene.layoutHand(0.12);
     }
+    this.scene.endTurn.setHover(hit?.kind === 'end_turn');
     const deck = hit?.kind === 'deck' ? hit.side : null;
     if (deck !== this.hoveredDeck) {
       if (this.hoveredDeck !== null) this.scene.decks[this.hoveredDeck].showCount(false);

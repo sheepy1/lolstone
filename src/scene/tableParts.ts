@@ -1,5 +1,4 @@
-// 台面上的实体物件：法力水晶条、牌库、结束回合按钮、对方思考提示（棋盘在 board.ts）。占位几何体，M4 换素材。
-import gsap from 'gsap';
+// 台面上的实体物件：法力水晶条、牌库、对方思考提示（棋盘在 board.ts，结束回合按钮在 endTurnButton.ts）。占位几何体，M4 换素材。
 import * as THREE from 'three';
 import type { ManaSnapshot } from '../engine';
 import { MANA_STEP } from '../presentation/layout';
@@ -115,58 +114,6 @@ export class DeckView extends THREE.Group {
     this.tip = textSprite(text, 0xf0e6d2, 0.36, FONT_CN, true);
     this.tip.position.set(0, 1.4, 0);
     this.add(this.tip);
-  }
-}
-
-const buttonGeo = shared(new THREE.CylinderGeometry(1, 1.08, 0.36, 4));
-const buttonTopGeo = shared(new THREE.PlaneGeometry(1.9, 1.0));
-
-// 结束回合按钮：海克斯风格的菱形实体按钮，立在台面右侧。我方回合亮起并缓慢脉动，对方回合变暗显示"对方回合"。
-export class EndTurnButton extends THREE.Group {
-  readonly body = new THREE.Group();
-  private readonly mat: THREE.MeshStandardMaterial;
-  private readonly label = makeLabelCanvas(384, 200);
-  private pulse: gsap.core.Tween | null = null;
-  private key = '';
-  mode: 'mine' | 'theirs' | 'off' = 'off';
-
-  constructor() {
-    super();
-    this.mat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.35, metalness: 0.6, emissive: 0x000000 });
-    const prism = new THREE.Mesh(buttonGeo, this.mat);
-    prism.rotation.y = Math.PI / 4;
-    prism.scale.set(1.25, 1, 0.75);
-    prism.position.y = 0.18;
-    prism.castShadow = true;
-    const top = new THREE.Mesh(buttonTopGeo, new THREE.MeshBasicMaterial({ map: this.label.texture, transparent: true, toneMapped: false }));
-    top.rotation.x = -Math.PI / 2;
-    top.position.y = 0.37;
-    this.body.add(prism, top);
-    this.add(this.body);
-    this.userData.pick = { kind: 'end_turn' };
-    this.setMode('off', false);
-  }
-
-  setMode(mode: 'mine' | 'theirs' | 'off', ready: boolean): void {
-    const key = `${mode}${ready}`;
-    if (key === this.key) return;
-    this.key = key;
-    this.mode = mode;
-    const mine = mode === 'mine';
-    this.mat.color.setHex(mine ? (ready ? 0x2fbf4f : 0xc8aa6e) : 0x3a3a3a);
-    this.mat.emissive.setHex(mine ? (ready ? 0x1a8a30 : 0x6a5020) : 0x000000);
-    this.mat.emissiveIntensity = mine ? 0.8 : 0;
-    const g = this.label.g;
-    g.clearRect(0, 0, 384, 200);
-    strokeText(g, mode === 'theirs' ? '对方回合' : '结束回合', 192, 104, 74, mine ? '#ffffff' : '#9a9a9a', FONT_CN, 0.12);
-    this.label.texture.needsUpdate = true;
-    if (mine && !this.pulse) {
-      this.pulse = gsap.to(this.body.scale, { x: 1.06, y: 1.06, z: 1.06, duration: 0.9, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-    } else if (!mine && this.pulse) {
-      this.pulse.kill();
-      this.pulse = null;
-      this.body.scale.setScalar(1);
-    }
   }
 }
 

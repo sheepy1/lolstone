@@ -35,7 +35,8 @@ import { MinionView } from './minionView';
 import { useLampReflections } from './nexusLamps';
 import type { Stage } from './stage';
 import { BoardView } from './board';
-import { DeckView, EndTurnButton, ManaBarView, ThinkingView } from './tableParts';
+import { EndTurnButton, useButtonReflections } from './endTurnButton';
+import { DeckView, ManaBarView, ThinkingView } from './tableParts';
 
 export type LegalHighlights = {
   playable: Set<number>; // 能打出的手牌实例 id
@@ -134,6 +135,7 @@ export class TableScene {
     this.view = view;
     const v = view.viewer;
     useLampReflections(stage.reflections);
+    useButtonReflections(stage.reflections);
     this.heroes = [new HeroView(view.players[0].heroClass, v !== 0, 0), new HeroView(view.players[1].heroClass, v !== 1, 1)];
     this.heroPowers = [new HeroPowerView(view.players[0].heroClass, 0), new HeroPowerView(view.players[1].heroClass, 1)];
     this.addLights();
@@ -165,6 +167,7 @@ export class TableScene {
       this.board.tick(t);
       for (const h of this.heroes) h.tick(t);
       for (const m of this.mana) m.tick(t);
+      this.endTurn.tick(t);
     });
     this.sync(view, 0);
   }

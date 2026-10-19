@@ -11,6 +11,7 @@ import { installDefaultPool, PRESET_DECKS } from '../../cards';
 import { applyAction, createGame, listLegalActions, maskEvents, seedRng, type Action, type Fx, type GameState, type RngState, type Side } from '../../engine';
 import { PLAY_MINION } from '../../presentation/animations/minionSummoned';
 import { DRAG, Interaction } from '../../scene/interaction';
+import { END_TURN } from '../../scene/endTurnButton';
 import { NEXUS_LAMP } from '../../scene/nexusLamps';
 import { Director } from '../../presentation/director';
 import { PRESENTATION_EVENT_KINDS, type PresentationEventKind } from '../../presentation/events';
@@ -201,6 +202,27 @@ const applyLampView = () => {
 };
 lamp.add(lampView, 'turn', ['我方', '对方']).name('谁的回合').onChange(applyLampView);
 lamp.add(lampView, 'health', 0, 30, 1).name('双方生命').onChange(applyLampView);
+
+// 结束回合按钮。"状态"只改画面（下一次局面同步会改回来），用来看四种状态和翻面动画
+const endTurn = gui.addFolder('结束回合按钮 END_TURN');
+endTurn.add(END_TURN, 'tilt', 0, 1.2, 0.01).name('面板倾角');
+endTurn.add(END_TURN, 'glow', 0, 4, 0.05).name('发光边亮度');
+endTurn.add(END_TURN, 'face', 0, 1, 0.01).name('面板自发光');
+endTurn.add(END_TURN, 'pulse', 0.4, 5, 0.05).name('脉动周期');
+endTurn.add(END_TURN, 'pulseAmp', 0, 0.8, 0.01).name('脉动幅度');
+endTurn.add(END_TURN, 'readyGlow', 0, 5, 0.05).name('该点了亮度');
+endTurn.add(END_TURN, 'readyPulse', 0.2, 3, 0.05).name('该点了脉动周期');
+endTurn.add(END_TURN, 'flip', 0.05, 1, 0.01).name('翻面时长');
+const endTurnView = { state: '我方回合' };
+endTurn
+  .add(endTurnView, 'state', ['我方回合', '该点了', '对方回合', '熄灭'])
+  .name('状态')
+  .onChange((v: string) => {
+    const b = bench?.scene.endTurn;
+    if (!b) return;
+    b.setMode(v === '对方回合' ? 'theirs' : v === '熄灭' ? 'off' : 'mine', v === '该点了');
+  });
+endTurn.add({ press: () => bench?.scene.endTurn.press() }, 'press').name('按一下');
 
 window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyP') play();

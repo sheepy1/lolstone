@@ -19,10 +19,12 @@ export type SfxId =
   | 'card.draw'
   | 'card.play'
   | 'card.land'
+  | 'card.land_heavy'
   | `spell.${Fx}`
   | 'spell.big'
   | 'card.buff'
   | 'card.debuff'
+  | 'card.silence'
   | 'card.bounce'
   | 'card.transform'
   | 'card.burn'
@@ -30,6 +32,7 @@ export type SfxId =
   | 'combat.swing'
   | 'combat.hit_light'
   | 'combat.hit_heavy'
+  | 'combat.hit_low'
   | 'combat.hero_hit'
   | 'combat.death'
   | 'combat.shield_break'
@@ -75,7 +78,8 @@ export const SFX_TABLE: Record<SfxId, SfxDef> = {
   'ui.cancel': sfx(),
   'card.draw': sfx(),
   'card.play': sfx(),
-  'card.land': sfx(),
+  'card.land': sfx(), // 轻落地：费用 ≤ 3 的随从、衍生物、变形
+  'card.land_heavy': sfx(), // 重落地：费用 ≥ 4（m4-storyboard E07）
   'spell.physical': sfx(),
   'spell.fire': sfx(),
   'spell.frost': sfx(),
@@ -84,12 +88,14 @@ export const SFX_TABLE: Record<SfxId, SfxDef> = {
   'spell.big': sfx(),
   'card.buff': sfx(),
   'card.debuff': sfx(),
+  'card.silence': sfx(), // 沉默的消音声（E16）
   'card.bounce': sfx(),
   'card.transform': sfx(),
   'card.burn': sfx(),
   'combat.swing': sfx(),
   'combat.hit_light': sfx(),
   'combat.hit_heavy': sfx(),
+  'combat.hit_low': sfx(), // 伤害 ≥ 5 时叠在命中声下面的低频层（1.6、E12、E24）
   'combat.hero_hit': sfx(),
   'combat.death': sfx(),
   'combat.shield_break': sfx(),

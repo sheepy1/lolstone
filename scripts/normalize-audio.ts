@@ -101,15 +101,16 @@ function metric(l: Loudness, p: Profile): number {
   return PROFILES[p].measure === 'momentaryMax' ? l.momentaryMax : l.integrated;
 }
 
-/** 单路输入的截取和淡入淡出。中间截出来的片段两头默认各淡 20 毫秒，避免爆音。 */
+/** 单路输入的截取、淡入淡出和低通。中间截出来的片段两头默认各淡 20 毫秒，避免爆音。 */
 function trimFilters(input: Input): string[] {
-  if (!input.trim) return [];
+  const lp = input.lowpass ? [`lowpass=f=${input.lowpass}`, `lowpass=f=${input.lowpass}`] : [];
+  if (!input.trim) return lp;
   const [start, end] = input.trim;
   const f = [`atrim=start=${start}${end !== undefined ? `:end=${end}` : ''}`, 'asetpts=PTS-STARTPTS'];
   if (start > 0) f.push('afade=t=in:d=0.02');
   const fade = input.fadeOut ?? 0.02;
   if (end !== undefined) f.push(`afade=t=out:st=${Math.max(0, end - start - fade)}:d=${fade}`);
-  return f;
+  return [...f, ...lp];
 }
 
 /** 结尾 crossfade 秒叠回开头，做成无缝循环：out(t) = seg(t)·淡入 + seg(L+t)·淡出，t < crossfade。 */

@@ -162,12 +162,11 @@ export function sfxAt(id: SfxId, x: number): void {
   playSfx(id, { pan: panAt(x) });
 }
 
-// 命中声的 cue：同一步只播最重的一次（分镜 1.6：≤ 2 轻、≥ 3 重、≥ 5 再叠低频）。
-// 没有专门的低频素材，≥ 5 时在重击声下面叠一层英雄受击声（它的低频最厚）。
+// 命中声的 cue：同一步只播最重的一次（分镜 1.6：≤ 2 轻、≥ 3 重、≥ 5 再叠低频层 combat.hit_low）。
 export function hitCue(at: number, amount: number, x: () => number, hero = false): Cue {
   const ids: SfxId[] = hero
-    ? amount >= HIT.lowAt ? ['combat.hero_hit', 'combat.hit_heavy'] : ['combat.hero_hit']
-    : amount >= HIT.lowAt ? ['combat.hit_heavy', 'combat.hero_hit'] : amount >= HIT.heavyAt ? ['combat.hit_heavy'] : ['combat.hit_light'];
+    ? amount >= HIT.lowAt ? ['combat.hero_hit', 'combat.hit_low'] : ['combat.hero_hit']
+    : amount >= HIT.lowAt ? ['combat.hit_heavy', 'combat.hit_low'] : amount >= HIT.heavyAt ? ['combat.hit_heavy'] : ['combat.hit_light'];
   return { channel: 'impact:hit', at, weight: amount + (hero ? 0.5 : 0), run: () => ids.forEach((id) => sfxAt(id, x())) };
 }
 

@@ -787,6 +787,36 @@
       ]
     },
     {
+      "id": "card.land_heavy",
+      "group": "card",
+      "label": "随从砸落（重，费用 ≥ 4）",
+      "spec": "m4-storyboard E07：impact 砸落在落地帧，费用 ≤ 3 轻、≥ 4 重。轻的是 card.land",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "selected": 1,
+      "candidates": [
+        {
+          "mix": [
+            {
+              "source": "oga-100-cc0-sfx",
+              "member": "slam_02.ogg"
+            },
+            {
+              "source": "kenney-impact-sounds",
+              "member": "Audio/impactSoft_heavy_001.ogg",
+              "gainDb": -3
+            }
+          ],
+          "note": "轻落地（用户选的 slam_02）下面叠一层 Kenney 的低沉闷响，同一个砸落声更沉"
+        },
+        {
+          "source": "oga-100-cc0-sfx",
+          "member": "slam_03.ogg",
+          "note": "同包里更响的一条砸落声，低频少"
+        }
+      ]
+    },
+    {
       "id": "card.burn",
       "group": "card",
       "label": "爆牌（燃烧）",
@@ -853,6 +883,29 @@
         {
           "source": "kenney-digital-audio",
           "member": "Audio/phaserDown2.ogg"
+        }
+      ]
+    },
+    {
+      "id": "card.silence",
+      "group": "card",
+      "label": "沉默（消音声）",
+      "spec": "m4-storyboard E16：magic 消音声（沉默）或减益声。减益声是 card.debuff",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "selected": 1,
+      "candidates": [
+        {
+          "source": "kenney-digital-audio",
+          "member": "Audio/phaserDown3.ogg",
+          "lowpass": 2500,
+          "note": "和用户选的减益声 lowDown 同包的下行音，过 2.5 kHz 低通，听着像被闷住"
+        },
+        {
+          "source": "kenney-digital-audio",
+          "member": "Audio/phaserDown1.ogg",
+          "lowpass": 2500,
+          "note": "同包另一条下行音，同样低通"
         }
       ]
     },
@@ -1100,6 +1153,27 @@
         {
           "source": "oga-100-cc0-sfx",
           "member": "hit_02.ogg"
+        }
+      ]
+    },
+    {
+      "id": "combat.hit_low",
+      "group": "combat",
+      "label": "命中低频层（伤害 ≥ 5 叠加）",
+      "spec": "m4-storyboard 1.6、E12、E24：命中声 ≥ 5 再叠一层低频",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "selected": 1,
+      "candidates": [
+        {
+          "source": "kenney-impact-sounds",
+          "member": "Audio/impactSoft_heavy_003.ogg",
+          "note": "Kenney Impact Sounds 里低频占比最高的一条闷响，和用户选的重击声 impactPunch_heavy_000 同包"
+        },
+        {
+          "source": "kenney-impact-sounds",
+          "member": "Audio/impactSoft_heavy_004.ogg",
+          "note": "同组另一条闷响"
         }
       ]
     },

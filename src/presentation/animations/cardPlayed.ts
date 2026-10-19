@@ -1,7 +1,7 @@
 // 从手牌打出一张牌（spec 5.6、m4-storyboard E06、E07、E09）：
 // - 自己的随从牌：飞到落点上方、转平、略缩小，悬在那里，随后的 minion_summoned 把它砸成随从底座；
 // - 自己的法术：沿弧线飞到中央放大展示，停一下，然后放大、提亮、缩没，接法术效果；
-// - 对手的牌：放大停在中央 0.8 秒让玩家看清，再淡出。
+// - 对手的牌（E06，共 0.8 秒）：飞到中央放大，停 0.45 秒让玩家看清，再淡出。
 import gsap from 'gsap';
 import * as THREE from 'three';
 import { playSfx } from '../../audio';
@@ -13,7 +13,8 @@ import type { AnimModule } from './types';
 import { syncTo, tl, toSlot } from './util';
 
 const SPELL_HOLD = 0.35;
-const OPPONENT_HOLD = 0.8;
+// 对手出牌按 E06（800ms）：飞入 250、停 450（让玩家看清，不能缩）、退场 100
+const OPPONENT = { fly: 0.25, hold: 0.45, exit: 0.1 };
 
 export const cardPlayed: AnimModule<'card_played'> = (e, { scene, before, after, viewer }) => {
   const t = tl();
@@ -49,7 +50,7 @@ export const cardPlayed: AnimModule<'card_played'> = (e, { scene, before, after,
     const st = { t: 0 };
     gsap.to(st, {
       t: 1,
-      duration: 0.3,
+      duration: mine ? 0.3 : OPPONENT.fly,
       ease: 'power2.out',
       onUpdate: () => {
         c.position.copy(bez.getPoint(st.t));
@@ -58,9 +59,9 @@ export const cardPlayed: AnimModule<'card_played'> = (e, { scene, before, after,
       },
     });
   });
-  t.add(syncTo(scene, after, minionOfMine ? 0.12 : 0.3));
+  t.add(syncTo(scene, after, minionOfMine ? 0.12 : mine ? 0.3 : OPPONENT.fly));
   if (minionOfMine) return { tl: t };
-  t.to({}, { duration: mine ? SPELL_HOLD : OPPONENT_HOLD });
+  t.to({}, { duration: mine ? SPELL_HOLD : OPPONENT.hold });
   // 退场：自己的法术放大、提亮再缩没（接效果）；对手的牌直接淡出
   t.call(() => {
     const c = holder.card;
@@ -68,8 +69,8 @@ export const cardPlayed: AnimModule<'card_played'> = (e, { scene, before, after,
     if (mine) {
       c.flare();
       gsap.to(c.scale, { x: show.scale * 1.12, y: show.scale * 1.12, z: show.scale * 1.12, duration: 0.08, ease: 'power2.out', onComplete: () => fadeOutAndDispose(c, 0.14) });
-    } else fadeOutAndDispose(c);
+    } else fadeOutAndDispose(c, OPPONENT.exit);
   });
-  t.to({}, { duration: 0.2 });
+  t.to({}, { duration: mine ? 0.2 : OPPONENT.exit });
   return { tl: t };
 };

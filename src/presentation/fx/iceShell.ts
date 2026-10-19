@@ -675,25 +675,11 @@ export function frostRing(layer: THREE.Object3D, at: { x: number; z: number }, r
   return t;
 }
 
-// 预编译冰壳的几种着色器：建一个不可见的样本，交给 compileAsync
-export function warmIce(renderer: THREE.WebGLRenderer, camera: THREE.Camera, scene: THREE.Scene, parent: THREE.Object3D, env: THREE.Texture): void {
+// 冰壳的预热：环境贴图和程序生成的贴图
+export function warmIce(renderer: THREE.WebGLRenderer, env: THREE.Texture): void {
   useIceReflections(env);
-  // 贴图先传到显卡：不然第一个冻住的随从那一帧要多花十几毫秒
+  // 贴图先传到显卡：不然第一个冻住的随从那一帧要多花十几毫秒。着色器由 fx/warm.ts 的彩排编译（彩排里有一个冻住的随从）
   renderer.initTexture(detail());
   renderer.initTexture(noise());
   renderer.initTexture(frostTexture());
-  const s = new IceShell(1, null);
-  s.visible = true;
-  s.position.set(0, -50, 0); // 台面下面，编译期间即使画出来也看不见
-  parent.add(s);
-  const done = () => {
-    s.removeFromParent();
-    s.traverse((o) => {
-      const m = o as THREE.Mesh;
-      if (m.geometry && !m.geometry.userData.shared) m.geometry.dispose();
-      const mat = m.material as THREE.Material | undefined;
-      mat?.dispose();
-    });
-  };
-  renderer.compileAsync(s, camera, scene).then(done, done);
 }

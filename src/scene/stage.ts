@@ -105,6 +105,20 @@ export class Stage {
     this.reflections = shared(pmrem.fromScene(new RoomEnvironment(), 0.04).texture);
     pmrem.dispose();
 
+    // 预编译（compile、compileAsync）按"画进后处理的线性缓冲"编译。three 按编译时的渲染目标选输出色彩空间：不设目标时按
+    // 屏幕（sRGB）编译，而实际都画进 EffectComposer 的线性缓冲，对不上的程序在真用到时还要再编译一次（预热等于白做）
+    const compileTarget = new THREE.WebGLRenderTarget(1, 1);
+    const compile = r.compile.bind(r);
+    r.compile = (scene, camera, target) => {
+      const prev = r.getRenderTarget();
+      r.setRenderTarget(compileTarget);
+      try {
+        return compile(scene, camera, target);
+      } finally {
+        r.setRenderTarget(prev);
+      }
+    };
+
     this.resize();
     window.addEventListener('resize', () => this.resize());
     r.setAnimationLoop(() => this.frame());

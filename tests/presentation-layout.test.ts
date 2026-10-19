@@ -195,9 +195,9 @@ describe('画布适配窗口', () => {
 });
 
 describe('地形', () => {
-  it('随从行、枢纽、英雄技能、牌库、法力条、结束回合按钮脚下是平的', async () => {
+  it('随从行、枢纽、英雄技能、牌库、法力条脚下是平的', async () => {
     const { terrainHeight } = await import('../src/scene/terrain');
-    const { boardSlot, deckSlot, endTurnSlot } = await import('../src/presentation/layout');
+    const { boardSlot, deckSlot } = await import('../src/presentation/layout');
     const flatAt = (x: number, z: number, what: string) => expect(Math.abs(terrainHeight(x, z)), `${what} (${x.toFixed(2)}, ${z.toFixed(2)})`).toBeLessThan(0.03);
     for (const p of ['near', 'far'] as Placement[]) {
       const rz = boardSlot(p, 0, 1).pos.z;
@@ -212,8 +212,36 @@ describe('地形', () => {
       const m = manaSlot(p).pos;
       for (let i = 0; i < 10; i++) flatAt(m.x + i * MANA_STEP, m.z, `${p} 法力条`);
     }
+  });
+
+  // 结束回合按钮立在河中的石墩上，脚下的地形不垫平。原来"按钮脚下是平的"这条要防的是按钮悬空、陷进地形、被地形挡住，
+  // 现在改由石墩保证，这里核对石墩：
+  it('结束回合按钮坐在石墩上：顶面和台面齐平，地形不从石墩里冒出来，石墩插进河床，河水流到石墩脚下', async () => {
+    const { terrainHeight, END_TURN_PIER: P, RIVER_DEPTH } = await import('../src/scene/terrain');
+    const { endTurnSlot } = await import('../src/presentation/layout');
     const e = endTurnSlot().pos;
-    for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) flatAt(e.x + Math.cos(a) * 1.0, e.z + Math.sin(a) * 1.0, '结束回合按钮');
+    // 按钮底座的底面在槽位的 y 上，石墩顶面要托住它：不悬空、不埋进去
+    expect(Math.abs(P.top - e.y)).toBeLessThan(0.03);
+    // 六棱柱在 (dx, dz) 方向上的半径（拉长前），用来在石墩投影范围内取点
+    const hexR = (r: number, a: number) => (r * Math.cos(Math.PI / 6)) / Math.cos(((a % (Math.PI / 3)) + Math.PI / 3) % (Math.PI / 3) - Math.PI / 6);
+    const bottom = P.top - P.height;
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 12) {
+      for (const f of [0, 0.3, 0.6, 0.9, 1]) {
+        // 顶面范围内：地形不高于石墩顶面，按钮不会被地形挡住或穿模
+        const rt = hexR(P.rTop, a) * f;
+        const xt = e.x + Math.sin(a) * rt * P.scaleX;
+        const zt = e.z + Math.cos(a) * rt;
+        expect(terrainHeight(xt, zt), `石墩顶面内 (${xt.toFixed(2)}, ${zt.toFixed(2)})`).toBeLessThan(P.top);
+        // 底面范围内：石墩底面低于地形，侧面落进河床，看不到缝
+        const rb = hexR(P.rBottom, a) * f;
+        const xb = e.x + Math.sin(a) * rb * P.scaleX;
+        const zb = e.z + Math.cos(a) * rb;
+        expect(bottom, `石墩底面 (${xb.toFixed(2)}, ${zb.toFixed(2)})`).toBeLessThan(terrainHeight(xb, zb) - 0.05);
+      }
+    }
+    // 紧挨着石墩左侧的河床是满深度：河道一直挖到石墩脚下，没有一圈垫平的浅滩把水挡开（右侧是台面外框）
+    const x = e.x - (P.rBottom * Math.cos(Math.PI / 6) * P.scaleX + 0.02);
+    expect(terrainHeight(x, e.z), `石墩左侧 (${x.toFixed(2)}, ${e.z.toFixed(2)})`).toBeLessThan(-RIVER_DEPTH * 0.85);
   });
 
   it('河道是挖下去的，左侧野区有起伏', async () => {

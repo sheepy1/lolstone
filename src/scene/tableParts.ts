@@ -8,6 +8,8 @@ import { textSprite } from '../presentation/fx/effects';
 import { cardBackTexture, makeLabelCanvas, strokeText } from './canvasArt';
 import { COLORS, FONT_CN } from './theme';
 import { releaseTexture, shared } from './dispose';
+import { ART_STYLE } from './artStyle';
+import { backMat } from './cardView';
 
 const gemGeo = shared(new THREE.OctahedronGeometry(0.2, 0));
 const socketGeo = shared(new THREE.CylinderGeometry(0.22, 0.26, 0.08, 8));
@@ -106,19 +108,52 @@ export class ManaBarView extends THREE.Group {
 }
 
 const deckCardGeo = shared(new THREE.BoxGeometry(1.5, 1, 2.1));
-const deckSideMat = shared(new THREE.MeshStandardMaterial({ color: 0xd8ceb0, roughness: 0.8 }));
-const deckTopMat = shared(new THREE.MeshStandardMaterial({ map: cardBackTexture(), roughness: 0.55 }));
+const NEW_ART = ART_STYLE === 'new';
+const deckTopMat = NEW_ART ? backMat : shared(new THREE.MeshStandardMaterial({ map: cardBackTexture(), roughness: 0.55 }));
+
+// 牌库侧面：新版是一张张叠起来的卡背边缘，深蓝的卡身加一道海克斯金的边，和卡背、台面外框一套；旧版是米色。
+// 每张卡一条，贴图沿高度方向重复"张数"次，所以每个牌库一份材质（双方各一份，模块级共用，不随对局释放）
+function deckEdgeTexture(): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 8;
+  c.height = 16;
+  const g = c.getContext('2d')!;
+  g.fillStyle = '#141c30';
+  g.fillRect(0, 0, 8, 16);
+  g.fillStyle = '#c8aa6e';
+  g.fillRect(0, 0, 8, 3);
+  g.fillStyle = '#6e5a34';
+  g.fillRect(0, 3, 8, 1);
+  g.fillStyle = '#05080f';
+  g.fillRect(0, 15, 8, 1);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.magFilter = THREE.LinearFilter;
+  t.anisotropy = 4;
+  return shared(t);
+}
+const deckSideMats = ([0, 1] as const).map(() =>
+  shared(
+    NEW_ART
+      ? new THREE.MeshStandardMaterial({ map: deckEdgeTexture(), roughness: 0.45, metalness: 0.5 })
+      : new THREE.MeshStandardMaterial({ color: 0xd8ceb0, roughness: 0.8 }),
+  ),
+);
 
 // 牌库：一叠卡背，厚度随剩余张数变。悬停显示张数。
 export class DeckView extends THREE.Group {
   private readonly stack: THREE.Mesh;
+  private readonly side: THREE.MeshStandardMaterial;
   private tip: THREE.Sprite | null = null;
   private cardCount = -1;
   private fatigue = 0;
 
   constructor(side: 0 | 1) {
     super();
-    this.stack = new THREE.Mesh(deckCardGeo, [deckSideMat, deckSideMat, deckTopMat, deckSideMat, deckSideMat, deckSideMat]);
+    this.side = deckSideMats[side]!;
+    const m = this.side;
+    this.stack = new THREE.Mesh(deckCardGeo, [m, m, deckTopMat, m, m, m]);
     this.stack.castShadow = true;
     this.stack.receiveShadow = true;
     this.add(this.stack);
@@ -133,6 +168,8 @@ export class DeckView extends THREE.Group {
     this.stack.scale.y = h;
     this.stack.position.y = h / 2;
     this.stack.visible = count > 0;
+    // 侧面一张卡一条边
+    this.side.map?.repeat.set(1, Math.max(1, count));
     if (this.tip) this.showCount(true);
   }
 

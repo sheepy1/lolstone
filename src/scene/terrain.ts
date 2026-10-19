@@ -1,10 +1,16 @@
 // 棋盘地形的高度场（spec 5.2）：程序生成，不需要外部素材。纯函数，不依赖 DOM，测试直接调用。
 // - 河道：沿中线略微蜿蜒，挖下去，河床最深 RIVER_DEPTH；
 // - 左侧是野区：起伏的丘陵，离台面边缘越近越低，接上台面边框；
-// - 其余地面只有很小的起伏；随从行、枢纽、英雄技能、牌库、法力条、结束回合按钮脚下是平的，物件不会悬空或陷进去。
-import { boardSlot, deckSlot, endTurnSlot, heroPowerSlot, heroSlot, MANA_STEP, manaSlot, TABLE, type Placement } from '../presentation/layout';
+// - 其余地面只有很小的起伏；随从行、枢纽、英雄技能、牌库、法力条脚下是平的，物件不会悬空或陷进去；
+// - 结束回合按钮立在河中的石墩上（END_TURN_PIER）：脚下不垫平，河床照样挖下去，水绕着石墩流。石墩的顶面和台面齐平，
+//   按钮的底座就坐在上面；石墩底面插到河床以下，四周看不到缝。
+import { boardSlot, deckSlot, heroPowerSlot, heroSlot, MANA_STEP, manaSlot, TABLE, type Placement } from '../presentation/layout';
 
 export const RIVER_DEPTH = 0.42;
+
+// 结束回合按钮脚下的六棱石墩（几何体在 boardProps.ts、boardLegacy.ts）：上下底的外接圆半径、高度、顶面高度，
+// 沿 x 拉长 scaleX 倍。顶面要和按钮底座的底面（台面 y = 0）齐平，底面要比河床低
+export const END_TURN_PIER = { rTop: 1.5, rBottom: 1.75, height: 0.6, top: 0.02, scaleX: 1.25 };
 export const WATER_LEVEL = -0.17;
 
 function hash(ix: number, iz: number): number {
@@ -57,8 +63,6 @@ function pads(): Pad[] {
     const m = manaSlot(p).pos;
     for (let i = -2; i < 11; i++) out.push({ x: m.x + i * MANA_STEP, z: m.z, r: 0.6 });
   }
-  const e = endTurnSlot().pos;
-  out.push({ x: e.x, z: e.z, r: 1.6 });
   return out;
 }
 

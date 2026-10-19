@@ -15,7 +15,8 @@ import { shared } from './dispose';
 
 const NEW_ART = ART_STYLE === 'new';
 const bodyMat = shared(new THREE.MeshStandardMaterial({ color: 0x8a7650, roughness: 0.6, metalness: 0.3 }));
-const backMat = shared(
+// 卡背的材质（新版带法线、粗糙度金属度贴图和反射），牌库顶面也用它
+export const backMat = shared(
   NEW_ART
     ? new THREE.MeshStandardMaterial({ map: cardBackTexture(), ...faceMapProps('back'), roughness: 1, metalness: 1 })
     : new THREE.MeshStandardMaterial({ map: cardBackTexture(), roughness: 0.55, metalness: 0.15 }),
@@ -28,7 +29,7 @@ function faceMapProps(layout: ReturnType<typeof faceLayout>) {
 }
 
 // 金属边框、卡背、卡面上的金属部分反射舞台的 reflections（和结束回合按钮的金色金属一样），
-// 没有反射环境时金属只剩一块暗色，看不出是金属
+// 没有反射环境时金属只剩一块暗色，看不出是金属。只用它的镜面反射（specularOnly）
 let reflections: THREE.Texture | null = null;
 const reflective = new Set<THREE.MeshStandardMaterial>();
 export function useCardReflections(env: THREE.Texture): void {
@@ -36,7 +37,26 @@ export function useCardReflections(env: THREE.Texture): void {
   reflections = env;
   for (const m of reflective) applyReflections(m);
 }
+// 反射贴图只给金属部分：three 默认拿它算漫反射的环境光（irradiance），非金属的表面（原画、文本框、宝石）和清漆层
+// 也照样反射它。它是一间亮着灯的房间，强度压到 0.18 也会给整张卡面蒙一层灰白，悬停抬起的牌最明显，原画、宝石颜色发淡。
+// 这里去掉环境漫反射和清漆的环境反射，镜面反射乘金属度：边框、包边这些金属有反光，其余只受场景灯光
+function specularOnly(m: THREE.MeshStandardMaterial): void {
+  if (m.userData.specularOnly) return;
+  m.userData.specularOnly = true;
+  m.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace(
+      '#include <lights_fragment_maps>',
+      THREE.ShaderChunk.lights_fragment_maps
+        .replace('iblIrradiance += getIBLIrradiance( geometryNormal );', '')
+        .replace('radiance += iblRadiance;', 'radiance += iblRadiance * metalnessFactor;')
+        .replace('clearcoatRadiance += getIBLRadiance( geometryViewDir, geometryClearcoatNormal, material.clearcoatRoughness );', ''),
+    );
+  };
+  m.customProgramCacheKey = () => 'melol-card-metal-env';
+}
+
 function applyReflections(m: THREE.MeshStandardMaterial, intensity = m.userData.envIntensity ?? 0.7): void {
+  specularOnly(m);
   reflective.add(m);
   m.userData.envIntensity = intensity;
   if (!reflections || m.envMap === reflections) return;
@@ -44,7 +64,7 @@ function applyReflections(m: THREE.MeshStandardMaterial, intensity = m.userData.
   m.envMapIntensity = intensity;
   m.needsUpdate = true;
 }
-if (NEW_ART) applyReflections(backMat, 0.35);
+if (NEW_ART) applyReflections(backMat, 0.6);
 
 // 发光边的亮度低于 bloom 阈值：只有边框本身亮，不往卡面上泛光
 export const glowMat = shared(glowMaterial(COLORS.playable, EDGE_GLOW));
@@ -137,7 +157,7 @@ export class CardView extends THREE.Group {
         ? new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 1, clearcoat: 0.4, clearcoatRoughness: 0.25 })
         : new THREE.MeshPhysicalMaterial({ roughness: 0.55, metalness: 0.05, clearcoat: 0.75, clearcoatRoughness: 0.2 }),
     );
-    if (NEW_ART) applyReflections(this.front.material, 0.18);
+    if (NEW_ART) applyReflections(this.front.material, 0.5);
     this.front.position.z = CARD_T / 2 + 0.002;
     const back = new THREE.Mesh(CARD_FACE, backMat);
     back.position.z = -CARD_T / 2 - 0.002;

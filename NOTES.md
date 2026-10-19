@@ -239,7 +239,7 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
 
 - `pnpm dev`：Vite 开发服务器（`.claude/launch.json` 里的 `melol-dev` 用 5174 端口）。`pnpm build` 先跑浏览器侧类型检查再打包。
 - 地址参数：`?replay` 回放夹具（观战，不接受输入）；`?autoplay` 开一局并让玩家这边也随机选合法动作，三倍速；
-  `?mute=1` 强制静音；`?sound=1` 在开发环境里打开声音（开发环境默认静音，生产构建默认音量不变）。
+  默认有声，开发环境也一样；`?mute=1` 静音。其他会话在内置浏览器里自动试玩时必须带 `?mute=1`，否则声音会从用户的电脑里放出来。
 - 控制台 `melol`：`melol.startMatch(我方职业, 对手职业, 种子?)` 给种子时对局和对手 AI 可复现（自动驾驶下玩家这边的
   动作时机受动画影响，不保证同一条路线）；`melol.autoplay(true/false)`；`melol.renderFrame()` 手动渲染一帧；
   `melol.gsap` 是应用自己的 GSAP 实例。

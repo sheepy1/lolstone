@@ -26,7 +26,7 @@ pnpm smoke         # L0 对 L0 自动打 200 局
 
 ## 拉取素材
 
-英雄头像、竖版原画、语音、音效和音乐都不进 git，第一次 clone 之后在仓库根目录跑：
+英雄头像、竖版原画、语音、音效和音乐都不进 git，第一次 clone 之后在仓库根目录跑：（不跑 `fetch:sfx` 和 `normalize:audio` 的话，游戏里没有音效和音乐，请求全是 404）。开发环境默认有声，地址带 `?mute=1` 静音。
 
 ```bash
 pnpm fetch:art         # 等于 node scripts/fetch-art.ts

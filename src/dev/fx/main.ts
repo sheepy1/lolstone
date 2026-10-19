@@ -28,6 +28,7 @@ import { OPENING } from '../../presentation/animations/mulliganStart';
 import { TURN_END } from '../../presentation/animations/turnEnd';
 import { FLOW } from '../../presentation/fx/flow';
 import { MANA_FX } from '../../scene/tableParts';
+import { AI_PACE } from '../../app/match';
 import { SAMPLE, sampleEvents } from '../sampleEvents';
 
 gsap.registerPlugin(GSDevTools);
@@ -201,6 +202,7 @@ addAll(flow, MANA_FX, 'E25');
 addAll(flow, BURN, 'E04');
 addAll(flow, FATIGUE, 'E05');
 addAll(flow, AI_THINK, 'E27');
+addAll(flow, AI_PACE, 'E27 思考');
 addAll(flow, ENDGAME, 'E28/29');
 
 // 方案 b 的小灯。"谁的回合""生命"只改画面，不改局面，"重置棋盘"后恢复

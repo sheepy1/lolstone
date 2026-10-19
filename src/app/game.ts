@@ -2,7 +2,7 @@
 import gsap from 'gsap';
 import { matchManifest } from '../assets/manifest';
 import { loadManifest } from '../assets/loader';
-import { initAudio } from '../audio';
+import { initAudio, playMusic, stopAmbience } from '../audio';
 import { PRESET_DECKS } from '../cards';
 import { getCard, getHeroClass, maskEvents, maskHidden, seedRng, type Action, type HeroClass, type Side } from '../engine';
 import { Director } from '../presentation/director';
@@ -150,6 +150,9 @@ export class GameApp {
     const unsubscribe = director.subscribe(() => this.onDirector());
     this.session = { scene, director, player, interaction, match, unsubscribe };
     setUi({ screen: 'match' });
+    // 进对局换成对局音乐，再叠上峡谷环境音（两层可以同时放）
+    playMusic('match');
+    playMusic('ambience');
     this.onDirector();
   }
 
@@ -169,6 +172,8 @@ export class GameApp {
 
   backToMenu(): void {
     this.teardown();
+    // 菜单页会自己换成菜单音乐，环境音只属于对局，这里停掉
+    stopAmbience();
     setUi({ screen: 'menu', result: null });
   }
 

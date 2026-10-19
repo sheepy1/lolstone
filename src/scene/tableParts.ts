@@ -1,4 +1,4 @@
-// 台面上的实体物件：法力水晶条、牌库、结束回合按钮、对方思考提示（棋盘在 board.ts）。占位几何体，M4 换素材。
+// 台面上的实体物件：法力水晶条、牌库、对方思考提示（棋盘在 board.ts，结束回合按钮在 endTurnButton.ts）。占位几何体，M4 换素材。
 import gsap from 'gsap';
 import * as THREE from 'three';
 import type { ManaSnapshot } from '../engine';
@@ -13,16 +13,25 @@ const gemGeo = shared(new THREE.OctahedronGeometry(0.2, 0));
 const socketGeo = shared(new THREE.CylinderGeometry(0.22, 0.26, 0.08, 8));
 const gemMats = {
   full: shared(new THREE.MeshStandardMaterial({ color: 0x3a8cff, emissive: COLORS.mana, emissiveIntensity: 1.6, roughness: 0.2, flatShading: true })),
-  temp: shared(new THREE.MeshStandardMaterial({ color: 0x45e0d0, emissive: COLORS.manaTemp, emissiveIntensity: 1.6, roughness: 0.2, flatShading: true })),
+  // 临时法力（法力药水）：紫色（m4-storyboard E25）
+  temp: shared(new THREE.MeshStandardMaterial({ color: 0xb07cff, emissive: 0x9a4dff, emissiveIntensity: 1.6, roughness: 0.2, flatShading: true })),
   spent: shared(new THREE.MeshStandardMaterial({ color: 0x1a2a40, emissive: 0x0a1428, emissiveIntensity: 0.3, roughness: 0.4, flatShading: true })),
   locked: shared(new THREE.MeshStandardMaterial({ color: 0x3a4250, roughness: 0.7, transparent: true, opacity: 0.35, flatShading: true })),
 };
+type GemState = 'full' | 'temp' | 'spent' | 'locked';
+
+// E25 的参数（调试台可调）
+export const MANA_FX = { stagger: 0.05, light: 0.2 };
+
 const socketMat = shared(new THREE.MeshStandardMaterial({ color: 0x2a2620, roughness: 0.6, metalness: 0.5 }));
 
 // 法力条：10 颗水晶立在台面上。可用的亮（自发光进 bloom），用掉的暗，临时法力另一种颜色，未解锁的熄灭变小。
+// 法力变化（m4-storyboard E25）：set(m, true) 时变化的格子从左往右 50ms 错开换状态，亮起的自发光从 0 到 1、弹一下；
+// 新解锁的空水晶从 0 放大出现。每颗水晶有自己的一份材质，亮度动画只改自己。
 export class ManaBarView extends THREE.Group {
   readonly flash: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
-  private readonly gems: THREE.Mesh[] = [];
+  private readonly gems: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>[] = [];
+  private states: GemState[] = Array(10).fill('locked');
   private readonly label = makeLabelCanvas(192, 96);
   private last = '';
 
@@ -32,7 +41,7 @@ export class ManaBarView extends THREE.Group {
       const socket = new THREE.Mesh(socketGeo, socketMat);
       socket.position.set(i * MANA_STEP, 0.04, 0);
       socket.receiveShadow = true;
-      const gem = new THREE.Mesh(gemGeo, gemMats.locked);
+      const gem = new THREE.Mesh(gemGeo, gemMats.locked.clone());
       gem.position.set(i * MANA_STEP, 0.32, 0);
       gem.scale.set(1, 1.4, 1);
       gem.castShadow = true;
@@ -48,23 +57,47 @@ export class ManaBarView extends THREE.Group {
     this.add(text, this.flash);
   }
 
-  set(m: ManaSnapshot): void {
+  set(m: ManaSnapshot, animate = false): void {
     const key = `${m.current}/${m.max}/${m.temp}`;
     if (key === this.last) return;
     this.last = key;
+    const next: GemState[] = this.gems.map((_, i) => (i < m.current ? (i >= m.current - m.temp ? 'temp' : 'full') : i < m.max ? 'spent' : 'locked'));
+    let k = 0;
     this.gems.forEach((gem, i) => {
-      let mat = gemMats.locked;
-      if (i < m.current) mat = i >= m.current - m.temp ? gemMats.temp : gemMats.full;
-      else if (i < m.max) mat = gemMats.spent;
-      gem.material = mat;
-      markBloom(gem, mat === gemMats.full || mat === gemMats.temp);
-      gem.scale.setScalar(i < Math.max(m.max, m.current) ? 1 : 0.6);
-      gem.scale.y *= 1.4;
+      const prev = this.states[i];
+      const to = next[i];
+      const size = to === 'locked' ? 0.6 : 1;
+      const apply = () => {
+        gem.material.copy(gemMats[to]);
+        markBloom(gem, to === 'full' || to === 'temp');
+        gem.scale.set(size, size * 1.4, size);
+      };
+      gsap.killTweensOf([gem.scale, gem.material]);
+      if (!animate || prev === to) {
+        apply();
+        return;
+      }
+      // 变化的格子从左往右错开
+      gsap.delayedCall(k++ * MANA_FX.stagger, () => {
+        apply();
+        if (to === 'full' || to === 'temp') {
+          gsap.fromTo(gem.material, { emissiveIntensity: 0 }, { emissiveIntensity: gemMats[to].emissiveIntensity, duration: MANA_FX.light, ease: 'power2.out' });
+        }
+        // 新解锁的空水晶从 0 放大出现；其余变化的弹一下
+        const from = prev === 'locked' ? 0.01 : size * 1.3;
+        gsap.fromTo(gem.scale, { x: from, y: from * 1.4, z: from }, { x: size, y: size * 1.4, z: size, duration: MANA_FX.light * (prev === 'locked' ? 1.5 : 1), ease: 'back.out(2)' });
+      });
     });
+    this.states = next;
     const g = this.label.g;
     g.clearRect(0, 0, 192, 96);
     strokeText(g, `${m.current}/${m.max}`, 96, 50, 58, '#cfe6ff', FONT_CN, 0.14);
     this.label.texture.needsUpdate = true;
+  }
+
+  // 第 i 颗水晶在世界里的位置（法力变化的粒子用）
+  gemPoint(i: number): THREE.Vector3 {
+    return this.gems[i].getWorldPosition(new THREE.Vector3());
   }
 
   tick(t: number): void {
@@ -115,58 +148,6 @@ export class DeckView extends THREE.Group {
     this.tip = textSprite(text, 0xf0e6d2, 0.36, FONT_CN, true);
     this.tip.position.set(0, 1.4, 0);
     this.add(this.tip);
-  }
-}
-
-const buttonGeo = shared(new THREE.CylinderGeometry(1, 1.08, 0.36, 4));
-const buttonTopGeo = shared(new THREE.PlaneGeometry(1.9, 1.0));
-
-// 结束回合按钮：海克斯风格的菱形实体按钮，立在台面右侧。我方回合亮起并缓慢脉动，对方回合变暗显示"对方回合"。
-export class EndTurnButton extends THREE.Group {
-  readonly body = new THREE.Group();
-  private readonly mat: THREE.MeshStandardMaterial;
-  private readonly label = makeLabelCanvas(384, 200);
-  private pulse: gsap.core.Tween | null = null;
-  private key = '';
-  mode: 'mine' | 'theirs' | 'off' = 'off';
-
-  constructor() {
-    super();
-    this.mat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.35, metalness: 0.6, emissive: 0x000000 });
-    const prism = new THREE.Mesh(buttonGeo, this.mat);
-    prism.rotation.y = Math.PI / 4;
-    prism.scale.set(1.25, 1, 0.75);
-    prism.position.y = 0.18;
-    prism.castShadow = true;
-    const top = new THREE.Mesh(buttonTopGeo, new THREE.MeshBasicMaterial({ map: this.label.texture, transparent: true, toneMapped: false }));
-    top.rotation.x = -Math.PI / 2;
-    top.position.y = 0.37;
-    this.body.add(prism, top);
-    this.add(this.body);
-    this.userData.pick = { kind: 'end_turn' };
-    this.setMode('off', false);
-  }
-
-  setMode(mode: 'mine' | 'theirs' | 'off', ready: boolean): void {
-    const key = `${mode}${ready}`;
-    if (key === this.key) return;
-    this.key = key;
-    this.mode = mode;
-    const mine = mode === 'mine';
-    this.mat.color.setHex(mine ? (ready ? 0x2fbf4f : 0xc8aa6e) : 0x3a3a3a);
-    this.mat.emissive.setHex(mine ? (ready ? 0x1a8a30 : 0x6a5020) : 0x000000);
-    this.mat.emissiveIntensity = mine ? 0.8 : 0;
-    const g = this.label.g;
-    g.clearRect(0, 0, 384, 200);
-    strokeText(g, mode === 'theirs' ? '对方回合' : '结束回合', 192, 104, 74, mine ? '#ffffff' : '#9a9a9a', FONT_CN, 0.12);
-    this.label.texture.needsUpdate = true;
-    if (mine && !this.pulse) {
-      this.pulse = gsap.to(this.body.scale, { x: 1.06, y: 1.06, z: 1.06, duration: 0.9, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-    } else if (!mine && this.pulse) {
-      this.pulse.kill();
-      this.pulse = null;
-      this.body.scale.setScalar(1);
-    }
   }
 }
 

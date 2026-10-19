@@ -14,7 +14,7 @@ import { shared } from './dispose';
 const bodyMat = shared(new THREE.MeshStandardMaterial({ color: 0x8a7650, roughness: 0.6, metalness: 0.3 }));
 const backMat = shared(new THREE.MeshStandardMaterial({ map: cardBackTexture(), roughness: 0.55, metalness: 0.15 }));
 // 发光边的亮度低于 bloom 阈值：只有边框本身亮，不往卡面上泛光
-const glowMat = shared(glowMaterial(COLORS.playable, EDGE_GLOW));
+export const glowMat = shared(glowMaterial(COLORS.playable, EDGE_GLOW));
 const markMat = shared((() => {
   const c = document.createElement('canvas');
   c.width = c.height = 128;
@@ -117,6 +117,13 @@ export class CardView extends THREE.Group {
     this.dimmed = on;
     this.front.material.color.setScalar(on ? 0.45 : 1);
     this.texts.setDim(on);
+  }
+
+  // 去掉清漆层。悬停大卡浮在镜头前、正对着方向光的镜面反射方向，清漆把整张卡面照成一片白，原画看不清；
+  // 它不需要转动时流动的高光，关掉清漆只留漫反射。
+  setMatte(): void {
+    this.front.material.clearcoat = 0;
+    this.front.material.needsUpdate = true;
   }
 
   setMarked(on: boolean): void {

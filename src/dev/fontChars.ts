@@ -1,6 +1,87 @@
-// 卡面 SDF 字体子集要带的字：卡池里所有卡的名字和文本、职业名，加上数字和 ASCII。
-// 子集文件旁边的 .chars.txt 记着实际带了哪些字，测试用它核对卡池没有用到子集外的字。
+// 卡面 SDF 字体子集要带的字：卡池里所有卡的名字和文本、职业名、界面文字，加上数字和 ASCII。
+// 子集文件旁边的 .chars.txt 记着实际带了哪些字，测试用它核对卡池和界面没有用到子集外的字。
+// 主菜单、加载页、结算面板（src/ui/menu.css 的 @font-face）也用这个子集，缺的字会由系统宋体补，字形不统一。
+import { readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 import { CARD_POOL, HERO_CLASSES } from '../cards';
+
+// 界面文字所在的目录：src/ui 是界面组件；src/app 里有加载页的进度说明、出错提示这类交给界面显示的字符串；
+// src/presentation 和 src/scene 里有场景里的 SDF 文字（横幅、先后手、胜负大字、换牌说明）和悬停说明的关键词解释
+export const UI_TEXT_DIRS = ['src/ui', 'src/app', 'src/presentation', 'src/scene'];
+
+const ROOT = path.resolve(import.meta.dirname, '../..');
+
+// 去掉 // 和 /* */ 注释，字符串、模板字符串和 JSX 文本原样保留。不做完整的词法分析：
+// 只认引号和反引号，够区分"字符串里的 //"和真正的注释。单双引号的字符串不跨行，
+// 所以 JSX 文本里的撇号最多把那一行剩下的部分当成字符串，字照样收进来。
+export function stripComments(src: string): string {
+  let out = '';
+  let i = 0;
+  // 模板字符串里 ${ 的嵌套层数：在 ${ } 里面时按代码处理（可以有注释），回到 } 时继续字符串
+  const templateDepth: number[] = [];
+  let braces = 0;
+  while (i < src.length) {
+    const ch = src[i];
+    const next = src[i + 1];
+    if (ch === '/' && next === '/') {
+      while (i < src.length && src[i] !== '\n') i++;
+      continue;
+    }
+    if (ch === '/' && next === '*') {
+      const end = src.indexOf('*/', i + 2);
+      i = end < 0 ? src.length : end + 2;
+      continue;
+    }
+    if (ch === "'" || ch === '"') {
+      let j = i + 1;
+      while (j < src.length && src[j] !== ch && src[j] !== '\n') j += src[j] === '\\' ? 2 : 1;
+      out += src.slice(i, j + 1);
+      i = j + 1;
+      continue;
+    }
+    if (ch === '`' || (ch === '}' && templateDepth.length > 0 && templateDepth[templateDepth.length - 1] === braces)) {
+      if (ch === '}') templateDepth.pop();
+      let j = i + 1;
+      while (j < src.length && src[j] !== '`' && !(src[j] === '$' && src[j + 1] === '{')) j += src[j] === '\\' ? 2 : 1;
+      out += src.slice(i, j);
+      if (src[j] === '$') {
+        templateDepth.push(braces);
+        out += '${';
+        i = j + 2;
+      } else {
+        out += '`';
+        i = j + 1;
+      }
+      continue;
+    }
+    if (ch === '{') braces++;
+    if (ch === '}') braces--;
+    out += ch;
+    i++;
+  }
+  return out;
+}
+
+function sourceFiles(dir: string): string[] {
+  const files: string[] = [];
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) files.push(...sourceFiles(p));
+    else if (/\.tsx?$/.test(e.name) && !e.name.endsWith('.d.ts')) files.push(p);
+  }
+  return files;
+}
+
+// 界面代码里字符串和 JSX 文本用到的非 ASCII 字符（ASCII 子集里本来就全带）。注释不收，免得子集无谓变大。
+export function uiTextChars(): string {
+  const set = new Set<string>();
+  for (const dir of UI_TEXT_DIRS) {
+    for (const f of sourceFiles(path.join(ROOT, dir))) {
+      for (const ch of stripComments(readFileSync(f, 'utf8'))) if (ch.codePointAt(0)! > 127 && !/\s/.test(ch)) set.add(ch);
+    }
+  }
+  return [...set].sort().join('');
+}
 
 export function cardFontChars(): string {
   const set = new Set<string>();
@@ -14,5 +95,6 @@ export function cardFontChars(): string {
   for (const h of HERO_CLASSES) add(h.name);
   for (let i = 32; i < 127; i++) add(String.fromCharCode(i));
   add('，。：；、！？（）「」…·—＋－');
+  add(uiTextChars());
   return [...set].sort().join('');
 }

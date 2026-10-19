@@ -95,6 +95,13 @@ export function mulliganSlot(index: number, count: number): Slot {
   return { pos: v(o * 2.6, 3.4, 2.6), rot: { x: -CAMERA_PITCH + 0.32, y: -o * 0.07, z: 0 }, scale: 1.45 };
 }
 
+// 换牌时后手的法力药水单独放在起手牌左边，小一号（不能换，m4-first-minutes 第 4 步）。count 是其余起手牌的张数。
+// 右边是结束回合按钮，放不下；离镜头不能超过换牌压暗板（18），否则被压暗
+export function mulliganPotionSlot(count: number): Slot {
+  const left = mulliganSlot(0, count).pos.x;
+  return { pos: v(left - 2.9, 4.2, 3.5), rot: { x: -CAMERA_PITCH + 0.32, y: 0.25, z: 0 }, scale: 1.1 };
+}
+
 // 场上第 index 个随从（共 count 个）。gapAt 不为 null 时在那个位置空出一格（拖随从牌时的空位）。
 export function boardSlot(p: Placement, index: number, count: number, gapAt: number | null = null): Slot {
   const step = 1.95;

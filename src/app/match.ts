@@ -12,6 +12,7 @@ import {
   maskEvents,
   maskHidden,
   other,
+  nextFloat,
   seedRng,
   type Action,
   type GameEvent,
@@ -38,6 +39,12 @@ export type MatchConfig = {
 
 const MAX_AI_ACTIONS_PER_TURN = 200;
 
+// AI 每个动作前的思考时间（m4-storyboard E27，用户 2026-10-20 定"越往后越短"）：同一个对手回合里，第一个动作前
+// 随机 first 到 firstMax 秒，之后每个动作乘 decay 逐步缩短，最短 floor 秒；每次再加减 jitter 的比例，不像机器。
+// 目标是动作多的回合也不超过 10 秒（m4-first-minutes 第 7 步）。调试台 /dev/fx 的"回合流程"面板可调
+// 决定结束回合（已经没有别的可做）前只停 endTurn 秒
+export const AI_PACE = { first: 0.8, firstMax: 1.5, decay: 0.6, floor: 0.4, jitter: 0.15, endTurn: 0.2 };
+
 export class Match {
   state: GameState;
   readonly human: Side;
@@ -46,7 +53,8 @@ export class Match {
   private director: Director | null = null;
   private aiRng: RngState;
   private readonly ai: AiPolicy;
-  private readonly thinkSeconds: number;
+  private readonly thinkSeconds: number | null;
+  private thinkRng: RngState;
   private pendingStart: GameEvent[];
   // 每批事件交给导演之前调用（对局日志用）
   onBatch: ((events: PresentationEvent[], state: GameState) => void) | null = null;
@@ -58,7 +66,9 @@ export class Match {
     this.human = config.human;
     this.aiSide = other(config.human);
     this.ai = config.ai ?? l1ChooseAction;
-    this.thinkSeconds = config.thinkSeconds ?? 0.7;
+    // 不指定时按 AI_PACE 算（越往后越短）。用自己的随机数，不影响 AI 的选择
+    this.thinkSeconds = config.thinkSeconds ?? null;
+    this.thinkRng = seedRng(config.seed ^ 0x7417);
     this.aiRng = seedRng(config.seed ^ 0x5eed);
     this.initial = initialView(this.state, this.human);
   }
@@ -107,6 +117,21 @@ export class Match {
     this.director?.enqueue(masked);
   }
 
+  private rand(): number {
+    const [f, next] = nextFloat(this.thinkRng);
+    this.thinkRng = next;
+    return f;
+  }
+
+  // 这个对手回合里第 k 个动作（从 0 数）前的思考时间。first 是这一回合第一个动作的思考时间
+  private nextThink(k: number, first: number): number {
+    if (this.thinkSeconds !== null) return this.thinkSeconds;
+    const P = AI_PACE;
+    if (k === 0) return first;
+    const base = Math.max(P.floor, first * Math.pow(P.decay, k));
+    return Math.max(P.floor * (1 - P.jitter), base * (1 + (this.rand() * 2 - 1) * P.jitter));
+  }
+
   private aiToAct(): boolean {
     const s = this.state;
     if (s.phase === 'mulligan') return !s.players[this.aiSide].mulliganDone;
@@ -116,6 +141,8 @@ export class Match {
   // AI 连续行动直到轮到玩家或对局结束。AI 瞬间算完，事件全部进队列，由导演按节奏播。
   private runAi(): void {
     let n = 0;
+    let k = 0; // 这一回合里已经思考过几次
+    const first = AI_PACE.first + this.rand() * (AI_PACE.firstMax - AI_PACE.first);
     while (this.aiToAct()) {
       if (n++ > MAX_AI_ACTIONS_PER_TURN) throw new Error('AI did not end its turn');
       const choice = this.ai(maskHidden(this.state, this.aiSide), this.aiSide, this.aiRng);
@@ -124,7 +151,7 @@ export class Match {
       const r = applyAction(this.state, choice.action);
       if (!r.ok) throw new Error(`AI action rejected: ${r.error}`);
       if (this.state.phase === 'playing') {
-        const wait: PresentationEvent = { kind: 'ai_thinking', group: 0, side: this.aiSide, seconds: this.thinkSeconds };
+        const wait: PresentationEvent = { kind: 'ai_thinking', group: 0, side: this.aiSide, seconds: choice.action.kind === 'end_turn' ? AI_PACE.endTurn : this.nextThink(k++, first) };
         this.onBatch?.([wait], this.state);
         this.director?.enqueue([wait]);
       }

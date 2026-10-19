@@ -247,6 +247,13 @@ body {
   color: #e8e2d0;
 }
 
+/* 指针停在这个关键词的图标上 */
+.keyword-help.focus {
+  border-left: 5px solid var(--gold-light);
+  background: rgba(30, 44, 60, 0.95);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
 /* 日志：右侧 */
 .game-log {
   position: absolute;

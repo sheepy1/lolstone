@@ -11,13 +11,25 @@ import { installDefaultPool, PRESET_DECKS } from '../../cards';
 import { applyAction, createGame, listLegalActions, maskEvents, seedRng, type Action, type Fx, type GameState, type RngState, type Side } from '../../engine';
 import { PLAY_MINION } from '../../presentation/animations/minionSummoned';
 import { DRAG, Interaction } from '../../scene/interaction';
+import { END_TURN } from '../../scene/endTurnButton';
+import { NEXUS_LAMP } from '../../scene/nexusLamps';
 import { Director } from '../../presentation/director';
 import { PRESENTATION_EVENT_KINDS, type PresentationEventKind } from '../../presentation/events';
 import { createGsapPlayer, type GsapPlayer } from '../../presentation/player';
 import { viewFromState, type ViewState } from '../../presentation/viewState';
 import { Stage } from '../../scene/stage';
 import { TableScene } from '../../scene/table';
-import { sampleEvents } from '../sampleEvents';
+import { AI_THINK } from '../../presentation/animations/aiThinking';
+import { BURN } from '../../presentation/animations/burn';
+import { FATIGUE } from '../../presentation/animations/fatigue';
+import { ENDGAME } from '../../presentation/animations/gameOver';
+import { MULLIGAN } from '../../presentation/animations/mulliganDone';
+import { OPENING } from '../../presentation/animations/mulliganStart';
+import { TURN_END } from '../../presentation/animations/turnEnd';
+import { FLOW } from '../../presentation/fx/flow';
+import { MANA_FX } from '../../scene/tableParts';
+import { AI_PACE } from '../../app/match';
+import { SAMPLE, sampleEvents } from '../sampleEvents';
 
 gsap.registerPlugin(GSDevTools);
 installDefaultPool();
@@ -168,12 +180,77 @@ slam.add(PLAY_MINION, 'shockwaveCost', 0, 10, 1).name('冲击波费用');
 slam.add(PLAY_MINION, 'shakeCost', 0, 10, 1).name('震屏费用');
 slam.add(PLAY_MINION, 'shake', 0, 0.3, 0.005).name('震屏幅度');
 const look = gui.addFolder('枢纽方案（切换会重新加载）');
-const nexus = { style: new URLSearchParams(location.search).get('nexus') ?? 'c' };
+const nexus = { style: new URLSearchParams(location.search).get('nexus') ?? 'b' };
 look.add(nexus, 'style', ['a', 'b', 'c']).name('方案').onChange((v: string) => {
   const q = new URLSearchParams(location.search);
   q.set('nexus', v);
   location.search = q.toString();
 });
+
+// 回合流程（m4-storyboard E01 到 E05、E25 到 E29）：事件在上面"事件"里选，这里调时长
+const flow = gui.addFolder('回合流程');
+flow.close();
+flow.add(SAMPLE, 'winner', ['我方胜', '我方负', '平局']).name('game_over 结果');
+const addAll = (folder: GUI, obj: Record<string, unknown>, prefix: string) => {
+  for (const [k, v] of Object.entries(obj)) if (typeof v === 'number') folder.add(obj, k, 0, Math.max(2, v * 3), 0.01).name(`${prefix} ${k}`);
+};
+addAll(flow, OPENING, 'E01');
+addAll(flow, MULLIGAN, '换牌');
+addAll(flow, FLOW, 'E02/E03');
+addAll(flow, TURN_END, 'E26');
+addAll(flow, MANA_FX, 'E25');
+addAll(flow, BURN, 'E04');
+addAll(flow, FATIGUE, 'E05');
+addAll(flow, AI_THINK, 'E27');
+addAll(flow, AI_PACE, 'E27 思考');
+addAll(flow, ENDGAME, 'E28/29');
+
+// 方案 b 的小灯。"谁的回合""生命"只改画面，不改局面，"重置棋盘"后恢复
+const lamp = gui.addFolder('枢纽小灯 NEXUS_LAMP');
+lamp.add(NEXUS_LAMP, 'core', 0.5, 6, 0.1).name('灯芯亮度');
+lamp.add(NEXUS_LAMP, 'active', 0, 2, 0.05).name('自己回合');
+lamp.add(NEXUS_LAMP, 'idle', 0, 2, 0.05).name('对方回合');
+lamp.add(NEXUS_LAMP, 'period', 0.5, 6, 0.1).name('呼吸周期');
+lamp.add(NEXUS_LAMP, 'breath', 0, 0.6, 0.01).name('呼吸幅度');
+lamp.add(NEXUS_LAMP, 'fade', 0.05, 2, 0.05).name('换回合过渡');
+lamp.add(NEXUS_LAMP, 'lowPeriod', 0.1, 2, 0.05).name('危险闪烁周期');
+lamp.add(NEXUS_LAMP, 'lowBreath', 0, 1, 0.01).name('危险闪烁幅度');
+lamp.add(NEXUS_LAMP, 'glass', 0, 2, 0.05).name('玻璃反射');
+lamp.add(NEXUS_LAMP, 'rimGlass', 0, 1, 0.01).name('玻璃边缘白光');
+lamp.add(NEXUS_LAMP, 'rimGlow', 0, 2, 0.05).name('玻璃边缘透色');
+const lampView = { turn: '我方', health: 30 };
+const applyLampView = () => {
+  if (!bench) return;
+  const me = bench.director.displayed.viewer;
+  for (const side of [0, 1] as Side[]) {
+    const h = bench.scene.heroes[side];
+    h.setActive((lampView.turn === '我方') === (side === me));
+    h.setHealth(lampView.health, 30);
+  }
+};
+lamp.add(lampView, 'turn', ['我方', '对方']).name('谁的回合').onChange(applyLampView);
+lamp.add(lampView, 'health', 0, 30, 1).name('双方生命').onChange(applyLampView);
+
+// 结束回合按钮。"状态"只改画面（下一次局面同步会改回来），用来看四种状态和翻面动画
+const endTurn = gui.addFolder('结束回合按钮 END_TURN');
+endTurn.add(END_TURN, 'tilt', 0, 1.2, 0.01).name('面板倾角');
+endTurn.add(END_TURN, 'glow', 0, 4, 0.05).name('发光边亮度');
+endTurn.add(END_TURN, 'face', 0, 1, 0.01).name('面板自发光');
+endTurn.add(END_TURN, 'pulse', 0.4, 5, 0.05).name('脉动周期');
+endTurn.add(END_TURN, 'pulseAmp', 0, 0.8, 0.01).name('脉动幅度');
+endTurn.add(END_TURN, 'readyGlow', 0, 5, 0.05).name('该点了亮度');
+endTurn.add(END_TURN, 'readyPulse', 0.2, 3, 0.05).name('该点了脉动周期');
+endTurn.add(END_TURN, 'flip', 0.05, 1, 0.01).name('翻面时长');
+const endTurnView = { state: '我方回合' };
+endTurn
+  .add(endTurnView, 'state', ['我方回合', '该点了', '对方回合', '熄灭'])
+  .name('状态')
+  .onChange((v: string) => {
+    const b = bench?.scene.endTurn;
+    if (!b) return;
+    b.setMode(v === '对方回合' ? 'theirs' : v === '熄灭' ? 'off' : 'mine', v === '该点了');
+  });
+endTurn.add({ press: () => bench?.scene.endTurn.press() }, 'press').name('按一下');
 
 window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyP') play();

@@ -26,7 +26,7 @@ pnpm smoke         # L0 对 L0 自动打 200 局
 
 ## 拉取素材
 
-英雄头像、竖版原画、语音、音效和音乐都不进 git，第一次 clone 之后在仓库根目录跑：
+英雄头像、竖版原画、语音、音效和音乐都不进 git，第一次 clone 之后在仓库根目录跑：（不跑 `fetch:sfx` 和 `normalize:audio` 的话，游戏里没有音效和音乐，请求全是 404）。开发环境默认有声，地址带 `?mute=1` 静音。
 
 ```bash
 pnpm fetch:art         # 等于 node scripts/fetch-art.ts
@@ -46,10 +46,10 @@ pnpm normalize:audio   # 等于 node scripts/normalize-audio.ts，要先装 ffmp
 
 ### 音效和音乐
 
-- 来源、授权和候选都记在 `scripts/data/audio-sources.json`（进 git）：`sources` 是来源（素材包或单个文件），每个都写了页面、作者、授权和授权写在哪里，只收 CC0；`sounds` 是 spec 5.6、5.7 的每个事件或类别和它的 2 到 3 个候选，`id` 和 `src/audio/sfx.ts` 的音效键、`music.ts` 的曲目名对应。
-- `fetch-sfx.ts` 按 `sources` 下载原始素材到 `assets-src/audio/sources/<来源 id>/` 并解压（压缩包用 unzip，7z 用 macOS 自带的 tar 或 `7z`）。断了会从断开的位置续传；字节数和 sha256 跟清单记的不一致时报错，说明上游换了文件。加新来源时先在页面上确认授权，写进清单，再跑 `node scripts/fetch-sfx.ts --record` 把字节数和 sha256 记下来。
+- 来源、授权和候选都记在 `scripts/data/audio-sources.json`（进 git）：`sources` 是来源（素材包或单个文件），每个都写了页面、作者、授权和授权写在哪里，只收 CC0；`sounds` 是 spec 5.6、5.7 的每个事件或类别和它的 2 到 3 个候选，`selected` 是用户在试听页选定的那个（序号从 1 起），`id` 和 `src/audio/sfx.ts` 的音效键、`music.ts` 的曲目名对应。没选中的候选留着记录，不进成品。
+- `fetch-sfx.ts` 只下载选中的候选用到的来源（加 `--candidates` 全部下载），原始素材到 `assets-src/audio/sources/<来源 id>/` 并解压（压缩包用 unzip，7z 用 macOS 自带的 tar 或 `7z`）。断了会从断开的位置续传；字节数和 sha256 跟清单记的不一致时报错，说明上游换了文件。加新来源时先在页面上确认授权，写进清单，再跑 `node scripts/fetch-sfx.ts --record` 把字节数和 sha256 记下来。
 - `normalize-audio.ts` 用 ffmpeg 统一响度和格式：48 kHz，ogg（Vorbis）加 mp3 兜底。音效按最大瞬时响度对齐到 -18 LUFS，单声道，去掉首尾静音；语音积分响度 -18 LUFS，单声道；对局和菜单音乐 -20 LUFS，胜负收尾 -18 LUFS，环境音 -30 LUFS，立体声；真峰值都在 -1 dBTP 以下。起音很尖或只有几十毫秒的音效，限幅器最多压 6 dB（语音、音乐 3 dB），再要增益就停在峰值上限，比目标轻，不硬压。目标和理由写在脚本开头的 `PROFILES`。
-  - 输出 `public/audio/sfx/<id>/<序号>.ogg|mp3`、`public/audio/music/<id>/<序号>.ogg|mp3`，清单 `public/audio/manifest.json` 列出每个事件 → 候选文件 → 来源、授权、处理前后的响度。
+  - 只做选中的候选，输出 `public/audio/sfx/<id>.ogg|mp3`、`public/audio/music/<id>.ogg|mp3`，`src/audio` 按 id 拼出地址。清单 `public/audio/manifest.json` 列出每个事件 → 选中的文件 → 来源、授权、处理前后的响度。这两个目录下不属于选中候选的旧文件会被删掉。处理记录在 `assets-src/audio/normalize-state.json`，不进构建。
   - 语音也在这里处理：第一次把 `public/audio/voice/` 的原件复制到 `assets-src/audio/voice/` 留底，处理结果写回原路径，旁边加 `.mp3`。重跑 `fetch:voice` 之后 public 里又是原件（`fetch:voice` 按大小判断，会把处理过的文件重新下回来），再跑一次 `normalize:audio` 就行。
   - 输入和参数都没变的文件跳过，`--force` 全部重做，`--only sfx,music,voice` 只做某几类。
-- `pnpm audition:audio --out <目录>` 生成试听页：按类别列出每个候选，点击播放，标出来源和授权，可以勾选"留用"再导出。
+- 重新挑选：`node scripts/fetch-sfx.ts --candidates`、`node scripts/normalize-audio.ts --candidates` 把全部候选做到 `assets-src/audio/candidates/`（不碰 public），再 `pnpm audition:audio --out <目录>` 生成试听页：按类别列出每个候选，点击播放，标出来源、授权和现在选中的那个，可以勾选"留用"再导出。定下来后改清单的 `selected`，重跑 `normalize:audio`。

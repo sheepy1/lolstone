@@ -5,16 +5,19 @@
 import * as THREE from 'three';
 import { getCard, type Keyword } from '../engine';
 import { MINION_HEIGHT, MINION_SIZE } from '../presentation/layout';
-import { EDGE_GLOW, flashMaterial, glowMaterial, hdr, markBloom } from '../presentation/fx/materials';
+import { EDGE_GLOW, flashMaterial, fresnelMaterial, glowMaterial, hdr, markBloom } from '../presentation/fx/materials';
 import type { ViewMinion } from '../presentation/viewState';
-import { makeLabelCanvas, portraitTexture } from './canvasArt';
+import { drawKeywordIcon, makeLabelCanvas, portraitTexture, strokeText } from './canvasArt';
 import { MINION_BASE, MINION_RIM, MINION_TOP, UNIT_BOX, UNIT_SPHERE } from './geometry';
 import { StatBadge, type BadgeKind } from './statBadge';
-import { COLORS, FONT_CN } from './theme';
+import { COLORS, FONT_CN, FONT_NUM } from './theme';
 import { shared } from './dispose';
 
+// 底座上沿的 buff 小图标：LoL 的技能、物品、被动图标（card-art.json 的 keywords，spec 5.4）。
+// 图标没加载好或缺失时画纯色方块加一个字（label、color）。潜行按 spec 5.4 也有一个"视野被遮"的图标。
 const ICONS: { k: Keyword; label: string; color: string }[] = [
   { k: 'taunt', label: '嘲', color: '#f0c040' },
+  { k: 'stealth', label: '潜', color: '#9090b0' },
   { k: 'poisonous', label: '毒', color: '#58c040' },
   { k: 'lifesteal', label: '吸', color: '#d0304a' },
   { k: 'windfury', label: '风', color: '#80d8e8' },
@@ -25,13 +28,19 @@ const ICONS: { k: Keyword; label: string; color: string }[] = [
 // 徽章在底座顶面上的位置（底座中心为原点，+z 是近侧，也就是画面里的下方）
 const BADGE_X = 0.44;
 const BADGE_Z = 0.44;
-const ICON_W = 512;
-const ICON_H = 64;
-const iconGeo = shared(new THREE.PlaneGeometry(1.24, 0.155));
+// 关键词图标一排最多 6 个，每格 ICON_CELL 世界单位见方（1080p 下约 22 像素，原来约 10 像素）。整排贴着底座顶面的远侧边，
+// 一大半探出边外，只压住头像最上面一条，不挡头像主体和近侧的两个徽章。
+const ICON_SLOTS = 6;
+const ICON_CELL = 0.25;
+const ICON_PX = 128; // 贴图里每格的像素
+const ICON_W = ICON_SLOTS * ICON_PX;
+const ICON_H = ICON_PX;
+const ICON_Z = -0.72;
+const iconGeo = shared(new THREE.PlaneGeometry(ICON_SLOTS * ICON_CELL, ICON_CELL));
 
 const tauntMat = shared(glowMaterial(COLORS.taunt, 1.4));
 // 描边亮度低于 bloom 阈值：描边本身亮，不往头像上泛光
-const attackRimMat = shared(glowMaterial(COLORS.playable, EDGE_GLOW));
+export const attackRimMat = shared(glowMaterial(COLORS.playable, EDGE_GLOW));
 const targetRimMat = shared(glowMaterial(COLORS.target, EDGE_GLOW * 1.3));
 const iceMat = shared(new THREE.MeshStandardMaterial({
   color: 0x9fd8ff,
@@ -44,29 +53,7 @@ const iceMat = shared(new THREE.MeshStandardMaterial({
 }));
 // 圣盾外壳：只有边缘亮（菲涅尔），正中几乎透明，头像和两个徽章透过外壳看得清。
 // 不写深度、不进泛光：写深度会把壳里后画的徽章数字挡掉，整个壳泛光会把底座洗成一片白（发光的是生命徽章外圈的护盾环）
-const shellMat = shared(new THREE.ShaderMaterial({
-  uniforms: { color: { value: hdr(0xfff2b0, 1.6) } },
-  vertexShader: `
-    varying vec3 vN;
-    varying vec3 vV;
-    void main() {
-      vec4 mv = modelViewMatrix * vec4(position, 1.0);
-      vN = normalize(normalMatrix * normal);
-      vV = normalize(-mv.xyz);
-      gl_Position = projectionMatrix * mv;
-    }`,
-  fragmentShader: `
-    uniform vec3 color;
-    varying vec3 vN;
-    varying vec3 vV;
-    void main() {
-      float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 3.0);
-      gl_FragColor = vec4(color * (0.03 + 0.85 * f), 1.0);
-    }`,
-  transparent: true,
-  blending: THREE.AdditiveBlending,
-  depthWrite: false,
-}));
+const shellMat = shared(fresnelMaterial(hdr(0xfff2b0, 1.6)));
 const smokeTex = shared((() => {
   const c = document.createElement('canvas');
   c.width = c.height = 128;
@@ -97,7 +84,9 @@ export class MinionView extends THREE.Group {
   private readonly smoke: THREE.Sprite;
   readonly badges: Record<BadgeKind, StatBadge> = { attack: new StatBadge('attack'), health: new StatBadge('health') };
   private readonly icons = makeLabelCanvas(ICON_W, ICON_H);
-  private readonly iconPlane: THREE.Mesh;
+  readonly iconPlane: THREE.Mesh;
+  // 这一排里每个图标在贴图上的横向范围（像素），悬停时按 uv 查是哪个关键词
+  private iconSlots: { k: string; x0: number; x1: number }[] = [];
   private last: ViewMinion | null = null;
   private hudKey = '';
   private stealthed = false;
@@ -140,7 +129,15 @@ export class MinionView extends THREE.Group {
     this.badges.health.position.set(BADGE_X, MINION_HEIGHT, BADGE_Z);
     this.iconPlane = new THREE.Mesh(iconGeo, new THREE.MeshBasicMaterial({ map: this.icons.texture, transparent: true, toneMapped: false }));
     this.iconPlane.rotation.x = -Math.PI / 2;
-    this.iconPlane.position.set(0, MINION_HEIGHT + 0.012, -0.55);
+    this.iconPlane.position.set(0, MINION_HEIGHT + 0.016, ICON_Z);
+    this.iconPlane.renderOrder = 2;
+    // 射线只认画了图标的格子：这一排固定 6 格宽，空格子探出底座边外，不该算悬停或指向这个随从
+    const plane = this.iconPlane;
+    plane.raycast = (ray, out) => {
+      const hits: THREE.Intersection[] = [];
+      THREE.Mesh.prototype.raycast.call(plane, ray, hits);
+      for (const h of hits) if (h.uv && this.keywordAtUv(h.uv.x)) out.push(h);
+    };
     this.body.add(base, top, this.tauntRim, this.stateRim, this.ice, this.shell, this.smoke, this.flash, this.badges.attack, this.badges.health, this.iconPlane);
     this.add(this.body);
     this.userData.pick = { kind: 'minion', id: m.instanceId, side };
@@ -192,33 +189,60 @@ export class MinionView extends THREE.Group {
     if (key === this.hudKey) return;
     this.hudKey = key;
     // 底座上沿的 buff 小图标
-    const icons = ICONS.filter((i) => m.keywords.includes(i.k)).map((i) => ({ label: i.label, color: i.color }));
-    if (spellDamage > 0) icons.push({ label: `法${spellDamage}`, color: '#9a6cff' });
-    if (m.silenced) icons.push({ label: '默', color: '#808080' });
+    const icons: { k: string; label: string; color: string; badge?: string }[] = ICONS.filter((i) => m.keywords.includes(i.k));
+    if (spellDamage > 0) icons.push({ k: 'spell_damage', label: `法${spellDamage}`, color: '#9a6cff', badge: `+${spellDamage}` });
+    if (m.silenced) icons.push({ k: 'silence', label: '默', color: '#808080' });
     const a = this.icons.g;
     a.clearRect(0, 0, ICON_W, ICON_H);
-    const shown = icons.slice(0, 6);
+    const shown = icons.slice(0, ICON_SLOTS);
+    this.iconSlots = [];
+    const P = ICON_PX;
     shown.forEach((ic, i) => {
-      const x = ICON_W / 2 + (i - (shown.length - 1) / 2) * 62 - 27;
-      a.fillStyle = 'rgba(0,0,0,0.55)';
+      const cx = ICON_W / 2 + (i - (shown.length - 1) / 2) * P;
+      const x = cx - P / 2 + 10; // 图标 108 像素见方，四周留出底托和描边
+      const y = 10;
+      const s = P - 20;
+      this.iconSlots.push({ k: ic.k, x0: cx - P / 2, x1: cx + P / 2 });
+      // 深色底托加一圈黑边：放在任何头像上都压得住
+      a.fillStyle = 'rgba(8,10,14,0.92)';
       a.beginPath();
-      a.roundRect(x - 3, 4, 60, 56, 10);
+      a.roundRect(x - 8, y - 8, s + 16, s + 16, 22);
       a.fill();
-      a.fillStyle = ic.color;
-      a.strokeStyle = '#101010';
-      a.lineWidth = 3;
-      a.beginPath();
-      a.roundRect(x, 7, 54, 50, 9);
-      a.fill();
+      a.strokeStyle = '#000';
+      a.lineWidth = 4;
       a.stroke();
-      a.font = `900 ${ic.label.length > 1 ? 22 : 32}px ${FONT_CN}`;
-      a.textAlign = 'center';
-      a.textBaseline = 'middle';
-      a.fillStyle = '#101010';
-      a.fillText(ic.label, x + 27, 33);
+      // 图标稍后才加载好时整排重画
+      const drawn = drawKeywordIcon(a, ic.k, x, y, s, s, 16, () => {
+        this.hudKey = '';
+        if (this.last) this.drawHud(this.last);
+      });
+      if (!drawn) {
+        a.fillStyle = ic.color;
+        a.beginPath();
+        a.roundRect(x, y, s, s, 16);
+        a.fill();
+        a.font = `900 ${ic.label.length > 1 ? 44 : 64}px ${FONT_CN}`;
+        a.textAlign = 'center';
+        a.textBaseline = 'middle';
+        a.fillStyle = '#101010';
+        a.fillText(ic.label, x + s / 2, y + s / 2 + 2);
+      }
+      a.strokeStyle = '#c8aa6e';
+      a.lineWidth = 6;
+      a.beginPath();
+      a.roundRect(x, y, s, s, 16);
+      a.stroke();
+      if (drawn && ic.badge) strokeText(a, ic.badge, x + s - 26, y + s - 22, 50, '#ffffff', FONT_NUM, 0.22);
     });
     this.iconPlane.visible = shown.length > 0;
     this.icons.texture.needsUpdate = true;
+  }
+
+  // 悬停：uv 落在哪个关键词图标上（iconPlane 的射线交点），没有返回 null
+  keywordAtUv(u: number): string | null {
+    if (!this.iconPlane.visible) return null;
+    const px = u * ICON_W;
+    return this.iconSlots.find((s) => px >= s.x0 && px < s.x1)?.k ?? null;
   }
 
   // 动画中途先跳数字（显示局面之外的临时数值）

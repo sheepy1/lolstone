@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MeLoL 卡牌配图总览</title>
+    <style>
+      html, body { margin: 0; background: #0b1410; color: #e8e2d0; font-family: 'PingFang SC', sans-serif; }
+      #bar { position: sticky; top: 0; z-index: 2; padding: 8px 12px; background: #13201a; font-size: 14px; display: flex; gap: 12px; align-items: center; }
+      #bar a { color: #c8aa6e; }
+      #out { display: block; }
+    </style>
+  </head>
+  <body>
+    <div id="bar"></div>
+    <canvas id="out"></canvas>
+    <div id="stage" style="position:fixed;inset:0"></div>
+    <script type="module" src="/src/dev/art/entry.ts"></script>
+  </body>
+</html>

@@ -1,15 +1,17 @@
-// 生成音效试听页：按类别列出 public/audio/manifest.json 里的每个候选，可以点击播放，标出来源和授权。
+// 生成音效试听页：按类别列出每个候选，可以点击播放，标出来源、授权和现在选中的是哪个。
 // 页面和音频一起复制到输出目录，双击 index.html 就能用，不需要起服务。
 //
+//   node scripts/fetch-sfx.ts --candidates && node scripts/normalize-audio.ts --candidates   先做出全部候选
 //   node scripts/audio-audition.ts --out <目录>
 //
+// 候选读 assets-src/audio/candidates/audio/manifest.json，语音对比读 public/audio/manifest.json。
 // 页面上可以给每个候选打"留用"，选择存在浏览器本地；"导出选择"把留用的候选复制成 JSON，贴回给实现方改清单。
 // 语音部分抽几个英雄，对比处理前（assets-src 留底的原件）和处理后。
 
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
-import { ASSETS_SRC } from './lib/audio.ts';
+import { ASSETS_SRC, CANDIDATES_DIR } from './lib/audio.ts';
 import { PUBLIC_DIR } from './lib/files.ts';
 
 type Loud = { integrated: number; momentaryMax: number; truePeak: number };
@@ -33,12 +35,15 @@ type Sound = {
   profile: string;
   inSfxTable: boolean;
   loop: boolean;
+  selected: number;
   files: FileEntry[];
 };
 type Manifest = {
   generatedAt: string;
   profiles: Record<string, { measure: string; target: number }>;
   sounds: Sound[];
+};
+type PublicManifest = {
   voice: { ogg: string; mp3: string; duration: number; gainDb: number; before: Loud; after: Loud }[];
 };
 
@@ -76,7 +81,7 @@ function fileRow(sound: Sound, f: FileEntry, i: number, profileTarget: string): 
   return `<li class="cand" data-key="${esc(key)}">
     <button class="play" data-src="${esc(f.ogg)}" data-mp3="${esc(f.mp3)}" ${sound.loop ? 'data-loop="1"' : ''} aria-label="播放 ${esc(key)}">▶</button>
     <div class="info">
-      <div class="head"><span class="n">${i + 1}</span><span class="dur">${f.duration.toFixed(2)} 秒</span>
+      <div class="head"><span class="n">${i + 1}</span>${sound.selected === i + 1 ? '<span class="tag">已选</span>' : ''}<span class="dur">${f.duration.toFixed(2)} 秒</span>
         <span class="lufs" title="处理前 → 处理后（${profileTarget}）">${loud(f.before, sound.profile)} → ${loud(f.after, sound.profile)}，增益 ${f.gainDb > 0 ? '+' : ''}${f.gainDb} dB，${f.limitingDb > 0 ? `限幅压了 ${f.limitingDb} dB，` : ''}真峰值 ${f.after.truePeak} dBTP${f.peakLimited ? '，<b>峰值卡住、没到目标</b>' : ''}</span></div>
       ${f.note ? `<div class="note">${esc(f.note)}</div>` : ''}
       <div class="src">${srcs}</div>
@@ -85,7 +90,7 @@ function fileRow(sound: Sound, f: FileEntry, i: number, profileTarget: string): 
   </li>`;
 }
 
-function page(m: Manifest, voices: { key: string; kind: string; before: string; after: string; gain: number; b: Loud; a: Loud }[]): string {
+function page(m: Manifest, voiceCount: number, voices: { key: string; kind: string; before: string; after: string; gain: number; b: Loud; a: Loud }[]): string {
   const target = (p: string) => {
     const spec = m.profiles[p];
     if (!spec) return '';
@@ -166,7 +171,7 @@ button:hover{border-color:var(--accent)}
 <textarea id="out" readonly></textarea>
 ${groups}
 <h2 id="g-voice">语音：处理前后对比（抽 ${VOICE_SAMPLES.length} 个英雄）</h2>
-<section class="sound"><p class="spec">语音按积分响度对齐到 ${m.profiles.voice?.target ?? ''} LUFS。全部 ${m.voice.length} 条的范围见实现方的汇报。</p><ol>${voiceRows}</ol></section>
+<section class="sound"><p class="spec">语音按积分响度对齐到 ${m.profiles.voice?.target ?? ''} LUFS。全部 ${voiceCount} 条的范围见实现方的汇报。</p><ol>${voiceRows}</ol></section>
 </div>
 <script>
 const KEY='melol.audition.keep';let keep={};try{keep=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
@@ -195,7 +200,8 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   const out = path.resolve(values.out);
-  const m = JSON.parse(await readFile(path.join(PUBLIC_DIR, 'audio/manifest.json'), 'utf8')) as Manifest;
+  const m = JSON.parse(await readFile(path.join(CANDIDATES_DIR, 'audio/manifest.json'), 'utf8')) as Manifest;
+  const pub = JSON.parse(await readFile(path.join(PUBLIC_DIR, 'audio/manifest.json'), 'utf8')) as PublicManifest;
 
   let copied = 0;
   const copy = async (from: string, rel: string) => {
@@ -205,14 +211,14 @@ async function main(): Promise<void> {
   };
   for (const s of m.sounds) {
     for (const f of s.files) {
-      await copy(path.join(PUBLIC_DIR, f.ogg), f.ogg);
-      await copy(path.join(PUBLIC_DIR, f.mp3), f.mp3);
+      await copy(path.join(CANDIDATES_DIR, f.ogg), f.ogg);
+      await copy(path.join(CANDIDATES_DIR, f.mp3), f.mp3);
     }
   }
   const voices = [];
   for (const key of VOICE_SAMPLES) {
     for (const kind of ['choose', 'ban']) {
-      const v = m.voice.find((x) => x.ogg === `audio/voice/${key}/${kind}.ogg`);
+      const v = pub.voice.find((x) => x.ogg === `audio/voice/${key}/${kind}.ogg`);
       if (!v) continue;
       const before = `audio/voice-raw/${key}/${kind}.ogg`;
       await copy(path.join(ASSETS_SRC, 'voice', key, `${kind}.ogg`), before);
@@ -220,7 +226,7 @@ async function main(): Promise<void> {
       voices.push({ key, kind, before, after: v.ogg, gain: v.gainDb, b: v.before, a: v.after });
     }
   }
-  await writeFile(path.join(out, 'index.html'), page(m, voices));
+  await writeFile(path.join(out, 'index.html'), page(m, pub.voice.length, voices));
   console.log(`试听页：${path.join(out, 'index.html')}（复制了 ${copied} 个音频文件）`);
 }
 

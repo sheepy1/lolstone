@@ -3,14 +3,19 @@
 //   node scripts/normalize-audio.ts                  只处理输入或参数变了的文件
 //   node scripts/normalize-audio.ts --force          全部重做
 //   node scripts/normalize-audio.ts --only sfx,voice 只处理某几类：sfx、music、voice
+//   node scripts/normalize-audio.ts --candidates     把全部候选做成试听用的文件，见下
 //
 // 输入和输出：
-// - 音效和音乐：按 scripts/data/audio-sources.json 的候选，从 assets-src/audio/sources/（fetch-sfx.ts 下载的）读原始
-//   素材，输出 public/audio/sfx/<id>/<n>.ogg|mp3、public/audio/music/<id>/<n>.ogg|mp3，n 是候选的序号（从 1 起）。
+// - 音效和音乐：scripts/data/audio-sources.json 里每个事件或类别有几个候选，selected 指定用哪个（序号从 1 起）。
+//   从 assets-src/audio/sources/（fetch-sfx.ts 下载的）读选中候选的原始素材，输出 public/audio/sfx/<id>.ogg|mp3、
+//   public/audio/music/<id>.ogg|mp3。public/audio/sfx 和 music 下不属于选中候选的文件会被删掉（比如换了选择之后的旧文件）。
 // - 语音：fetch-voice.ts 拉到 public/audio/voice/<key>/{choose,ban}.ogg。第一次处理时把原件复制到
 //   assets-src/audio/voice/ 留底，处理结果写回原路径，旁边加一个 .mp3。以后重跑都从留底的原件处理，不会反复有损转码。
 //   重新跑过 fetch-voice.ts 之后，public 里又是原件，本脚本按内容认出来，重新留底再处理。
-// - public/audio/manifest.json：每个事件或类别 → 候选文件 → 来源、授权、处理前后的响度。
+// - public/audio/manifest.json：每个事件或类别 → 选中的文件 → 来源、授权、处理前后的响度。
+// - --candidates：不碰 public，把全部候选输出到 assets-src/audio/candidates/audio/sfx|music/<id>/<序号>.ogg|mp3，
+//   清单在 assets-src/audio/candidates/audio/manifest.json，给 audio-audition.ts 生成试听页。要先用
+//   fetch-sfx.ts --candidates 把没选中的候选的素材也下载下来。
 //
 // 响度目标见 PROFILES。短音效的积分响度不可靠（短于 400 毫秒算不出来，几百毫秒的也偏低），所以音效按最大瞬时响度
 // （400 毫秒窗口）对齐；语音、音乐、环境音按积分响度对齐。增益是整段统一的静态增益，不做动态压缩。
@@ -26,7 +31,7 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import type { Candidate, Input, Loudness, Profile, SoundEntry, Source } from './lib/audio.ts';
 import {
-  ASSETS_SRC, REPO_DIR, candidateInputs, hasCommand, inputPath, loadSources, measure, probeDuration, run, sha256,
+  ASSETS_SRC, CANDIDATES_DIR, REPO_DIR, candidateInputs, hasCommand, inputPath, loadSources, measure, probeDuration, run, sha256,
   sha256File,
 } from './lib/audio.ts';
 import { PUBLIC_DIR, runPool } from './lib/files.ts';
@@ -68,10 +73,8 @@ const TRUE_PEAK_MAX = -1;
 /** 增益超过这个值说明素材本身很轻，放大后底噪也跟着上来，汇总里提醒。 */
 const BIG_GAIN_DB = 18;
 /** 处理链的版本。改了处理链（滤波、编码参数以外的逻辑）就加一，让旧输出全部重做。 */
-const CHAIN_VERSION = 4;
+const CHAIN_VERSION = 5;
 
-const STATE_FILE = path.join(PUBLIC_DIR, 'audio/.normalize-state.json');
-const MANIFEST_FILE = path.join(PUBLIC_DIR, 'audio/manifest.json');
 const VOICE_DIR = path.join(PUBLIC_DIR, 'audio/voice');
 const VOICE_RAW_DIR = path.join(ASSETS_SRC, 'voice');
 
@@ -89,7 +92,7 @@ type Result = {
   after: Loudness;
 };
 
-type StateEntry = Result & { key: string; outSha?: string };
+type StateEntry = Result & { key: string; profile: Profile; outSha?: string };
 type State = Record<string, StateEntry>;
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
@@ -187,15 +190,15 @@ type Job = {
   voice?: { pub: string; fresh: boolean };
 };
 
-async function processJob(job: Job, tmp: string): Promise<Result> {
+async function processJob(job: Job, tmp: string, root: string): Promise<Result> {
   const wav = path.join(tmp, `${sha256(job.base).slice(0, 16)}.wav`);
   await prepare(job.inputs, job.candidate, job.profile, wav);
   const before = await measure(wav);
   const wanted = PROFILES[job.profile].target - metric(before, job.profile);
   const cap = LIMIT_DBFS - before.truePeak + PROFILES[job.profile].maxLimitingDb;
   const gainDb = round1(Math.min(wanted, cap));
-  const ogg = path.join(PUBLIC_DIR, `${job.base}.ogg`);
-  const mp3 = path.join(PUBLIC_DIR, `${job.base}.mp3`);
+  const ogg = path.join(root, `${job.base}.ogg`);
+  const mp3 = path.join(root, `${job.base}.mp3`);
   await mkdir(path.dirname(ogg), { recursive: true });
   // 先写临时文件再改名，处理中断不会留下半截文件（语音的 ogg 就是原路径，更要这样）
   await encode(wav, gainDb, job.profile, `${ogg}.tmp.ogg`, `${mp3}.tmp.mp3`);
@@ -204,8 +207,8 @@ async function processJob(job: Job, tmp: string): Promise<Result> {
   await rm(wav, { force: true });
   const after = await measure(ogg);
   return {
-    ogg: path.relative(PUBLIC_DIR, ogg),
-    mp3: path.relative(PUBLIC_DIR, mp3),
+    ogg: path.relative(root, ogg),
+    mp3: path.relative(root, mp3),
     duration: await probeDuration(ogg),
     gainDb,
     peakLimited: wanted > cap,
@@ -238,16 +241,31 @@ function outDir(profile: Profile): 'sfx' | 'music' {
   return profile === 'sfx' ? 'sfx' : 'music';
 }
 
-async function soundJobs(sounds: SoundEntry[], sources: Record<string, Source>, missing: string[]): Promise<Job[]> {
+/** 输出路径（相对输出根目录、不带扩展名）。成品每类一个文件，试听用的每个候选一个。 */
+export function soundBase(s: SoundEntry, index: number, candidates: boolean): string {
+  return candidates ? `audio/${outDir(s.profile)}/${s.id}/${index + 1}` : `audio/${outDir(s.profile)}/${s.id}`;
+}
+
+function picked(s: SoundEntry, candidates: boolean): [number, Candidate][] {
+  if (candidates) return [...s.candidates.entries()];
+  const i = s.selected - 1;
+  const c = s.candidates[i];
+  if (!c) throw new Error(`${s.id} 的 selected 是 ${s.selected}，只有 ${s.candidates.length} 个候选`);
+  return [[i, c]];
+}
+
+async function soundJobs(
+  sounds: SoundEntry[], sources: Record<string, Source>, missing: string[], candidates: boolean,
+): Promise<Job[]> {
   const jobs: Job[] = [];
   for (const s of sounds) {
-    for (const [i, cand] of s.candidates.entries()) {
-      const base = `audio/${outDir(s.profile)}/${s.id}/${i + 1}`;
+    for (const [i, cand] of picked(s, candidates)) {
+      const base = soundBase(s, i, candidates);
       const inputs = candidateInputs(cand).map((input) => inputPath(sources, input));
       const absent = [];
       for (const f of inputs) if (!(await exists(f))) absent.push(path.relative(REPO_DIR, f));
       if (absent.length) {
-        missing.push(`${base}：缺 ${absent.join('、')}（先跑 fetch-sfx.ts）`);
+        missing.push(`${base}：缺 ${absent.join('、')}（先跑 fetch-sfx.ts${candidates ? ' --candidates' : ''}）`);
         continue;
       }
       const shas = await Promise.all(inputs.map(cachedSha));
@@ -291,15 +309,55 @@ function range(xs: number[]): Range | null {
 }
 const fmt = (r: Range | null, unit: string) => (r ? `${r.min} 到 ${r.max} ${unit}` : '无');
 
+/** 删掉 dir 下不在 keep 里的文件和删空的目录，返回删掉的文件数。 */
+async function prune(dir: string, keep: Set<string>): Promise<number> {
+  let removed = 0;
+  const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
+  for (const e of entries) {
+    const full = path.join(dir, e.name);
+    if (e.isDirectory()) {
+      removed += await prune(full, keep);
+      if ((await readdir(full)).length === 0) await rm(full, { recursive: true });
+    } else if (!keep.has(full)) {
+      await rm(full);
+      removed++;
+    }
+  }
+  return removed;
+}
+
+function sourceInfo(c: Candidate, sources: Record<string, Source>) {
+  return candidateInputs(c).map((input) => {
+    const src = sources[input.source]!;
+    return {
+      id: input.source, member: input.member, trim: input.trim ?? null,
+      title: src.title, author: src.author, page: src.page, license: src.license,
+    };
+  });
+}
+
+function publicResult(st: StateEntry): Result {
+  const { key: _key, outSha: _outSha, profile: _profile, ...result } = st;
+  return result;
+}
+
 async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {
       force: { type: 'boolean', default: false },
       only: { type: 'string', default: 'sfx,music,voice' },
+      candidates: { type: 'boolean', default: false },
       concurrency: { type: 'string', default: String(Math.max(2, Math.floor(availableParallelism() / 2))) },
     },
   });
-  const only = new Set(values.only.split(','));
+  const candidates = values.candidates;
+  const root = candidates ? CANDIDATES_DIR : PUBLIC_DIR;
+  // 试听用的候选不处理语音，语音只有成品
+  const only = new Set(values.only.split(',').filter((k) => !(candidates && k === 'voice')));
+  // 处理记录不放 public，免得被打进构建产物。早先的版本放在 public/audio/ 下，读到就搬过来
+  const stateFile = candidates ? path.join(CANDIDATES_DIR, 'normalize-state.json') : path.join(ASSETS_SRC, 'normalize-state.json');
+  const legacyState = path.join(PUBLIC_DIR, 'audio/.normalize-state.json');
+  const manifestFile = path.join(root, 'audio/manifest.json');
   const concurrency = Number(values.concurrency);
 
   if (!(await hasCommand('ffmpeg')) || !(await hasCommand('ffprobe'))) {
@@ -310,14 +368,17 @@ async function main(): Promise<void> {
   const data = await loadSources();
   let state: State = {};
   try {
-    state = JSON.parse(await readFile(STATE_FILE, 'utf8')) as State;
+    state = JSON.parse(await readFile(stateFile, 'utf8')) as State;
   } catch {
-    // 第一次跑
+    if (!candidates) state = JSON.parse(await readFile(legacyState, 'utf8').catch(() => '{}')) as State;
   }
 
   const missing: string[] = [];
   const sounds = data.sounds.filter((s) => only.has(outDir(s.profile)));
-  const jobs = [...(await soundJobs(sounds, data.sources, missing)), ...(only.has('voice') ? await voiceJobs(state) : [])];
+  const jobs = [
+    ...(await soundJobs(sounds, data.sources, missing, candidates)),
+    ...(only.has('voice') ? await voiceJobs(state) : []),
+  ];
 
   const tmp = await mkdtemp(path.join(tmpdir(), 'melol-audio-'));
   let done = 0;
@@ -327,14 +388,16 @@ async function main(): Promise<void> {
 
   await runPool(jobs, concurrency, async (job) => {
     const prev = state[job.base];
-    const outputs = [path.join(PUBLIC_DIR, `${job.base}.ogg`), path.join(PUBLIC_DIR, `${job.base}.mp3`)];
+    const outputs = [path.join(root, `${job.base}.ogg`), path.join(root, `${job.base}.mp3`)];
     if (!values.force && !job.voice?.fresh && prev?.key === job.key && (await exists(outputs[0]!)) && (await exists(outputs[1]!))) {
       skipped++;
       return;
     }
     try {
-      const result = await processJob(job, tmp);
-      state[job.base] = { ...result, key: job.key, outSha: job.voice ? await sha256File(job.voice.pub) : undefined };
+      const result = await processJob(job, tmp, root);
+      state[job.base] = {
+        ...result, key: job.key, profile: job.profile, outSha: job.voice ? await sha256File(job.voice.pub) : undefined,
+      };
       done++;
       if (done % 25 === 0) console.log(`  已处理 ${done} 个`);
     } catch (err) {
@@ -343,56 +406,79 @@ async function main(): Promise<void> {
     }
   });
   await rm(tmp, { recursive: true, force: true });
-  await writeFile(STATE_FILE, `${JSON.stringify(state, null, 1)}\n`);
 
-  // 清单：事件或类别 → 候选文件 → 来源和授权、处理前后的响度。没处理成功的候选不进清单。
-  const manifest = {
+  // 音效和音乐：只留这一轮该有的输出，换了选择或删了候选留下的旧文件和旧记录都清掉。语音不清，它跟着 fetch-voice 走。
+  // 只做了 --only 的一部分时，没做的那几类按全部保留。
+  const expected = new Set<string>();
+  for (const s of data.sounds) {
+    for (const [i] of picked(s, candidates)) expected.add(soundBase(s, i, candidates));
+  }
+  for (const k of Object.keys(state)) {
+    if (!k.startsWith('audio/voice/') && !expected.has(k)) delete state[k];
+  }
+  let pruned = 0;
+  if (only.has('sfx') && only.has('music')) {
+    const keep = new Set([...expected].flatMap((b) => [`${b}.ogg`, `${b}.mp3`].map((f) => path.join(root, f))));
+    pruned += await prune(path.join(root, 'audio/sfx'), keep);
+    pruned += await prune(path.join(root, 'audio/music'), keep);
+  }
+  await mkdir(path.dirname(stateFile), { recursive: true });
+  await writeFile(stateFile, `${JSON.stringify(state, null, 1)}\n`);
+  if (!candidates) await rm(legacyState, { force: true });
+
+  // 清单：事件或类别 → 文件 → 来源和授权、处理前后的响度。没处理成功的不进清单。
+  const common = {
     generatedAt: new Date().toISOString(),
     sampleRate: SAMPLE_RATE,
     truePeakMax: TRUE_PEAK_MAX,
     profiles: PROFILES,
-    sounds: data.sounds.map((s) => ({
-      id: s.id,
-      group: s.group,
-      label: s.label,
-      spec: s.spec,
-      profile: s.profile,
-      inSfxTable: s.inSfxTable ?? s.profile === 'sfx',
-      loop: s.loop ?? false,
-      files: s.candidates.flatMap((c, i) => {
-        const st = state[`audio/${outDir(s.profile)}/${s.id}/${i + 1}`];
-        if (!st) return [];
-        const { key: _key, outSha: _outSha, ...result } = st;
-        return [{
-          ...result,
-          note: c.note ?? null,
-          sources: candidateInputs(c).map((input) => {
-            const src = data.sources[input.source]!;
-            return {
-              id: input.source, member: input.member, trim: input.trim ?? null,
-              title: src.title, author: src.author, page: src.page, license: src.license,
-            };
-          }),
-        }];
-      }),
-    })),
-    voice: Object.entries(state)
-      .filter(([k]) => k.startsWith('audio/voice/'))
-      .map(([, v]) => ({ ogg: v.ogg, mp3: v.mp3, duration: v.duration, gainDb: v.gainDb, before: v.before, after: v.after })),
   };
-  await writeFile(MANIFEST_FILE, `${JSON.stringify(manifest, null, 2)}\n`);
+  const head = (s: SoundEntry) => ({
+    id: s.id,
+    group: s.group,
+    label: s.label,
+    spec: s.spec,
+    profile: s.profile,
+    inSfxTable: s.inSfxTable ?? s.profile === 'sfx',
+    loop: s.loop ?? false,
+    selected: s.selected,
+  });
+  const manifest = candidates
+    ? {
+        ...common,
+        sounds: data.sounds.map((s) => ({
+          ...head(s),
+          files: s.candidates.flatMap((c, i) => {
+            const st = state[soundBase(s, i, true)];
+            return st ? [{ ...publicResult(st), note: c.note ?? null, sources: sourceInfo(c, data.sources) }] : [];
+          }),
+        })),
+      }
+    : {
+        ...common,
+        sounds: data.sounds.map((s) => {
+          const c = s.candidates[s.selected - 1]!;
+          const st = state[soundBase(s, s.selected - 1, false)];
+          return {
+            ...head(s),
+            candidates: s.candidates.length,
+            file: st ? { ...publicResult(st), note: c.note ?? null, sources: sourceInfo(c, data.sources) } : null,
+          };
+        }),
+        voice: Object.entries(state)
+          .filter(([k]) => k.startsWith('audio/voice/'))
+          .map(([, v]) => ({ ogg: v.ogg, mp3: v.mp3, duration: v.duration, gainDb: v.gainDb, before: v.before, after: v.after })),
+      };
+  await writeFile(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`);
 
   // 汇总：每类处理前后对齐指标的范围、真峰值、没达到目标的文件
-  console.log(`\n统一响度（目标见 scripts/normalize-audio.ts 的 PROFILES，清单 public/audio/manifest.json）`);
+  console.log(`\n统一响度（目标见 scripts/normalize-audio.ts 的 PROFILES，清单 ${path.relative(REPO_DIR, manifestFile)}）`);
   console.log(`  处理 ${done} 个，跳过 ${skipped} 个（输入和参数都没变），失败 ${failed.length} 个，缺素材 ${missing.length} 个`);
+  if (pruned) console.log(`  删掉 ${pruned} 个不再使用的旧文件`);
   const all = Object.entries(state).map(([base, v]) => ({ base, ...v }));
   for (const profile of Object.keys(PROFILES) as Profile[]) {
     const spec = PROFILES[profile];
-    const rows = all.filter((r) => {
-      if (profile === 'voice') return r.base.startsWith('audio/voice/');
-      const sound = data.sounds.find((s) => r.base.startsWith(`audio/${outDir(s.profile)}/${s.id}/`));
-      return sound?.profile === profile;
-    });
+    const rows = all.filter((r) => r.profile === profile);
     if (!rows.length) continue;
     const name = spec.measure === 'momentaryMax' ? '最大瞬时响度' : '积分响度';
     console.log(`\n  ${profile}（${rows.length} 个，按${name}对齐到 ${spec.target} LUFS）`);

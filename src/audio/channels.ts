@@ -10,13 +10,11 @@ const DEFAULTS: Volumes = { master: 0.8, music: 0.5, sfx: 0.8, voice: 0.9 };
 
 let volumes: Volumes = load();
 
-// 开发环境默认静音：自动化试玩时不能从电脑里放出声音。开发时要听声音，地址带 ?sound=1；
-// 任何环境带 ?mute=1 都静音。生产构建的默认音量不受影响。
+// 地址带 ?mute=1 时静音，其余情况默认有声（开发环境也一样）。
+// 自动化试玩（其他会话在内置浏览器里跑）必须带 ?mute=1，否则声音会从用户的电脑里放出来。
 function startMuted(): boolean {
   const params = new URLSearchParams(globalThis.location?.search ?? '');
-  if (params.has('mute')) return true;
-  const dev = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
-  return dev && !params.has('sound');
+  return params.has('mute');
 }
 
 export const MUTED_AT_START = startMuted();

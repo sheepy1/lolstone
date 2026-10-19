@@ -12,9 +12,15 @@ declare module 'troika-three-text' {
     anchorX: Anchor;
     anchorY: Anchor;
     maxWidth: number;
+    overflowWrap: 'normal' | 'break-word';
+    whiteSpace: 'normal' | 'nowrap';
     textAlign: 'left' | 'right' | 'center' | 'justify';
     lineHeight: number | 'normal';
     outlineWidth: number | string;
+    letterSpacing: number;
+    fillOpacity: number;
+    outlineOpacity: number;
+    clipRect: [number, number, number, number] | null;
     outlineColor: number | string | Color;
     sdfGlyphSize: number | null;
     depthOffset: number;

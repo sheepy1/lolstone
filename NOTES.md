@@ -239,7 +239,7 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
 
 - `pnpm dev`：Vite 开发服务器（`.claude/launch.json` 里的 `melol-dev` 用 5174 端口）。`pnpm build` 先跑浏览器侧类型检查再打包。
 - 地址参数：`?replay` 回放夹具（观战，不接受输入）；`?autoplay` 开一局并让玩家这边也随机选合法动作，三倍速；
-  `?mute=1` 强制静音；`?sound=1` 在开发环境里打开声音（开发环境默认静音，生产构建默认音量不变）。
+  默认有声，开发环境也一样；`?mute=1` 静音。其他会话在内置浏览器里自动试玩时必须带 `?mute=1`，否则声音会从用户的电脑里放出来。
 - 控制台 `melol`：`melol.startMatch(我方职业, 对手职业, 种子?)` 给种子时对局和对手 AI 可复现（自动驾驶下玩家这边的
   动作时机受动画影响，不保证同一条路线）；`melol.autoplay(true/false)`；`melol.renderFrame()` 手动渲染一帧；
   `melol.gsap` 是应用自己的 GSAP 实例。
@@ -289,8 +289,34 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
   关键词小图标（毒、吸、风、冲、突、法术伤害、沉默）排在底座上沿、头像上方。各种状态不盖住徽章：潜行的烟只罩头像中部；
   圣盾外壳是只有边缘亮的菲涅尔材质，中间几乎透明，不写深度也不泛光（写深度会挡掉壳里的徽章数字，整个壳泛光会把底座
   洗成一片白），发光的是生命徽章外圈的白色护盾环，破盾时外壳和护盾环一起碎掉。
-- 枢纽（英雄）：头像圆盘略向镜头倾斜，嵌在矮台座里，生命徽章在右前方，不再有悬浮的水晶。三种台座用地址参数
-  `?nexus=a|b|c` 切换：a 半透明水晶六棱台，b 暗金属台座加六颗发光镶嵌，c 薄金属台座加头像外一圈发光水晶环（默认）。
+- 枢纽（英雄）：头像圆盘略向镜头倾斜，嵌在矮台座里，生命徽章在右前方，不再有悬浮的水晶。用户定稿的是方案 b
+  （spec 5.4 v0.6.7）：暗金属六棱台，四周一圈半球形玻璃罩小灯（`scene/nexusLamps.ts`），默认就是它。否掉的 a（半透明
+  水晶六棱台）、c（薄台座加发光水晶环）代码还在，`?nexus=a|c` 能切回去对比。
+- 小灯：六颗，每颗在一个侧面的正中，朝外、顺着侧面的外倾角。从里到外是暗色凹槽、凸起的金属灯座（和台座的金属沿
+  同一种材质）、自发光灯芯（我方蓝、对方红，只有它进泛光）、玻璃罩。玻璃罩是两层加色混合、不写深度的壳：
+  - 高光层是漫反射为黑的 MeshPhysicalMaterial（清漆），加色混合后只剩高光和反射。只靠太阳光时，光滑半球上的高光
+    只有几个像素，读不出是玻璃，所以给它单独配了反射贴图：舞台的 `reflections`，是 three 的 RoomEnvironment 预滤波成的
+    PMREM。这张贴图不设成场景的 environment，其余物件的光照不受影响。
+  - 边缘层是菲涅尔亮边（`fresnelMaterial`，圣盾外壳也用它），颜色每帧按这颗灯的亮度算：灯亮时整个罩子透出灯色，灯灭时
+    只剩一圈淡白。一开始边缘是固定的白色，结果亮灯和灭灯在画面里几乎一样，看不出哪颗灭了。
+- 小灯的亮度：灯芯的 HDR 倍数 1.8，乘回合系数（自己的回合 1.0，对方回合 0.3，换回合时 0.5 秒平滑过渡），再乘呼吸
+  （周期 2.6 秒、幅度 12%，双方错开半拍）。灯芯不能太亮：倍数 2.6 时 ACES 把亮、暗两档都压成白色，回合差别看不出来。
+  生命低于 10 时，按生命比例留几颗亮着（9 点 6 颗，5 点 3 颗，2 点 2 颗），从后排往前灭，最后剩左前那颗（右前那颗
+  被生命徽章挡住一半）；亮着的那几颗改成快速、不规则的闪（两个周期不成整数比的正弦叠加）。不可选时整体压暗；
+  输掉时灯芯猛亮一下再整颗缩没。参数都在 `NEXUS_LAMP`，/dev/fx 的"枢纽小灯"面板可调，还能切谁的回合、改双方生命看效果。
+- 结束回合按钮（`scene/endTurnButton.ts`，spec 5.2 的海克斯菱形按钮）：和枢纽方案 b 同一套材质。河中的六棱石墩上是
+  暗金属六棱底座加金色窄沿，上面一块带厚度和倒角的切角菱形面板，四周凸起的金色框，框内一圈发光边（进泛光）。
+  面板朝镜头倾斜 0.35 弧度，绕长轴翻面：正面"结束回合"，背面"对方回合"，都是贴在面板上的 SDF 文字。
+  - 状态：我方回合是金色发光边，面板中心透出暖光，2.2 秒一次缓慢脉动；只剩结束回合可做（合法动作只有它）时换成
+    海克斯青色，更亮，0.9 秒一次脉动；对方回合翻到背面、熄灭、不能点；换牌阶段和对局结束是正面熄灭、字压暗。
+  - 动画：悬停抬起 0.08 并变亮；按下 80ms 压下（power3.in），再回弹（back.out）。翻到对方回合等压到底再开始，
+    0.28 秒 power2.out（E26）；翻回我方回合带一点回弹（E02）。
+  - 面板正面的自发光不进泛光，发光的只有那圈边：整块面板进泛光会把字晕开。面板中心的光是一张径向渐变的
+    emissiveMap，挤出几何体正面的 uv 是形状坐标，用 repeat、offset 换算。
+  - 金色金属用舞台的 reflections 做反射，不然只剩一块暗褐色；暗金属底座不加，加了会被照成浅褐色，和枢纽对不上。
+  - 参数在 `END_TURN`，/dev/fx 的"结束回合按钮"面板可调，还能直接切四种状态、按一下看动画。
+  - 没选嵌半球小灯，选的是发光边：按钮在画面右侧，小灯在 1080p 下只有十几个像素，远看分不出状态；一整圈发光边
+    换颜色、换节奏，隔着桌面也看得出。
 - 3D 物件共用材质，淡出不能改透明度，`fadeOutAndDispose` 改成缩小到 0 再移除。
 - 显存释放：几何体、材质、贴图默认归物件自己，物件销毁、一局结束时一起释放（`scene/dispose.ts` 的 `releaseGpu`）；
   多个物件、多局之间共用的（模块级常量、卡面和头像缓存）用 `shared()` 标记，不释放。漏释放的后果是每局留一份
@@ -303,15 +329,22 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
   拱起的弧线回到手牌里的位置。
 - 出随从（`minionSummoned.ts` 的 `PLAY_MINION`，参数取自 m4-storyboard 的 E07）：松手后牌飞到落点上方转平悬着，
   蓄力上提 0.1 秒，再 0.11 秒加速砸下（expo.in），落地压扁到 0.85 再弹回（elastic），扬起尘土（费用越高越多），
-  费用 ≥ 5 加一圈冲击波，≥ 6 镜头轻震，全程约 0.6 秒。松手到砸落之间空位一直留着（`scene.boardGap` 到砸落时才清），
+  费用 ≥ 5 加一圈冲击波，≥ 6 镜头轻震，全程约 0.6 秒。
+  尘土是粒子预设 `dust_land`（数量按分镜 8/14/20），在落地帧发出就不管，不算进这一步的时长（尘土飘 0.85 秒，
+  算进去会把后面的事件压住 0.3 秒）。冲击波没换成预设：最接近的 `spark_heavy` 是打击火花，朝镜头的白闪盖住头像，
+  四散的火星读起来像被打了一下，不像重物落地；还是用贴地向外扩的光环（`effects.ts` 的 `ring`）。松手到砸落之间空位一直留着（`scene.boardGap` 到砸落时才清），
   不然两边的随从会先合拢再被推开。对手的随从和效果召唤的随从不砸，用光圈加闪光出场。
 - 出法术：自己的法术沿弧线飞到中央放大，停 0.35 秒，再放大提亮缩没，接法术效果；对手打出的牌在中央停 0.8 秒再淡出。
 - 换牌阶段压暗棋盘：一块朝镜头的半透明黑板，放在离镜头 18 的位置，在起手牌（17.6）之后、我方枢纽（18.4）之前。
 
-- 卡面字体：思源宋体粗体（Noto Serif SC Bold，OFL，许可证在 `public/fonts/OFL.txt`）按卡池用到的字做子集，
-  `public/fonts/melol-serif-sc.woff`（约 80 KB），旁边的 `.chars.txt` 记着带了哪些字。卡池加了新字后运行
-  `pnpm font:subset <NotoSerifSC-Bold.otf 的路径>` 重新生成（要 Python 的 fonttools）；`tests/presentation-font.test.ts`
-  在缺字时失败。子集去掉了 OpenType 排版特性：思源的标点挤压会让 troika 把全角冒号挤没。
+- 卡面字体：思源宋体粗体（Noto Serif SC Bold，OFL，许可证在 `public/fonts/OFL.txt`）按卡池和界面用到的字做子集，
+  `public/fonts/melol-serif-sc.woff`（585 个字，约 110 KB），旁边的 `.chars.txt` 记着带了哪些字。主菜单、加载页、
+  结算面板也用这个子集（`src/ui/menu.css` 的 @font-face），缺的字会由系统宋体补，字形不统一。
+  界面文字由 `src/dev/fontChars.ts` 扫 `src/ui` 和 `src/app` 的源码收集：去掉注释后，字符串和 JSX 文本里的非 ASCII 字符
+  （ASCII 本来就全带）。`src/app` 也扫，是因为加载页的进度说明、出错提示这些字符串写在对局层里。
+  卡池或界面加了新字后运行 `pnpm font:subset assets-src/fonts/NotoSerifSC-Bold.otf` 重新生成（要 Python 的 fonttools）。
+  源字体放在不进 git 的 `assets-src/fonts/`；新的检出里没有的话，从 Google Fonts 下载思源宋体（Noto Serif SC）的 Bold 放进去。
+  `tests/presentation-font.test.ts` 在卡池或界面缺字时失败。子集去掉了 OpenType 排版特性：思源的标点挤压会让 troika 把全角冒号挤没。
 - 悬停大卡：悬停场上随从或英雄技能时，场景左侧显示一张放大的卡（`TableScene.showInspect`，和场上同一套光照），
   随从显示当前数值；关键词解释是 DOM，贴在放大卡下面（位置用镜头投影算出）。悬停手牌时手牌自己抬起放大，不另外显示。
 - 棋盘（spec 5.2）：`scene/terrain.ts` 是纯函数的高度场（河道挖下去、左侧野区丘陵、全场细小起伏），`scene/board.ts`
@@ -326,6 +359,150 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
 - 节奏：全局速度（慢放）、整步时长倍数、整步缓动（把整条时间线的进度映射到一条曲线上，`GsapPlayer.tune`）；
   光照与泛光强度也能实时调。GSDevTools 接在最近一步的时间线上，可以拖时间轴。
 - 开发服务器还有 `POST /__dev/screenshot?name=xxx`：`melol.saveScreenshot(name)` 把画布原尺寸存到 `.dev-output/`。
+
+### 踩过的坑
+
+- GSAP 动画去改已经销毁的物件会在 GSAP 的帧回调里抛错，那一帧之后所有动画都停住，导演永远等不到这一步结束。
+  所有销毁都先停掉子树上的全部动画（`scene/dispose.ts`），换局时停掉全局时间线上的全部动画。
+- 浏览器标签页或面板不可见时 requestAnimationFrame 停掉，GSAP 和渲染都不动，对局暂停，回来后继续。自动化验证时要在
+  页面里手动调 `gsap.ticker.tick()` 和 `melol.renderFrame()`；后台页面的 setTimeout 会被节流到几百毫秒一次，要精确
+  推进时间就用 MessageChannel 让出。CSS 动画在后台也不前进，截结算页前要关掉。
+- 自动化验证时要推进的是应用自己的 GSAP（`melol.gsap`）。从网络请求列表里 import 的 gsap 模块，在 Vite 重新预构建依赖后
+  可能是另一份实例，推它的时钟对应用没有作用。要截动画中间帧，最稳的办法是把全局时间线调慢
+  （`melol.gsap.globalTimeline.timeScale(0.05)`），不管页面在不在后台都有效。
+
+- 自动化录帧要完全接管 GSAP 的时钟：`gsap.ticker.sleep()` 之后再把 `gsap.ticker.wake` 换成空函数，然后每步
+  `gsap.updateRoot(T += 1/60)`、`stage.frame(1/60)`，再用 MessageChannel 让出一次（处理 promise 和 troika 的 worker 回复）。
+  GSAP 建新补间时会自己唤醒 ticker，不拦住就有两个时钟同时推全局时间线，时间来回跳，时间线开头的回调反复触发
+  （换牌的 takeHandCard 被调了几百次，留下几百张没销毁的牌）。手动推时钟时也不要快进：改全局时间线的 timeScale 会
+  按 ticker 的真实时间重新对齐，之后新建的补间全落在"未来"，永远播不完。
+- Vite 的 `server.watch.ignored` 不能写 `'**/.claude/**'`：在 `.claude/worktrees/<名>` 里起开发服务器时，项目自己的文件路径
+  也带 `.claude`，全被忽略，改了代码页面还是旧的。现在按相对项目根目录的路径判断，只忽略根目录下的 `.claude/`。
+- canvas 贴图的像素内存不在 JS 堆里，垃圾回收按堆的压力触发，飘字、横幅、血条这类一次性 canvas 只靠回收会越积越多，
+  连续自动对局几分钟后页面崩溃。释放 canvas 贴图时把 canvas 缩成 0×0（`releaseTexture`），像素内存马上还回去。
+- 设备像素比 2 时 1080p 窗口实际渲染 4K，后处理的半精度缓冲再开 4 倍多重采样会吃掉几百 MB 显存；像素比 ≥ 1.5 时不开
+  多重采样（本身已经是超采样）。
+
+### 回放夹具
+
+`tests/fixtures/l0-replay.json`：种子 181、弗雷尔卓德对德玛西亚的 L0 对 L0，按批存原始事件和开局显示局面。
+`pnpm fixture:record` 重新录制（卡池或事件改了之后）。它没有回手和失去潜行，这两种由构造的事件测试覆盖。
+
+## fxId 透传（spec 3.4，2026-10-19）
+
+- 带 fx 的动作都可以写可选的 `fxId`（招牌卡专属特效 id）。引擎不读它，只在发事件时原样放进去，涉及 `minion_summoned`、
+  `damage`、`heal`、`buff`、`silence`、`freeze`、`bounce`、`transform`。
+- 动作没写 fxId 时，事件里**这个键不出现**（不是 `null`）。表现层用 `e.fxId !== undefined` 或 `'fxId' in e` 判断。
+  这样没有招牌卡的老事件和录制的夹具保持原样；事件字段表（`tests/helpers/events.ts`）里 fxId 是可选字段，只在有值时才允许出现。
+- 引擎自己产生的事件（攻击伤害、疲劳、吸血治疗、激怒、增益到期）没有动作可挂，永远没有 fxId。随从自己打出时的
+  `minion_summoned`（via 为 play）也没有。
+- `destroy` 动作本身不发事件，所以 fxId 没处可放。做法：消灭带 fxId 时，引擎记下 fx 和 fxId，随后该随从的 `death` 事件
+  同时带上 `fx` 和 `fxId`（只有被带 fxId 的消灭动作消灭时才有，其余死亡的 death 事件字段不变）。德玛西亚正义就是这样。
+  代价是 death 比别的事件多了两个可选字段；如果表现层希望消灭有独立事件，要改事件契约，这里没做。
+- 校验（`src/cards/validate.ts`）：fxId 必须是字符串，匹配 `^[a-z0-9_]+\.[a-z0-9_]+$`（小写字母、数字、下划线，
+  中间恰好一个点，写成"英雄 key.招式"）；没有 fx 的动作（draw、gain_mana、extra_attack、random_keyword）不能写 fxId。
+  spec 只写了字符集和"英雄 key.招式"的形状，"恰好一个点"是我按这个形状收紧的，要放宽改 `FX_ID`。
+- 已标 fxId 的 9 张：狂风绝息斩（damage）、暴风雪（damage 和 freeze 都标，两种事件都带）、丽桑卓（freeze）、卡特琳娜（damage）、
+  审判（damage）、德玛西亚正义（destroy，在 death 上）、劫（summon）、李青（combo 的 bounce）、纳什男爵（turn_end 的 buff）。
+  泰达米尔和易数据没改，由表现层按 (卡牌 id, 触发时机) 映射。
+- 测试：`tests/fxid.test.ts`（透传、没写时键不出现、9 张卡各一条、卡池里带 fxId 的恰好是这 9 张、校验），
+  测试专用卡 `test.fxid_*` 在 `tests/helpers/testCards.ts`。
+
+## 非英雄卡的配图（fetch-icons）
+
+`scripts/data/card-art.json` 是映射表：没有 champion 字段的 47 张卡（小兵、野怪、亚龙、法术、衍生物）、4 个英雄技能、11 个关键词，
+每项写来源、裁切建议、选图理由和备选。`scripts/fetch-icons.ts` 按它下载，`scripts/art-review.ts` 出逐张对照页。还没接进卡面和场景，
+等 M3 定稿后再接：卡面原画窗口读 `art`（按 `crop` 裁），场上随从头像读 `icon`，清单是 `public/art/icons-manifest.json`。
+
+### 来源
+
+- 峡谷单位（小兵、野怪、亚龙、男爵、虚空幼虫和虚空螨）：CommunityDragon 的 `characters/<单位>/hud/<名>_square.png`，128×128。
+  目录可以用 `https://raw.communitydragon.org/json/latest/game/assets/characters/<单位>/hud/` 列出来，返回 JSON。
+  虚空幼虫对应 `sru_horde`（Voidgrub），虚空蠕虫对应 `sru_horde_mini`（Voidmite）。
+- 技能、被动、物品、召唤师技能图标：Data Dragon，64×64，地址带版本号。回城图标 Data Dragon 没有，用 CommunityDragon 的
+  `game/assets/spells/icons2d/recallhome.png`。
+- 皮肤原画：Data Dragon `cdn/img/champion/splash/<Key>_<编号>.jpg`，1215×717，和竖版原画一样不带版本号，带了返回 403。
+- 符文之地传说（Legends of Runeterra）卡牌原画：`https://dd.b.pvp.net/7_10_0/<set>/en_us/img/cards/<卡号>-full.png`，2048×1024。
+  卡号和 set 查 `https://dd.b.pvp.net/latest/<set>/en_us/data/<set>-en_us.json`（zh_cn 返回 403，en_us 能用）；set 有
+  set1 到 set9 以及 set6cde、set7b，卡号前两位不能直接推出 set（06 开头的分在 set6 和 set6cde）。服务器是没有 CDN 的 S3，
+  单张 15 到 100 秒，所以 http.ts 加了 `timeoutMs`，这类来源放宽到 10 分钟。
+
+### 选图的取舍（用户 2026-10-19 定）
+
+- 中立卡有官方大图的用大图：蓝色哨兵、山脉、海洋、云端亚龙、远古巨龙用符文之地传说的同名卡原画。其余中立卡和虚空蠕虫先用峡谷头像
+  （128 像素，放进原画窗口偏糊），映射表里带 `generate`（生成要求）和 `generatePriority`（先后，纳什男爵第一，其余按费用从高到低），
+  `fetch-icons.ts` 跑完会按先后列出来。失去坐骑的克烈、法力药水也在这个清单里，排最后。
+- 场上随从头像（`icon`）一律用峡谷头像，有大图的卡也一样。
+- 法术优先用符文之地传说里效果或名字对得上的卡（审判、大杀四方、回城、魔法水晶箭等），再退到皮肤原画。英雄本人的原皮原画已经
+  被随从卡或职业英雄用了，法术要用皮肤原画时换别的皮肤，避免两张卡同图。符文之地传说已确认可以作为来源，spec 5.9 由设计会话补。
+- 符文之地传说的法术原画是黑底上的圆形画面，`crop.zoom` 设 1.55（窗口宽高比 1:0.86 时四角刚好落在圆里）；单位原画是满幅的，不用放大。
+- 英雄技能图标不和任何法术、关键词同图：召集用盖伦 W「勇气」（spec 5.9 原来写的 GarenE 是法术「审判」的图标），诺克萨斯断头台用
+  德莱厄斯 W「致残打击」（DariusExecute 给了法术「处决」）。灵魄（阿狸 Q）和法术灵魄突袭（阿狸 R、灵魂莲华阿狸原画）本来就不同图。
+  映射表里所有主选图（icon 和 art）两两不重复。
+- 嘲讽用拉莫斯 E「狂乱嘲讽」。spec 5.4 写的 W 是笔误，设计会话会改。
+- spec 5.9 写 fetch-icons 输出到 `public/art/icons/`，实际按卡牌、英雄技能、关键词分成 `cards/`、`heropowers/`、`keywords/` 三个目录。
+
+## 音效和音乐素材（M4 准备，2026-10-19）
+
+脚本和用法见 README 的"音效和音乐"。这里记选择和踩过的坑。
+
+### 来源
+
+- 只用 CC0：Kenney 7 个音效包（页面写 CC0，包里带 License.txt），加 OpenGameArt 上 35 个页面（43 个文件）的素材，这些页面的授权一栏都只写了 CC0。
+  每个来源的页面、作者、授权依据在 `scripts/data/audio-sources.json` 的 `sources`。双授权（CC0 和 OGA-BY 并列）、
+  CC-BY 的一律没收，哪怕更合适（比如 YannZ 的菜单曲、JC Sounds 的自然环境音包）。
+- 没用 freesound：下原始文件要登录，不登录只能拿 128 kbps 的试听版。以后要补冷门音效再去，记得只挑 CC0 的。
+- 环境音用 Thimras 的公园录音（风、河水、鸟叫三条），每条十几分钟、七八十到一百 MB，`maxBytes` 只取开头一段，
+  混成 60 秒，结尾 4 秒叠回开头做成无缝循环。
+
+### 响度目标（建议写进 spec 5.7"一致性和分层"）
+
+| 类别 | 对齐指标 | 目标 | 声道 | 限幅器最多压 |
+| --- | --- | --- | --- | --- |
+| 音效 | 最大瞬时响度（400 毫秒窗口） | -18 LUFS | 单声道 | 6 dB |
+| 语音 | 积分响度 | -18 LUFS | 单声道 | 3 dB |
+| 胜负收尾 | 积分响度 | -18 LUFS | 立体声 | 3 dB |
+| 菜单、对局音乐 | 积分响度 | -20 LUFS | 立体声 | 3 dB |
+| 环境音 | 积分响度 | -30 LUFS | 立体声 | 3 dB |
+
+统一 48 kHz，真峰值不超过 -1 dBTP，ogg（Vorbis）加 mp3 兜底。音效单声道是为了按位置做声像时左右干净。
+
+- 音效不用积分响度：短于 400 毫秒的算不出来，几百毫秒的也偏低。
+- 增益是整段的静态增益，不做动态压缩。起音很尖（撞击、碎裂、冰咒）或只有几十毫秒（点击）的音效，要达到目标峰值得
+  高出上限十几 dB，所以增益有上限：限幅器最多压 6 dB，再多就停在峰值上限。这类音效最终的响度只取决于这个上限，和目标
+  无关；目标从 -14 降到 -18，就是为了让撞击、碎裂这些重要的声音不比"增益"这类柔和的声音轻太多。实测处理后音效的
+  最大瞬时响度中位数 -19.3，最轻的 10% 在 -26 以下（基本是界面点击声）。
+- 同类之间的轻重（悬停比按钮轻）不靠素材，靠 `src/audio/sfx.ts` 音效表的 volume。音效表的 volume 最大是 1，素材太轻
+  就补不回来，所以宁可目标低一点。
+
+### 选定和接入（2026-10-19）
+
+- 用户在试听页听完，每类选了一个，记在清单的 `selected`。spec 5.7 原来写"每类 2 到 3 个变体随机选"，现在每类只有一个
+  文件，重复感靠音高随机浮动正负 5%。
+- `src/audio` 已经接好：
+  - `sfx.ts` 的 44 个键里，42 个各对应 `audio/sfx/<id>.ogg|mp3`；`flow.victory`、`flow.defeat` 转给音乐通道放胜负收尾
+    （停掉对局音乐，环境音不停）。补了 `spell.big`、`flow.game_start`、`flow.nexus_light`、`flow.nexus_explode` 四个键。
+  - `playSfx(id, { pan })` 支持左右声像，-1 到 1，表现层按物件横坐标换算后传进来。
+  - `initAudio()` 在解锁音频时预载全部音效，加起来不到 1 MB。
+  - `music.ts` 分两层：音乐层同一时刻一首（菜单、对局、收尾），环境音单独一层可以和对局音乐同时放；语音时两层一起压低。
+    循环曲用 Web Audio 解码播放，循环点没有缝。同一首循环曲在放时再调 `playMusic` 不会从头来。
+  - 语音的 Howl 带上同名 mp3 兜底。
+- 选中候选的说明：`card.play` 选的 3 号原素材很轻，放大了 19 dB，听的时候留意底噪；菜单音乐选的 3 号（Prepare your swords）
+  是普通曲子，循环时首尾可能有接缝；对局音乐 2 号、环境音 2 号是循环版。
+
+### 表现层还没调用的（留给 M4）
+
+| 音效或曲目 | 应该在哪里调 | 现在的情况 |
+| --- | --- | --- |
+| `ui.pickup`、`ui.drop`、`ui.cancel` | 拖起手牌、放下（落点合法）、拖回手牌或右键取消 | `src/scene/interaction.ts` 没有调用 |
+| `flow.game_start`、`flow.nexus_light` | 开局镜头推进、双方枢纽依次点亮（5.6 开局） | `gameStart.ts` 只有横幅 |
+| `flow.nexus_explode` | 胜负时枢纽爆炸 | `gameOver.ts` 只放收尾 |
+| `spell.big` | 群体法术（5.6），效果同时落到所有目标时 | `spellCast.ts` 一律按 fx 放 |
+| `combat.stealth` 进入潜行 | 5.6 潜行"进入时一卷烟雾" | 只在失去潜行时放 |
+| 战吼选目标"按 fx 类型" | 5.6 | `trigger.ts` 放的是 `ui.click` |
+| 声像 | 5.7 按棋盘位置左右声像 | 所有调用都没传 `pan` |
+| `playMusic('match')`、`playMusic('ambience')` | 进入对局时 | 没人调，菜单音乐会一直放进对局 |
+| `stopAmbience()` 或 `playMusic('menu')` | 回到主菜单时停环境音 | 主菜单会调 `playMusic('menu')`，但环境音要单独停 |
 
 ### 踩过的坑
 
@@ -466,8 +643,10 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
 
 ## 粒子系统（M4，分镜表 1.5）
 
-代码在 `src/presentation/fx/particles/`，演示页 `src/dev/particles/`，测试 `tests/particles.test.ts`。还没接进事件动画，
-M4 各事件模块直接调用。
+代码在 `src/presentation/fx/particles/`，演示页 `src/dev/particles/`，测试 `tests/particles.test.ts`。
+对局场景里有一个现成的系统：`TableScene.particles`，挂在场景根上，每帧跟着渲染推进（乘全局时间线的 timeScale，
+效果和 `driveWithGsap` 一样，但手动推帧录屏时也会动），一局结束时随场景释放。动画模块直接
+`scene.particles.emit(...)` 或 `particleTimeline(scene.particles, ...)`。已接上的：出随从的落地扬尘（`dust_land`）。
 
 ### 用法
 
@@ -512,8 +691,7 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
 - 控制台 `pfx`：`pfx.shots(前缀)` 18 个预设各截一张；`pfx.capture(名字, [毫秒…], 前缀)` 按固定步长推进、截指定时刻的帧
   （不依赖页面在前台）；`pfx.bench('idle' | 'heavy5' | 'fill', 秒)` 测帧率（要页面在前台，rAF 才跑）。
   截图存到 `.dev-output/`。
-- 坑：`vite.config.ts` 的 `watch.ignored: ['**/.claude/**']` 在 worktree 里也会匹配到 worktree 自己的路径，
-  开发服务器看不到任何文件改动，改完代码要重启服务器才生效。
+- 开发服务器的监听规则按相对项目根判断（5a811ca），在 worktree 里起服务器也能看到自己的改动，不用重启。
 
 ### 性能（2026-10-19，Apple M4 Pro，不是 spec 的 M1 基准机；Chrome 内置浏览器，120Hz 屏）
 
@@ -567,3 +745,241 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
 - 原尺寸截图用 Playwright 缓存里的 `chrome-headless-shell`（`~/Library/Caches/ms-playwright/chromium_headless_shell-*/`）
   加 `--use-angle=metal` 走 GPU，通过 CDP 设视口、点按钮、`Page.captureScreenshot`。`Runtime.evaluate` 要带
   `replMode: true` 才能在表达式里 `await import('/src/app/store.ts')` 拿到和应用同一份的界面状态。
+
+## M4 开局和回合流程（纵切片，m4-storyboard E01 到 E05、E25 到 E29）
+
+### 文件
+
+- `presentation/fx/flow.ts`：回合流程的画面件。
+  - 横幅 Banner：暗色带子、金线、SDF 大字、光扫，沿镜头的"上"方向滑入滑出。
+  - 先后手徽记 Emblem。
+  - 从牌库飞进手牌的弧线飞行 `flyFromDeck`：飞到 40% 到 70% 之间绕长轴翻面。
+  - 震屏：和战斗事件共用 `fx/screen.ts` 的 `screenShake` / `shakeAt`（见下面"M4 战斗事件"），胜负的 S3 带白闪、跳过频率限制。
+  - 胜负大字 BigWord。
+  - 爆牌的燃烧溶解 `burnAway`。
+  - 时长参数在 `FLOW`。
+- 动画模块：mulliganStart（E01 加发牌）、mulliganDone、gameStart、turnStart（E02）、turnEnd（E26）、draw（E03）、
+  manaChanged（E25）、burn（E04）、fatigue（E05）、aiThinking（E27）、gameOver（E28、E29）。每个模块导出自己的参数对象，
+  /dev/fx 的"回合流程"面板全部可调；game_over 的样例可以选胜、负、平。
+- 先后手在 createGame 时就定了，换牌之前就能演。所以 E01 放在 mulligan_start 这一步，game_start 只把手牌收进扇形。
+
+### 改到的共用文件
+
+- `scene/stage.ts`：
+  - 镜头加看向点 `cameraTarget`，开局推镜头时改它。震屏同时平移位置和看向点，所以仍然只是平移。
+  - 加整个画面的调色 `look`（亮度、饱和度、暗角），胜负用，每帧写进后处理。
+  - 打开 `localClippingEnabled`，爆牌溶解要用。
+- `scene/table.ts`：
+  - `intro`：开局时先不出换牌压暗板。
+  - `frozen`：胜负定格时停掉常驻的小动画。
+  - `spawnAtSlot`：sync 新建的手牌直接放在槽位上，由模块自己做从牌库飞来的那段。
+  - `panAt`：按屏幕横坐标算声像。
+  - 换牌时法力药水单独摆放，加一行说明。
+  - 能出的牌、能攻击的随从的绿边按 1.6 秒周期脉动。
+  - 每局开始把镜头和调色复位。
+- `presentation/layout.ts`：只加了 `mulliganPotionSlot`。
+- `scene/cardView.ts`、`scene/minionView.ts`：只给共用的绿边材质加了 export，脉动要用。
+- `scene/interaction.ts`：拿起、放下、取消、换牌点选、结束回合按下的音效，都带声像。
+- `app/match.ts`：AI 每个动作前的思考时间按 `AI_PACE`（用户 2026-10-20 定"越往后越短"）：
+  - 同一个对手回合里，第一个动作前随机 0.8 到 1.5 秒；之后每个动作乘 0.6，最短 0.4 秒，每次加减 15%；
+  - 决定结束回合前只停 0.2 秒；
+  - 用自己的随机数，不影响 AI 的选择。
+- 对手出牌按 E06 收到 800ms（飞入 250、停 450、退场 100）。出牌、用技能扣的法力改成在后台亮暗，不占时间，
+  只有回合开始的法力变化占 300ms。
+- 对手回合的时长（第 7 步要求不超过 10 秒）：一个出三张牌加三次攻击的回合，各个事件动画本身就有约 9.6 秒，
+  思考已经压到每次 0.4 秒左右，整回合 13.25 秒。要压到 10 秒，需要导演按分镜 1.7 节让相邻的步重叠，
+  或者压缩战斗动画，单靠思考时间做不到。
+- `scene/tableParts.ts`：法力条逐格动画，每颗水晶一份材质；临时法力改成紫色。
+
+### 做法和取舍
+
+- 横幅、换牌那行字、"手牌已满"这类东西，在后台播，不进这一步的时间线。进时间线会拖长这一步，压住后面的事件。
+  回合开始这一步只占 0.45 秒，横幅剩下的部分和法力、抽牌重叠播，抽牌正好在滑出开始时起飞。
+- 新牌飞进手牌之前，sync 要先把它放到最终槽位上（`spawnAtSlot`），再记下目标、挪回牌库起飞。
+  如果 sync 用补间把牌滑过去，模块读到的"目标"其实还是牌库的位置，牌就原地不动，直到这一步结束时的兜底同步才归位。
+- 换牌时离镜头比压暗板（18）远的东西会被压暗。法力药水和它的说明都要放在压暗板前面。
+- 压暗画面不能用 postprocessing 的 BrightnessContrastEffect。它是加减偏移，暗处的颜色减成负数，转 sRGB 时变成白色，
+  整个画面发白。现在用自写的 GainEffect：压暗时乘，加亮（白闪）时加。
+- 场景里新加的 SDF 文字写在 src/presentation 和 src/scene 里，字体子集的扫描目录加上这两个（共 632 字，约 120 KB）。
+
+### 自动化录屏的坑（接 M3 那一条）
+
+- 手动推 GSAP 时钟时，`__T` 的初值要等于全局时间线当前的时间（`gsap.globalTimeline._start + time()`），不能用 `ticker.time`。
+  比它大，第一步就跳过一截；比它小，时间线停住不动，直到追上为止。
+- 同一个前缀重录时，先清掉旧的帧。文件名里的时刻不同，按名字排序会把两次录的帧交错在一起，看起来像动画在来回跳。
+- 声音在静音下也能核对：`await import('/src/audio/index.ts')` 拿到 `sfxLog`，每帧读一次，记下音效名和时刻。
+
+## 配图接进卡面和场景（M4，2026-10-20）
+
+`scripts/data/card-art.json` 的配图接进了卡面原画窗口、场上随从头像、英雄技能按钮、关键词小图标。素材仍不进 git，
+先跑 `pnpm fetch:art` 和 `pnpm fetch:icons`；没跑时全部退回纯色加名字，不报错。
+
+### 文件
+
+- `src/assets/cardArt.ts`：按映射表算本地路径（和 fetch-icons.ts 的规则一致：`art/cards/<id>/icon|art.<扩展名>`，art 和 icon
+  同来源时指向 icon 那个文件）、裁切参数、是否标了以后生成大图。映射表直接 import 进前端，改了 crop 不用重新下载。
+- `src/assets/manifest.ts`：开局预载清单加上 `card_art`、`card_icon`、`hero_power`、`keyword` 四类图。卡组里的卡沿着效果里引用的卡
+  一直追（召唤的衍生物、变形成的卡），再加上法力药水、两个英雄技能召唤的衍生物，所以加载页进度条把这些都算进去。
+  关键词图标一共 11 个小图，每局全载。
+- `src/assets/loader.ts`：长边超过 1024 的图（符文之地传说原画 2048×1024）加载完缩到 1024 的 canvas 再存，解码后一张从 8 MB
+  降到 2 MB。按地址取图的 `artImage(url, onReady)`。
+- `src/scene/artDraw.ts`：裁切和小图放大。`cropSource` 和 `scripts/art-review.ts` 对照页的 CSS 同一套算法（cover 铺满，
+  focus 定位，以 focus 为中心放大 zoom 倍），用户在对照页看到的取景就是游戏里的取景。
+- `src/scene/canvasArt.ts`：卡面、头像、英雄技能按钮、关键词图标的贴图。
+- `/dev/art`（`src/dev/art/`）：配图总览，所有卡（含衍生物）和四个英雄技能，每张卡排悬停大卡、手牌、场上随从三处；
+  `?only=generate` 只看小图放大的那 16 张；"保存"把整页存到 `.dev-output/art-gallery-<页>.png`。
+
+### 用哪张图
+
+- 卡面原画窗口：英雄卡用竖版原画（loading.jpg，取上部，focus y 0.2）。M3 时英雄卡的原画窗口其实画的是 120 像素头像，
+  放大三倍偏糊，这次按 spec 5.4"原画用竖版加载图裁切"改了。其余卡用映射表的 art 按 crop 裁；英雄技能（悬停大卡）用技能图标。
+- 场上随从头像：英雄用 Data Dragon 头像；其余用映射表的 icon，没有 icon 的（德玛西亚士兵）从 art 按 crop 裁出方形。
+- 图没加载好或缺失时退一级：原画 → 方图 → 纯色加名字前两个字。加载好后贴图重画、`needsUpdate`。
+- 关键词小图标：嘲讽、潜行、剧毒、吸血、风怒、冲锋、突袭、法术伤害（右下角叠 +N）、沉默。潜行按 spec 5.4 补了图标，
+  圣盾、冻结在 3D 里已经有外壳和冰块，不进这一排。
+
+### 小图放大
+
+映射表里标了 `generate` 的 16 张（13 张峡谷头像 128 像素、虚空蠕虫、法力药水 64 像素物品图标；失去坐骑的克烈是皮肤原画，不糊）
+放进 380 像素宽的窗口要放大三到六倍。放大倍数超过 2 时（`UPSCALE_SOFT`）：
+
+- 在离屏 canvas 上分步放大，每步不超过 2 倍，用 `imageSmoothingQuality = 'high'`，比一步放大三倍的双线性插值少一些方块感；
+- 放大后做一次轻微反锐化（3×3 拉普拉斯，强度 0.35），把发虚的边缘提一点；
+- 窗口四周压一圈暗角，再叠一层很淡的固定颗粒，盖住插值出来的平滑色块。
+
+英雄技能按钮的 64 像素图标放大到 200 也走这条路。这只是让它们不至于太糊，真正的解决是映射表的生成大图清单。
+
+### 悬停大卡去掉清漆
+
+悬停大卡浮在镜头前左上方，正好在方向光的镜面反射方向上，卡面的清漆层（clearcoat 0.75）把整张卡照成一片白，原画几乎看不见
+（原来是纯色块，不太显眼）。试过 clearcoat 0.15 仍然发白，所以悬停大卡关掉清漆（`CardView.setMatte()`，`table.ts` 的
+`showInspect` 建卡时调一次），手牌和其他卡不变。
+
+### 卡面正文折行（2026-10-20）
+
+- troika-three-text 只在空白处折行（`BREAK_AFTER_CHARS` 是空白和几个连字符），中文整句没有空白，`maxWidth` 不起作用，
+  纳什男爵、李青这些长文本排成一整行溢出卡外。现在由 `scene/cardTextLayout.ts` 自己断行，把换行符写进文本：中文逐字可断，
+  连续的半角字符（"+1/+1"、"-2/-2"）不断，逗号句号冒号等不放行首、左括号不放行尾（碰到时把上一个字一起带下去）。
+- 宽度用 canvas 按卡面字体量（同一份 woff 另外注册成 FontFace，`preloadCardFont` 一起等它加载完）；字体没加载好时用
+  近似宽度（中文 1 em、半角 0.55 em），加载好后把之前建的卡重排一次。troika 的 `maxWidth` 比排版宽度宽 0.06，量出来的宽度
+  和 troika 有细微出入时不会再被它折一次。
+- 文本框：随从卡排到 y 592 像素（底部两角攻击、生命圆章的顶边在 594），法术卡排到 648。放不下时字号按 1、0.93、0.87、0.81、
+  0.75 逐级缩。按现在的卡池，最长的泰达米尔、纳什男爵也只要两行、不用缩字号；`tests/presentation-card-text.test.ts` 逐张核对
+  每张卡的正文在框内、字号不低于 75%、行首没有标点、数值没被断开。`/dev/art?only=long` 看正文最长的 16 张。
+
+### 关键词图标放大和悬停说明（2026-10-20）
+
+- 每格 0.25 世界单位见方（原来约 0.13），1080p 下约 22 像素。深色底托、黑边、金边，压在任何头像上都看得清。整排贴着底座顶面的
+  远侧边、一大半探出边外，只压住头像最上面一条，不挡头像主体和近侧的两个徽章。贴图固定 6 格宽，空格子不参与射线检测
+  （`iconPlane.raycast` 只认画了图标的格子），不会把底座背后的空地算成悬停这个随从。
+- 悬停说明：输入（interaction.ts）只认到随从这一级，`scene/keywordHover.ts` 另外对图标那一排做射线检测，按交点 uv 查是哪个
+  关键词，写进界面状态 `hover.keyword`。悬停随从时本来就显示放大卡和关键词面板（`ui/HoverCard.tsx`，说明来自 `KEYWORD_HELP`），
+  指针停在某个图标上时那一条排到最前、高亮，两边是同一份文字。
+- `/dev/art?view=board`（`src/dev/art/board.ts`）：用对局的舞台、镜头、灯光摆一个固定局面，场上随从带全部图标，手牌放正文最长
+  的几张，检查 1080p 下的实际观感；`saveBoard()` 存原尺寸截图。
+
+## M4 战斗事件（分镜 E11 到 E19、E24，2026-10-20）
+
+攻击、受伤、英雄受伤、治疗、死亡、圣盾、冻结和解冻、潜行、增益、减益、沉默按 docs/m4-storyboard.md 做到成品。
+参数都在 `src/presentation/animations/combat.ts`（`ATTACK`、`HIT`、`HERO_HIT`、`HEAL`、`DEATH`、`SHIELD`、`FREEZE`、
+`STEALTH`、`BUFF`），飘字在 `fx/combatText.ts` 的 `FLOAT_TEXT`，画面反馈在 `fx/screen.ts` 的 `SCREEN`，裂纹在
+`fx/nexusCracks.ts` 的 `CRACKS`。/dev/fx 的"战斗事件"面板能逐项调，调好后改这些对象的默认值。
+
+### 文件
+
+- 动画模块：`attack.ts`、`damage.ts`（随从和英雄）、`heal.ts`、`death.ts`、`shieldBroken.ts`、`freeze.ts`、`unfreeze.ts`、
+  `stealthLost.ts`、`buff.ts`（增益、减益、获得关键词）、`silence.ts`。`combat.ts` 放参数和共用小工具（声像、命中声、
+  头像自发光、抖动、飘字位置、`statusEnter`）。
+- 特效：`fx/screen.ts`（震屏 S1 到 S3 和 S3 白闪、边缘泛红、棋盘闪）、`fx/combatText.ts`（飘字）、`fx/shatter.ts`（随从碎裂）、
+  `fx/nexusCracks.ts`（枢纽裂纹）、`fx/statusFx.ts`（冰层、圣盾外壳、潜行、沉默的进出过程）、`fx/warm.ts`（预编译着色器）。
+- 调试台：`src/dev/combatScenarios.ts`（25 个战斗场景、满场 14 随从）、`src/dev/recorder.ts`（录帧、测帧耗时）。
+
+### 同组并行和每步只一次的反馈（分镜 1.4、1.6、1.7）
+
+- `Anim` 多了 `order`（目标在画面上的横坐标）、`stagger`、`cues`。`compose.ts` 在没有攻击的一步里按 order 的名次错开：
+  同一个目标上的几个事件（伤害加冻结）算同一格。有攻击的一步不错开，攻击方和被攻击方同一个命中帧。
+- cue 是"一步里只能出现一次"的反馈：`shake`（取最重）、`impact:hit`（命中声取最重）、`impact:death`、`impact:shield`、
+  `voice`（取最晚的，也就是最后死的那个）、`buff_ring`、`boardflash`。同一频道多于一条且带 `many` 时改调 `many`：
+  群体增益用一圈大金环盖住整排，群体冻结闪一次冰色棋盘。时刻放在这一频道最早的那条（波的第一个命中帧）。
+- 震屏频率：S2 以上每回合最多 3 次、1 秒内不重复，超出降一档（`allowShake`，按 `scene.view.turn` 和全局时间线计时）。
+  同一时刻只有一个震屏，新的比正在跑的剩余幅度大才替换。
+- 全局只有这一份震屏（2026-10-20 合 main 时统一）：`fx/flow.ts` 原来那份 S1 到 S3 删掉，`gameOver.ts` 改用
+  `shakeAt(scene, 3, { force: true, flash })` 和 `shakeAt(scene, 1)`；`TableScene.shake` 也删了，出随从的高费 S1 改用 `shakeAt`。
+  观感按 flow.ts 那份对齐：幅度按镜头到注视点的距离和视角换算（开局推镜头时会变），每帧一个随机偏移、线性衰减、z 方向减半；
+  S3 白闪是后处理整体亮度加 0.15 再退（`stage.look.brightness`），胜利 60ms、失败 30ms。
+- `AnimContext.step` 是同一步的全部事件：受伤模块据此判断自己是不是攻击撞击的一部分（是的话火花由攻击在撞击点放）。
+
+### 实现时定下的细节
+
+- 尺寸单位：分镜的"底座高"取随从底座在画面上的高度，也就是正方形底座的边长 1.5（和 `PLAY_MINION` 的 hover、
+  chargeLift 的换算一致），槽距 1.95。
+- 攻击方受到的反击伤害，飘字留在它自己的槽位上方，不跟着冲到目标那里的 body。飘字"上方"是画面上的上方：
+  往上抬再往远处挪一点，不盖住徽章。英雄的飘字在生命徽章右上，避开头像。
+- 飘字的上升段 300ms 按分镜，升到顶后再停 80ms、淡出 250ms；淡出不占这一步的时长。字号三档 0.46 / 0.6 / 0.8，
+  英雄受伤升一档（"红色大号"）。
+- 命中声：≤ 2 `combat.hit_light`，≥ 3 `combat.hit_heavy`；没有专门的低频素材，≥ 5 时叠一层 `combat.hero_hit`。
+  沉默没有专门的消音声，用 `card.debuff`。所有战斗声都按目标横坐标传 pan（x / 8）。
+- 死亡：定格时头像换成去饱和、亮度 0.6 的贴图（canvas 滤镜生成，按原贴图缓存），两个徽章消失；碎裂是真的 3D 碎块
+  （底座连同头像切 3 × 3，顶面贴对应那片头像），落到台面滑一小段，随后缩小消失，不靠透明度淡出。
+- 圣盾打破：外壳切 6 瓣飞散（和外壳同一组菲涅尔着色器参数），护盾环放大熄灭，随从白闪 60ms，"吸收"白字由受伤事件弹。
+- 冻结：冰层按高度从 0 长到满（裁切用缩放加位移做），覆冰时闪一层冰色；两个徽章蒙淡蓝（`StatBadge.setFrost`，
+  MinionView 按显示局面设）。
+- 潜行：常驻透明度改成分镜的 0.55（`STEALTH_OPACITY`）。分镜说的"视野遮蔽图标"没有单独做，用原来的那团烟当遮蔽标记，
+  进入时淡入、失去时淡出。带潜行、圣盾、嘲讽入场的随从（提莫、卡兹克、泰隆、阿卡丽、劫和影分身等）在 `minionSummoned.ts` 里
+  调 `statusEnter` 播一遍进入表现。
+- 枢纽裂纹：每级两层，台座侧面一圈、金属沿顶面一圈（画面里侧面大多被头像圆盘挡住，顶面才看得到）。生命回升到阈值以上时
+  那一级退掉。生命低于 10 的小灯规则不变，受伤的命中帧调 `setHealth`，灯在同一帧灭。
+- 边缘泛红：全屏四边形画在色调映射之前的线性 HDR 缓冲里，台面亮度只有 0.05 左右，直接叠 35% 纯红经过 ACES 是满屏通红。
+  现在透明度主要用来压暗边缘，红色按 `SCREEN.edgeGain` 压低；白闪、棋盘闪按 `flashGain` 压低。
+
+### 没做的（分镜里有、这次没有）
+
+- 不同 group 之间"上一组收尾到 60% 时下一组开始"（分镜 1.7）：导演仍然一步播完再播下一步。
+- 亡语的 trigger 在合拢开始时起（E14）：同上，是跨步的时序。
+
+### 共享文件的改动
+
+- `compose.ts`：错开成波、cue 挑选（见上）；`startTimes` 只数时间线，不数 cue 的回调。
+- `player.ts`：给动画模块多传一个 `step`。
+- `animations/types.ts`：`Anim` 的 `order`、`stagger`、`cues`，`AnimContext.step`。
+- `minionSummoned.ts`：入场后调 `statusEnter`（两行）。
+- `scene/minionView.ts`：`ice`、`shell`、`smoke`、`tauntRim` 改成只读公开；冻结时徽章蒙蓝；潜行透明度用 `STEALTH_OPACITY`。贴图部分没动。
+- `scene/statBadge.ts`：`pop` 按分镜（1.25 倍、180ms、闪色 120ms），加 `setFrost`、`flashShield`。
+- `scene/table.ts`：构造时调 `warmCombatFx`（一行）；删掉旧的 `shake()`。
+- `fx/flow.ts`、`animations/gameOver.ts`：震屏改用 `fx/screen.ts`（见上）。
+- `scene/dispose.ts`：`killTree` 不再逐个物件调 `killTweensOf`，改成全部补间扫一遍（见下面"性能"）。
+- `src/dev/vitePlugin.ts`：截图接口收 JPEG，`dir=` 存到子目录（录帧用）。
+
+### 调试台和录帧
+
+- /dev/fx 的"战斗事件"面板：选场景、伤害量，"播放场景"（C）；"满场 14 个随从"、"满场同时受伤加死亡"做压力测试。
+  场景包括随从互撞、打死随从、打英雄、打在圣盾上、风怒、法术单体、群体、群体打死、英雄轻伤和重伤、治疗、单个和同时死亡、
+  冻结、群体冻结、解冻、圣盾获得和打破、潜行进入和失去、增益、群体增益、减益、沉默。
+- 控制台 `bench.recordCombat(场景, 名字, { slow, everyNth, amount })`：重置棋盘、接管 GSAP 时钟逐帧推进、存 JPEG 到
+  `.dev-output/rec/<名字>/`。`bench.benchCombat(局面, 事件, 秒)`：固定步长推进、每帧读回一个像素等 GPU，返回平均、p95、
+  最慢几帧。
+- 录帧的坑：
+  - 画完要同步取图（`toDataURL` 紧跟在 `stage.frame` 后面）。中间让出一次任务，浏览器可能已经把绘图缓冲交出去清空了，
+    取到的是黑帧（录了一半才发现有三成黑帧）。
+  - 在主应用里录一段真实对局：自动驾驶会调 `player.fastForward()` 把全局时间线调到 3 倍，手动推时钟时再改回 1 倍，
+    新建的补间落在"过去"，一进来就跳到撞击帧。录之前把 `fastForward` 换成空函数，全程 1 倍。
+  - 改源码会触发 Vite 热更新整页刷新，后台跑着的录制会断，录的时候别改代码。
+
+### 性能（2026-10-20，Apple M4 Pro，Chrome 内置浏览器，1920×1080、像素比 1，单帧同步耗时 = update + 渲染 + 读回像素）
+
+| 场景 | 平均 | p95 | 最慢 | 超过 16.7ms 的帧 |
+| --- | --- | --- | --- | --- |
+| 满场 14 随从空转 2.5 秒 | 6.0ms | 7.5ms | 10.4ms | 0 / 151 |
+| 满场 14 随从同时受伤，接着同时死亡（第一次） | 5.9ms | 8.9ms | 26.8ms | 1 / 151 |
+| 同上（第二次） | 5.7ms | 8.7ms | 14.9ms | 0 / 151 |
+
+第一次的 26.8ms 是事件开始那一帧（14 个飘字的 canvas 贴图第一次上传）。过程中修掉的三处卡顿：
+
+- 碎块第一次用透明材质，是新的着色器组合，第一次碎裂现编译卡 60ms。改成和底座、头像同参数的不透明材质，淡出改成缩小；
+  全屏四边形和裂纹的着色器在 `TableScene` 建好时用 `compileAsync` 在后台编译（`fx/warm.ts`）。
+- `BoxGeometry` 六个面各是一组、各画一次，14 个随从同时碎时一帧 1500 次绘制。碎块几何体按 n × n 预先切好共用，
+  合成两组（顶面、其余），碎块不投影。
+- 随从销毁时 `dispose.ts` 对子树里每个物件、每个 position/rotation/scale 调 `killTweensOf`，每调一次扫一遍全部活着的补间；
+  满场同时死亡时一帧 700 次、9ms。改成把子树的目标放进集合、全部补间只扫一遍。
+
+M1 基准机上没测，合并后要在 M1 上用 `bench.benchCombat(bench.fullBoard(), () => bench.fullBoardWipe(bench.current.director.displayed), 2.5)` 再测一次。

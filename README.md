@@ -7,15 +7,26 @@
 - [设计规格](docs/spec.md)：规则、职业、关键词、效果模型、AI、界面与视听、架构、里程碑。
 - [初始卡池 v1](docs/cards-v1.md)：86 张卡、衍生物、预组卡组、实现分级。
 
-代码还没开始写。
+## 当前进度
+
+M1（规则引擎）：引擎、M1 卡池（中立、德玛西亚、弗雷尔卓德、四个英雄技能、全部衍生物）、L0 随机 AI、命令行对局。
+实现时补的细节见 [NOTES.md](NOTES.md)。
+
+```bash
+pnpm install
+pnpm test          # 单元测试
+pnpm typecheck     # 类型检查
+pnpm play          # 命令行里和 L0 随机 AI 打一局
+pnpm smoke         # L0 对 L0 自动打 200 局
+```
 
 ## 拉取素材
 
 英雄头像、竖版原画和语音不进 git，第一次 clone 之后在仓库根目录跑：
 
 ```bash
-node scripts/fetch-art.ts
-node scripts/fetch-voice.ts
+pnpm fetch:art     # 等于 node scripts/fetch-art.ts
+pnpm fetch:voice   # 等于 node scripts/fetch-voice.ts
 ```
 
 - 需要 Node 22.18 以上（直接运行 .ts），不需要先装依赖。

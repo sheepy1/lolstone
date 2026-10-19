@@ -3,14 +3,16 @@
 // 碎裂 350ms（线）：底座连同头像碎成 9 块，带重力散开、落到台面、淡出；碎裂帧 spark_light 和 death_shards 碎屑；
 // 合拢 270ms（落）：从碎裂的 250ms 处开始，相邻随从滑到新槽位。
 // 声音：碎裂声在碎裂帧；死亡台词再晚 120ms。同组多个死亡错开 50ms，碎裂声和台词都只放一条，台词放最后死的那个。
+// 亡语：下一组（亡语的 trigger）在相邻随从开始合拢时就开始，不等这一步播完。
 import { playVoice } from '../../audio';
 import { championOf } from '../../assets/manifest';
+import { getCard } from '../../engine';
 import { greyOut, shatterMinion } from '../fx/shatter';
 import { DEATH, hold, sfxAt, targetX } from './combat';
 import type { AnimModule, Cue } from './types';
 import { syncTo, tl } from './util';
 
-export const death: AnimModule<'death'> = (e, { scene, after }) => {
+export const death: AnimModule<'death'> = (e, { scene, before, after }) => {
   const D = DEATH;
   const t = tl();
   const m = e.target.kind === 'minion' ? scene.minion(e.target.instanceId) : undefined;
@@ -52,5 +54,11 @@ export const death: AnimModule<'death'> = (e, { scene, after }) => {
   const cues: Cue[] = [{ channel: 'impact:death', at: shatterAt, weight: 1, run: () => sfxAt('combat.death', x) }];
   const champ = championOf(e.cardId);
   if (champ) cues.push({ channel: 'voice', at: shatterAt + D.voiceDelay, weight: 1, run: () => playVoice(champ, 'ban') });
-  return { tl: t, cues, order: x, stagger: D.stagger };
+  // 收尾：相邻随从合拢这一段（分镜 1.7 组间重叠）。带亡语（且没被沉默）时，亡语的 trigger 在下一组，
+  // 分镜 E14 要它在合拢开始时就起：用 readyAt 直接指定
+  const closeAt = shatterAt + D.closeAt;
+  const target = e.target;
+  const vm = target.kind === 'minion' ? before.players[target.side].board.find((b) => b.instanceId === target.instanceId) : undefined;
+  const rattle = !vm?.silenced && (getCard(e.cardId).effects ?? []).some((eff) => eff.trigger === 'deathrattle');
+  return { tl: t, cues, order: x, stagger: D.stagger, tail: D.freeze + D.shatter + D.close - closeAt, readyAt: rattle ? closeAt : undefined };
 };

@@ -53,5 +53,6 @@ export const buff: AnimModule<'buff'> = (e, { scene, after }) => {
       },
     });
   }
-  return { tl: t, cues, order: x, stagger: B.stagger };
+  // 收尾：命中帧的闪光和徽章弹起之后（金环转完、金光退）
+  return { tl: t, cues, order: x, stagger: B.stagger, tail: B.tail };
 };

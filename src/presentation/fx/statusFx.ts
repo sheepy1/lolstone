@@ -5,6 +5,8 @@ import gsap from 'gsap';
 import * as THREE from 'three';
 import { MINION_BASE, MINION_TOP } from '../../scene/geometry';
 import type { MinionView } from '../../scene/minionView';
+import { drawKeywordIcon } from '../../scene/canvasArt';
+import { releaseTexture, shared } from '../../scene/dispose';
 import { fresnelMaterial, hdr } from './materials';
 
 // 潜行时底座和头像的透明度（m4-storyboard E19），MinionView 的常驻状态也用它
@@ -128,3 +130,54 @@ export function stripStatus(m: MinionView, duration: number): void {
   }
 }
 
+
+type Cell = { x: number; y: number; z: number; size: number };
+const cellGeo = shared(new THREE.PlaneGeometry(1, 1));
+
+// 关键词图标的出现和消失（spec 5.4 潜行的"视野被遮"图标，E19）。底座上沿那排图标是一张 canvas，单个格子没法单独淡入淡出，
+// 所以在那一格上叠一张同样的图标：
+// - in：从 1.8 倍大、透明压到原位，像盖章（那一格本身已经画上了图标，叠层落定后正好重合）；
+// - out：那一格已经擦掉了，叠层从原位缩小、淡出。cell 要在显示局面同步之前取（同步后那一格就没了）
+export function keywordStamp(m: MinionView, k: string, cell: Cell | null, mode: 'in' | 'out', duration: number): void {
+  if (!cell) return;
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d')!;
+  g.fillStyle = 'rgba(8,10,14,0.92)';
+  g.beginPath();
+  g.roundRect(2, 2, 124, 124, 22);
+  g.fill();
+  const drawn = drawKeywordIcon(g, k, 10, 10, 108, 108, 16, () => {});
+  if (!drawn) {
+    g.fillStyle = '#9090b0';
+    g.beginPath();
+    g.roundRect(10, 10, 108, 108, 16);
+    g.fill();
+  }
+  g.strokeStyle = '#c8aa6e';
+  g.lineWidth = 6;
+  g.beginPath();
+  g.roundRect(10, 10, 108, 108, 16);
+  g.stroke();
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false });
+  const mesh = new THREE.Mesh(cellGeo, mat);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.set(cell.x, cell.y + 0.006, cell.z);
+  mesh.renderOrder = 3;
+  m.body.add(mesh);
+  const st = { k: mode === 'in' ? 0 : 1 };
+  const apply = () => {
+    const s = mode === 'in' ? 1 + (1 - st.k) * 0.8 : 0.4 + st.k * 0.6;
+    mesh.scale.setScalar(cell.size * s);
+    mat.opacity = st.k;
+  };
+  apply();
+  const release = () => {
+    mesh.removeFromParent();
+    releaseTexture(tex);
+    mat.dispose();
+  };
+  gsap.to(st, { k: mode === 'in' ? 1 : 0, duration, ease: mode === 'in' ? 'power2.out' : 'power1.in', onUpdate: apply, onComplete: release, onInterrupt: release });
+}

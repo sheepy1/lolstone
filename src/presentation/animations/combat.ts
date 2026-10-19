@@ -10,7 +10,7 @@ import type { TableScene } from '../../scene/table';
 import { MINION_HEIGHT, MINION_SIZE, NEXUS, type Vec3 } from '../layout';
 import type { ShakeLevel } from '../fx/screen';
 import { screenShake } from '../fx/screen';
-import { shieldGain, stealthFadeIn } from '../fx/statusFx';
+import { keywordStamp, shieldGain, stealthFadeIn } from '../fx/statusFx';
 import type { Cue } from './types';
 
 // 分镜 1.3 的尺寸单位：底座高是随从底座在画面上的高度（正方形底座的边长），槽距是相邻两个随从中心的距离
@@ -73,6 +73,7 @@ export const HEAL = {
   glowFade: 0.3,
   motes: 12,
   stagger: 0.04,
+  tail: 0.28, // 收尾时长（分镜 1.7 组间重叠）：命中帧之后 120ms 以外都算
 };
 
 // E14 随从死亡
@@ -146,6 +147,8 @@ export const BUFF = {
   gatherTime: 0.2,
   strip: 0.1, // 沉默时状态收缩消失
   stagger: 0.04,
+  tail: 0.28, // 增益的收尾时长（分镜 1.7 组间重叠）：命中帧之后 120ms 以外都算
+  silenceTail: 0.25,
 };
 
 // ---------- 声音 ----------
@@ -246,6 +249,7 @@ export function statusEnter(scene: TableScene, id: number, keywords: readonly st
     sfxAt('combat.stealth', p.x);
     scene.particles.emit('stealth_smoke', { at: { x: p.x, y: 0, z: p.z }, count: STEALTH.enterSmoke });
     stealthFadeIn(m, STEALTH.enterFade);
+    keywordStamp(m, 'stealth', m.keywordCell('stealth'), 'in', STEALTH.enterFade);
   }
   if (keywords.includes('divine_shield')) shieldGain(m, SHIELD.gainTime, SHIELD.gainOver, SHIELD.ringFlash);
   if (keywords.includes('taunt')) gsap.fromTo(m.tauntRim.scale, { x: 1.35, y: 1, z: 1.35 }, { x: 1, y: 1, z: 1, duration: 0.25, ease: 'back.out(1.4)' });

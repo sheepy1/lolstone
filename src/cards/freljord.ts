@@ -28,7 +28,7 @@ export const FRELJORD_CARDS: CardDef[] = [
     keywords: ['taunt'], text: '嘲讽', champion: 'Braum',
   },
   {
-    id: 'freljord.sejuani', name: '瑟庄妮', type: 'minion', class: 'freljord', cost: 5, attack: 4, health: 5,
+    id: 'freljord.sejuani', name: '瑟庄妮', type: 'minion', class: 'freljord', cost: 5, attack: 3, health: 6,
     text: '战吼：冻结一个敌方随从', champion: 'Sejuani',
     effects: [{
       trigger: 'battlecry', target: { pick: 'enemy_minion' },
@@ -41,7 +41,7 @@ export const FRELJORD_CARDS: CardDef[] = [
     effects: [{ trigger: 'deathrattle', actions: [{ kind: 'summon', token: 'token.anivia_egg', count: 1, fx: 'frost' }] }],
   },
   {
-    id: 'freljord.nunu', name: '努努和威朗普', type: 'minion', class: 'freljord', cost: 5, attack: 4, health: 6,
+    id: 'freljord.nunu', name: '努努和威朗普', type: 'minion', class: 'freljord', cost: 5, attack: 3, health: 7,
     keywords: ['rush'], text: '突袭', champion: 'Nunu',
   },
   {

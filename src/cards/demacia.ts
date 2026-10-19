@@ -16,11 +16,11 @@ export const DEMACIA_CARDS: CardDef[] = [
     }],
   },
   {
-    id: 'demacia.vayne', name: '薇恩', type: 'minion', class: 'demacia', cost: 2, attack: 1, health: 3,
+    id: 'demacia.vayne', name: '薇恩', type: 'minion', class: 'demacia', cost: 2, attack: 2, health: 1,
     keywords: ['poisonous'], text: '剧毒', champion: 'Vayne',
   },
   {
-    id: 'demacia.poppy', name: '波比', type: 'minion', class: 'demacia', cost: 3, attack: 2, health: 3,
+    id: 'demacia.poppy', name: '波比', type: 'minion', class: 'demacia', cost: 3, attack: 1, health: 4,
     keywords: ['taunt', 'divine_shield'], text: '嘲讽，圣盾', champion: 'Poppy',
   },
   {
@@ -28,7 +28,7 @@ export const DEMACIA_CARDS: CardDef[] = [
     keywords: ['charge'], text: '冲锋', champion: 'XinZhao',
   },
   {
-    id: 'demacia.quinn', name: '奎因', type: 'minion', class: 'demacia', cost: 3, attack: 2, health: 2,
+    id: 'demacia.quinn', name: '奎因', type: 'minion', class: 'demacia', cost: 3, attack: 3, health: 2,
     text: '战吼：召唤一个 1/1 并具有突袭的瓦罗', champion: 'Quinn',
     effects: [{ trigger: 'battlecry', actions: [{ kind: 'summon', token: 'token.valor', count: 1, fx: 'physical' }] }],
   },
@@ -41,7 +41,7 @@ export const DEMACIA_CARDS: CardDef[] = [
     }],
   },
   {
-    id: 'demacia.fiora', name: '菲奥娜', type: 'minion', class: 'demacia', cost: 4, attack: 3, health: 4,
+    id: 'demacia.fiora', name: '菲奥娜', type: 'minion', class: 'demacia', cost: 4, attack: 4, health: 3,
     text: '决斗：本随从攻击时不受反击伤害', champion: 'Fiora', script: 'fiora_duel',
   },
   {
@@ -62,7 +62,7 @@ export const DEMACIA_CARDS: CardDef[] = [
     keywords: ['taunt'], text: '嘲讽', champion: 'Galio',
   },
   {
-    id: 'demacia.kayle', name: '凯尔', type: 'minion', class: 'demacia', cost: 6, attack: 5, health: 5,
+    id: 'demacia.kayle', name: '凯尔', type: 'minion', class: 'demacia', cost: 6, attack: 6, health: 4,
     text: '战吼：使一个友方随从获得圣盾', champion: 'Kayle',
     effects: [{
       trigger: 'battlecry', target: { pick: 'friendly_minion' },

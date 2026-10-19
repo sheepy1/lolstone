@@ -122,8 +122,8 @@ describe('每种事件', () => {
     expect(expectEvent(g.events, 'damage')).toMatchObject({
       amount: 1,
       shieldAbsorbed: 0,
-      healthBefore: 6,
-      healthAfter: 5,
+      healthBefore: 5,
+      healthAfter: 4,
       lethalPrevented: false,
       fx: 'fire',
     });
@@ -146,7 +146,7 @@ describe('每种事件', () => {
     g.play('特朗德尔', { target: g.m(1, '雷克塞') });
     const buffs = g.eventsOf('buff');
     buffs.forEach(expectEventShape);
-    expect(buffs[0]).toMatchObject({ attack: -2, health: -2, attackBefore: 3, attackAfter: 1, healthBefore: 6, healthAfter: 4, reason: 'effect' });
+    expect(buffs[0]).toMatchObject({ attack: -2, health: -2, attackBefore: 4, attackAfter: 2, healthBefore: 5, healthAfter: 3, reason: 'effect' });
     expect(buffs[1]).toMatchObject({ attack: 2, health: 2, attackAfter: 5, maxHealthAfter: 7 });
   });
 

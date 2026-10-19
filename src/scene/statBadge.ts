@@ -23,6 +23,7 @@ const bodyMats: Record<BadgeKind, THREE.MeshStandardMaterial> = {
 };
 const bezelMat = shared(new THREE.MeshStandardMaterial({ color: 0xc8aa6e, metalness: 0.85, roughness: 0.28, flatShading: true }));
 const ringMat = shared(glowMaterial(0xf2f6ff, 1.8));
+const FROST = new THREE.Color(0xbfe8ff);
 
 // 顶面的刻纹：攻击是剑，生命是血滴，颜色比徽章深一点
 function decal(kind: BadgeKind): THREE.CanvasTexture {
@@ -119,14 +120,34 @@ export class StatBadge extends THREE.Group {
     this.shieldRing.visible = on;
   }
 
-  // 数值变化时弹一下，tint 是闪的颜色（受伤红、治疗绿、增益金、减益紫）
-  pop(tint: number): gsap.core.Timeline {
+  // 数值变化时弹一下（m4-storyboard E12：1 → 1.25 → 1，180ms 弹），tint 是闪的颜色（受伤红、治疗绿、增益金、减益紫），
+  // flash 是闪色的时长。数字本身不插值，由调用方在同一帧跳到新值
+  pop(tint: number, scale = 1.25, duration = 0.18, flash = 0.12): gsap.core.Timeline {
     const t = gsap.timeline();
     const mat = this.bodyMesh.material;
+    gsap.killTweensOf(this.body.scale);
     t.call(() => mat.emissive.setHex(tint));
-    t.fromTo(mat, { emissiveIntensity: 1.2 }, { emissiveIntensity: 0, duration: 0.35, ease: 'power2.out', immediateRender: false }, 0);
-    t.fromTo(this.body.scale, { x: 1, y: 1, z: 1 }, { x: 1.35, y: 1.6, z: 1.35, duration: 0.09, ease: 'power2.out', immediateRender: false }, 0);
-    t.to(this.body.scale, { x: 1, y: 1, z: 1, duration: 0.3, ease: 'elastic.out(1, 0.45)' }, 0.09);
+    t.fromTo(mat, { emissiveIntensity: 1.4 }, { emissiveIntensity: 0, duration: flash, ease: 'power1.in', immediateRender: false }, 0);
+    const up = duration * 0.3;
+    t.fromTo(this.body.scale, { x: 1, y: 1, z: 1 }, { x: scale, y: scale, z: scale, duration: up, ease: 'power2.out', immediateRender: false }, 0);
+    t.to(this.body.scale, { x: 1, y: 1, z: 1, duration: duration - up, ease: 'back.out(1.4)' }, up);
+    return t;
+  }
+
+  // 冻结时徽章蒙一层淡蓝（E17），解冻时去掉
+  setFrost(on: boolean): void {
+    const mat = this.bodyMesh.material;
+    const base = bodyMats[this.kind].color;
+    if (on) mat.color.copy(base).lerp(FROST, 0.55);
+    else mat.color.copy(base);
+  }
+
+  // 获得圣盾：护盾环从大收到原位、亮起（E18，150ms）
+  flashShield(duration = 0.15): gsap.core.Timeline {
+    const t = gsap.timeline();
+    const ring = this.shieldRing;
+    ring.visible = true;
+    t.fromTo(ring.scale, { x: 1.6, y: 1.6, z: 1.6 }, { x: 1, y: 1, z: 1, duration, ease: 'back.out(1.4)' });
     return t;
   }
 
@@ -134,7 +155,7 @@ export class StatBadge extends THREE.Group {
   breakShield(): gsap.core.Timeline {
     const t = gsap.timeline();
     const ring = this.shieldRing;
-    t.to(ring.scale, { x: 1.8, y: 1.8, z: 1.8, duration: 0.25, ease: 'power2.out' });
+    t.to(ring.scale, { x: 1.7, y: 1.7, z: 1.7, duration: 0.12, ease: 'power2.out' });
     t.call(() => {
       ring.visible = false;
       ring.scale.setScalar(1);

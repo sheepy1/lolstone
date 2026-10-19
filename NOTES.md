@@ -754,7 +754,7 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
   - 横幅 Banner：暗色带子、金线、SDF 大字、光扫，沿镜头的"上"方向滑入滑出。
   - 先后手徽记 Emblem。
   - 从牌库飞进手牌的弧线飞行 `flyFromDeck`：飞到 40% 到 70% 之间绕长轴翻面。
-  - 震屏 `screenShake(S1/S2/S3)`：衰减噪声，S3 带白闪。
+  - 震屏：和战斗事件共用 `fx/screen.ts` 的 `screenShake` / `shakeAt`（见下面"M4 战斗事件"），胜负的 S3 带白闪、跳过频率限制。
   - 胜负大字 BigWord。
   - 爆牌的燃烧溶解 `burnAway`。
   - 时长参数在 `FLOW`。
@@ -877,3 +877,109 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
   指针停在某个图标上时那一条排到最前、高亮，两边是同一份文字。
 - `/dev/art?view=board`（`src/dev/art/board.ts`）：用对局的舞台、镜头、灯光摆一个固定局面，场上随从带全部图标，手牌放正文最长
   的几张，检查 1080p 下的实际观感；`saveBoard()` 存原尺寸截图。
+
+## M4 战斗事件（分镜 E11 到 E19、E24，2026-10-20）
+
+攻击、受伤、英雄受伤、治疗、死亡、圣盾、冻结和解冻、潜行、增益、减益、沉默按 docs/m4-storyboard.md 做到成品。
+参数都在 `src/presentation/animations/combat.ts`（`ATTACK`、`HIT`、`HERO_HIT`、`HEAL`、`DEATH`、`SHIELD`、`FREEZE`、
+`STEALTH`、`BUFF`），飘字在 `fx/combatText.ts` 的 `FLOAT_TEXT`，画面反馈在 `fx/screen.ts` 的 `SCREEN`，裂纹在
+`fx/nexusCracks.ts` 的 `CRACKS`。/dev/fx 的"战斗事件"面板能逐项调，调好后改这些对象的默认值。
+
+### 文件
+
+- 动画模块：`attack.ts`、`damage.ts`（随从和英雄）、`heal.ts`、`death.ts`、`shieldBroken.ts`、`freeze.ts`、`unfreeze.ts`、
+  `stealthLost.ts`、`buff.ts`（增益、减益、获得关键词）、`silence.ts`。`combat.ts` 放参数和共用小工具（声像、命中声、
+  头像自发光、抖动、飘字位置、`statusEnter`）。
+- 特效：`fx/screen.ts`（震屏 S1 到 S3 和 S3 白闪、边缘泛红、棋盘闪）、`fx/combatText.ts`（飘字）、`fx/shatter.ts`（随从碎裂）、
+  `fx/nexusCracks.ts`（枢纽裂纹）、`fx/statusFx.ts`（冰层、圣盾外壳、潜行、沉默的进出过程）、`fx/warm.ts`（预编译着色器）。
+- 调试台：`src/dev/combatScenarios.ts`（25 个战斗场景、满场 14 随从）、`src/dev/recorder.ts`（录帧、测帧耗时）。
+
+### 同组并行和每步只一次的反馈（分镜 1.4、1.6、1.7）
+
+- `Anim` 多了 `order`（目标在画面上的横坐标）、`stagger`、`cues`。`compose.ts` 在没有攻击的一步里按 order 的名次错开：
+  同一个目标上的几个事件（伤害加冻结）算同一格。有攻击的一步不错开，攻击方和被攻击方同一个命中帧。
+- cue 是"一步里只能出现一次"的反馈：`shake`（取最重）、`impact:hit`（命中声取最重）、`impact:death`、`impact:shield`、
+  `voice`（取最晚的，也就是最后死的那个）、`buff_ring`、`boardflash`。同一频道多于一条且带 `many` 时改调 `many`：
+  群体增益用一圈大金环盖住整排，群体冻结闪一次冰色棋盘。时刻放在这一频道最早的那条（波的第一个命中帧）。
+- 震屏频率：S2 以上每回合最多 3 次、1 秒内不重复，超出降一档（`allowShake`，按 `scene.view.turn` 和全局时间线计时）。
+  同一时刻只有一个震屏，新的比正在跑的剩余幅度大才替换。
+- 全局只有这一份震屏（2026-10-20 合 main 时统一）：`fx/flow.ts` 原来那份 S1 到 S3 删掉，`gameOver.ts` 改用
+  `shakeAt(scene, 3, { force: true, flash })` 和 `shakeAt(scene, 1)`；`TableScene.shake` 也删了，出随从的高费 S1 改用 `shakeAt`。
+  观感按 flow.ts 那份对齐：幅度按镜头到注视点的距离和视角换算（开局推镜头时会变），每帧一个随机偏移、线性衰减、z 方向减半；
+  S3 白闪是后处理整体亮度加 0.15 再退（`stage.look.brightness`），胜利 60ms、失败 30ms。
+- `AnimContext.step` 是同一步的全部事件：受伤模块据此判断自己是不是攻击撞击的一部分（是的话火花由攻击在撞击点放）。
+
+### 实现时定下的细节
+
+- 尺寸单位：分镜的"底座高"取随从底座在画面上的高度，也就是正方形底座的边长 1.5（和 `PLAY_MINION` 的 hover、
+  chargeLift 的换算一致），槽距 1.95。
+- 攻击方受到的反击伤害，飘字留在它自己的槽位上方，不跟着冲到目标那里的 body。飘字"上方"是画面上的上方：
+  往上抬再往远处挪一点，不盖住徽章。英雄的飘字在生命徽章右上，避开头像。
+- 飘字的上升段 300ms 按分镜，升到顶后再停 80ms、淡出 250ms；淡出不占这一步的时长。字号三档 0.46 / 0.6 / 0.8，
+  英雄受伤升一档（"红色大号"）。
+- 命中声：≤ 2 `combat.hit_light`，≥ 3 `combat.hit_heavy`；没有专门的低频素材，≥ 5 时叠一层 `combat.hero_hit`。
+  沉默没有专门的消音声，用 `card.debuff`。所有战斗声都按目标横坐标传 pan（x / 8）。
+- 死亡：定格时头像换成去饱和、亮度 0.6 的贴图（canvas 滤镜生成，按原贴图缓存），两个徽章消失；碎裂是真的 3D 碎块
+  （底座连同头像切 3 × 3，顶面贴对应那片头像），落到台面滑一小段，随后缩小消失，不靠透明度淡出。
+- 圣盾打破：外壳切 6 瓣飞散（和外壳同一组菲涅尔着色器参数），护盾环放大熄灭，随从白闪 60ms，"吸收"白字由受伤事件弹。
+- 冻结：冰层按高度从 0 长到满（裁切用缩放加位移做），覆冰时闪一层冰色；两个徽章蒙淡蓝（`StatBadge.setFrost`，
+  MinionView 按显示局面设）。
+- 潜行：常驻透明度改成分镜的 0.55（`STEALTH_OPACITY`）。分镜说的"视野遮蔽图标"没有单独做，用原来的那团烟当遮蔽标记，
+  进入时淡入、失去时淡出。带潜行、圣盾、嘲讽入场的随从（提莫、卡兹克、泰隆、阿卡丽、劫和影分身等）在 `minionSummoned.ts` 里
+  调 `statusEnter` 播一遍进入表现。
+- 枢纽裂纹：每级两层，台座侧面一圈、金属沿顶面一圈（画面里侧面大多被头像圆盘挡住，顶面才看得到）。生命回升到阈值以上时
+  那一级退掉。生命低于 10 的小灯规则不变，受伤的命中帧调 `setHealth`，灯在同一帧灭。
+- 边缘泛红：全屏四边形画在色调映射之前的线性 HDR 缓冲里，台面亮度只有 0.05 左右，直接叠 35% 纯红经过 ACES 是满屏通红。
+  现在透明度主要用来压暗边缘，红色按 `SCREEN.edgeGain` 压低；白闪、棋盘闪按 `flashGain` 压低。
+
+### 没做的（分镜里有、这次没有）
+
+- 不同 group 之间"上一组收尾到 60% 时下一组开始"（分镜 1.7）：导演仍然一步播完再播下一步。
+- 亡语的 trigger 在合拢开始时起（E14）：同上，是跨步的时序。
+
+### 共享文件的改动
+
+- `compose.ts`：错开成波、cue 挑选（见上）；`startTimes` 只数时间线，不数 cue 的回调。
+- `player.ts`：给动画模块多传一个 `step`。
+- `animations/types.ts`：`Anim` 的 `order`、`stagger`、`cues`，`AnimContext.step`。
+- `minionSummoned.ts`：入场后调 `statusEnter`（两行）。
+- `scene/minionView.ts`：`ice`、`shell`、`smoke`、`tauntRim` 改成只读公开；冻结时徽章蒙蓝；潜行透明度用 `STEALTH_OPACITY`。贴图部分没动。
+- `scene/statBadge.ts`：`pop` 按分镜（1.25 倍、180ms、闪色 120ms），加 `setFrost`、`flashShield`。
+- `scene/table.ts`：构造时调 `warmCombatFx`（一行）；删掉旧的 `shake()`。
+- `fx/flow.ts`、`animations/gameOver.ts`：震屏改用 `fx/screen.ts`（见上）。
+- `scene/dispose.ts`：`killTree` 不再逐个物件调 `killTweensOf`，改成全部补间扫一遍（见下面"性能"）。
+- `src/dev/vitePlugin.ts`：截图接口收 JPEG，`dir=` 存到子目录（录帧用）。
+
+### 调试台和录帧
+
+- /dev/fx 的"战斗事件"面板：选场景、伤害量，"播放场景"（C）；"满场 14 个随从"、"满场同时受伤加死亡"做压力测试。
+  场景包括随从互撞、打死随从、打英雄、打在圣盾上、风怒、法术单体、群体、群体打死、英雄轻伤和重伤、治疗、单个和同时死亡、
+  冻结、群体冻结、解冻、圣盾获得和打破、潜行进入和失去、增益、群体增益、减益、沉默。
+- 控制台 `bench.recordCombat(场景, 名字, { slow, everyNth, amount })`：重置棋盘、接管 GSAP 时钟逐帧推进、存 JPEG 到
+  `.dev-output/rec/<名字>/`。`bench.benchCombat(局面, 事件, 秒)`：固定步长推进、每帧读回一个像素等 GPU，返回平均、p95、
+  最慢几帧。
+- 录帧的坑：
+  - 画完要同步取图（`toDataURL` 紧跟在 `stage.frame` 后面）。中间让出一次任务，浏览器可能已经把绘图缓冲交出去清空了，
+    取到的是黑帧（录了一半才发现有三成黑帧）。
+  - 在主应用里录一段真实对局：自动驾驶会调 `player.fastForward()` 把全局时间线调到 3 倍，手动推时钟时再改回 1 倍，
+    新建的补间落在"过去"，一进来就跳到撞击帧。录之前把 `fastForward` 换成空函数，全程 1 倍。
+  - 改源码会触发 Vite 热更新整页刷新，后台跑着的录制会断，录的时候别改代码。
+
+### 性能（2026-10-20，Apple M4 Pro，Chrome 内置浏览器，1920×1080、像素比 1，单帧同步耗时 = update + 渲染 + 读回像素）
+
+| 场景 | 平均 | p95 | 最慢 | 超过 16.7ms 的帧 |
+| --- | --- | --- | --- | --- |
+| 满场 14 随从空转 2.5 秒 | 6.0ms | 7.5ms | 10.4ms | 0 / 151 |
+| 满场 14 随从同时受伤，接着同时死亡（第一次） | 5.9ms | 8.9ms | 26.8ms | 1 / 151 |
+| 同上（第二次） | 5.7ms | 8.7ms | 14.9ms | 0 / 151 |
+
+第一次的 26.8ms 是事件开始那一帧（14 个飘字的 canvas 贴图第一次上传）。过程中修掉的三处卡顿：
+
+- 碎块第一次用透明材质，是新的着色器组合，第一次碎裂现编译卡 60ms。改成和底座、头像同参数的不透明材质，淡出改成缩小；
+  全屏四边形和裂纹的着色器在 `TableScene` 建好时用 `compileAsync` 在后台编译（`fx/warm.ts`）。
+- `BoxGeometry` 六个面各是一组、各画一次，14 个随从同时碎时一帧 1500 次绘制。碎块几何体按 n × n 预先切好共用，
+  合成两组（顶面、其余），碎块不投影。
+- 随从销毁时 `dispose.ts` 对子树里每个物件、每个 position/rotation/scale 调 `killTweensOf`，每调一次扫一遍全部活着的补间；
+  满场同时死亡时一帧 700 次、9ms。改成把子树的目标放进集合、全部补间只扫一遍。
+
+M1 基准机上没测，合并后要在 M1 上用 `bench.benchCombat(bench.fullBoard(), () => bench.fullBoardWipe(bench.current.director.displayed), 2.5)` 再测一次。

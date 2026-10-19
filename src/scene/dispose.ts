@@ -13,12 +13,19 @@ export function shared<T extends HasUserData>(x: T): T {
 
 const isShared = (x: HasUserData | null | undefined) => !x || x.userData.shared === true;
 
+// 停掉一棵物件树上的全部动画。不用 killTweensOf：它对每个目标都扫一遍全部活着的补间，满场同时死亡时
+// 一帧光这一项就要 5 到 9ms。这里反过来，把树上的目标放进集合，全部补间只扫一遍
 function killTree(o: THREE.Object3D): void {
-  gsap.killTweensOf(o);
-  gsap.killTweensOf(o.position);
-  gsap.killTweensOf(o.rotation);
-  gsap.killTweensOf(o.scale);
-  for (const c of o.children) killTree(c);
+  const targets = new Set<object>();
+  o.traverse((c) => {
+    targets.add(c);
+    targets.add(c.position);
+    targets.add(c.rotation);
+    targets.add(c.scale);
+  });
+  for (const t of gsap.globalTimeline.getChildren(true, true, false) as gsap.core.Tween[]) {
+    if (t.targets().some((x) => targets.has(x as object))) t.kill();
+  }
 }
 
 const TEXTURE_KEYS = ['map', 'emissiveMap', 'alphaMap'] as const;

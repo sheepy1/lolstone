@@ -8,8 +8,15 @@ import { GSDevTools } from 'gsap/GSDevTools';
 import GUI from 'lil-gui';
 import { l0ChooseAction } from '../../ai/l0';
 import { installDefaultPool, PRESET_DECKS } from '../../cards';
-import { applyAction, createGame, listLegalActions, maskEvents, seedRng, type Action, type Fx, type GameState, type RngState, type Side } from '../../engine';
+import { applyAction, createGame, getCard, listLegalActions, maskEvents, seedRng, type Action, type Fx, type GameState, type RngState, type Side } from '../../engine';
 import { PLAY_MINION } from '../../presentation/animations/minionSummoned';
+import { ATTACK, BUFF, DEATH, FREEZE, HEAL, HERO_HIT, HIT, SHIELD, STEALTH } from '../../presentation/animations/combat';
+import { FLOAT_TEXT } from '../../presentation/fx/combatText';
+import { CRACKS } from '../../presentation/fx/nexusCracks';
+import { SCREEN } from '../../presentation/fx/screen';
+import { COMBAT_SCENARIOS, combatEvents, fullBoard, fullBoardWipe, type CombatScenario } from '../combatScenarios';
+import { measureFrames, recordFrames } from '../recorder';
+import type { PresentationEvent } from '../../presentation/events';
 import { DRAG, Interaction } from '../../scene/interaction';
 import { END_TURN } from '../../scene/endTurnButton';
 import { NEXUS_LAMP } from '../../scene/nexusLamps';
@@ -74,23 +81,32 @@ const settings = {
   bloomRadius: 0.55,
   play: () => play(),
   reset: () => build(),
+  combat: COMBAT_SCENARIOS[0] as CombatScenario,
+  amount: 3,
+  playCombat: () => playCombat(),
+  fullBoard: () => build(fullBoard(base, BOARD_CARDS)),
+  wipe: () => playEvents(fullBoardWipe(bench!.director.displayed)),
 };
 
-function build(): void {
+// 满场压力测试用的随从：两套预组里的随从牌
+const BOARD_CARDS = [...new Set([...PRESET_DECKS.ionia!, ...PRESET_DECKS.noxus!])].filter((id) => getCard(id).type === 'minion');
+
+function build(view: ViewState = base): void {
   if (bench) {
     for (const t of gsap.globalTimeline.getChildren(false, true, true)) t.kill();
     bench.interaction.destroy();
     bench.scene.dispose();
   }
-  const scene = new TableScene(base, stage);
+  const scene = new TableScene(view, stage);
   const player = createGsapPlayer(scene);
   player.resetSpeed = () => {}; // 慢放由调试台控制，队列播空时不改回 1 倍
   player.onTimeline = (tl) => {
     devtools?.kill();
     devtools = GSDevTools.create({ animation: tl, container: document.body, minimal: false, persist: false });
   };
-  const director = new Director(base, player.play);
-  const b: Bench = { scene, director, player, interaction: null as never, state: baseState, dirty: false };
+  const director = new Director(view, player.play);
+  // 改过场面的棋盘（满场压力测试）和真实局面对不上，不接受拖牌
+  const b: Bench = { scene, director, player, interaction: null as never, state: baseState, dirty: view !== base };
   const legal = (): Action[] | null => (director.busy || b.dirty || b.state.current !== 0 ? null : listLegalActions(b.state, 0));
   b.interaction = new Interaction(scene, {
     legal,
@@ -130,10 +146,66 @@ function play(): void {
     log.textContent = `${settings.kind}：当前棋盘造不出这个事件（比如场上没有随从了），先点"重置棋盘"`;
     return;
   }
+  playEvents(events);
+}
+
+function playEvents(events: PresentationEvent[]): void {
+  if (!bench) return;
   log.textContent = `播放 ${events.map((e) => e.kind).join(' + ')}（之后先"重置棋盘"再拖牌）`;
   bench.dirty = true;
   bench.interaction.refresh();
   bench.director.enqueue(events);
+}
+
+function playCombat(): boolean {
+  if (!bench) return false;
+  const events = combatEvents(settings.combat, bench.director.displayed, settings.amount);
+  if (!events) {
+    log.textContent = `${settings.combat}：当前棋盘造不出这个场景（比如需要的随从已经死了或没有圣盾），先点"重置棋盘"`;
+    return false;
+  }
+  playEvents(events);
+  return true;
+}
+
+// 录一个战斗场景的逐帧画面：先重置棋盘，原速和 slow 倍慢放各录一份。返回帧数
+async function recordCombat(scenario: CombatScenario, name: string, opts: { amount?: number; slow?: number; everyNth?: number; view?: ViewState; events?: () => PresentationEvent[] } = {}) {
+  build(opts.view ?? base);
+  settings.combat = scenario;
+  settings.amount = opts.amount ?? settings.amount;
+  gsap.globalTimeline.timeScale(1);
+  // 先把场景渲染稳定（头像贴图、SDF 字体在第一帧之后才就位）
+  for (let i = 0; i < 3; i++) stage.frame(1 / 60);
+  await new Promise((r) => setTimeout(r, 400));
+  let started = false;
+  const r = await recordFrames({
+    stage,
+    name,
+    slow: opts.slow ?? 1,
+    everyNth: opts.everyNth ?? 1,
+    start: () => {
+      started = opts.events ? (playEvents(opts.events()), true) : playCombat();
+    },
+    done: () => !started || !bench!.director.busy,
+    tail: 0.5,
+    maxSeconds: 8,
+  });
+  gsap.globalTimeline.timeScale(settings.timeScale);
+  return r;
+}
+
+// 量一个场景的每帧耗时（固定步长推进，渲染后读回像素等 GPU）
+async function benchCombat(view: ViewState | null, events: () => PresentationEvent[], seconds = 6) {
+  build(view ?? base);
+  for (let i = 0; i < 3; i++) stage.frame(1 / 60);
+  await new Promise((r) => setTimeout(r, 400));
+  return measureFrames({
+    stage,
+    start: () => playEvents(events()),
+    // 固定跑满 seconds，空场基准和带事件的可以直接比
+    done: () => false,
+    maxSeconds: seconds,
+  });
 }
 
 build();
@@ -144,6 +216,40 @@ ev.add(settings, 'kind', [...PRESENTATION_EVENT_KINDS]).name('事件类型');
 ev.add(settings, 'fx', ['physical', 'fire', 'frost', 'holy', 'shadow']).name('伤害 fx');
 ev.add(settings, 'play').name('播放（P）');
 ev.add(settings, 'reset').name('重置棋盘（R）');
+const combat = gui.addFolder('战斗事件（m4-storyboard E11 到 E19、E24）');
+combat.add(settings, 'combat', [...COMBAT_SCENARIOS]).name('场景');
+combat.add(settings, 'amount', 0, 10, 1).name('伤害 / 治疗 / 增益量');
+combat.add(settings, 'playCombat').name('播放场景（C）');
+combat.add(settings, 'fullBoard').name('满场 14 个随从');
+combat.add(settings, 'wipe').name('满场同时受伤加死亡');
+type Params = { [k: string]: number | Params | number[] };
+const tune = (title: string, obj: Params, ranges: Record<string, [number, number, number]> = {}, parent: GUI = combat) => {
+  const f = parent.addFolder(title);
+  for (const k of Object.keys(obj)) {
+    const v = obj[k];
+    if (typeof v === 'object' && !Array.isArray(v)) {
+      tune(k, v, ranges, f);
+      continue;
+    }
+    if (typeof v !== 'number') continue;
+    const [lo, hi, step] = ranges[k] ?? (Number.isInteger(v) && v >= 1 ? [0, Math.max(10, v * 3), 1] : [0, Math.max(1, v * 3), 0.005]);
+    f.add(obj, k, lo, hi, step);
+  }
+  f.close();
+};
+tune('攻击 ATTACK', ATTACK, { windupTilt: [0, 40, 1], dashTilt: [-40, 20, 1] });
+tune('受伤 HIT', HIT);
+tune('英雄受伤 HERO_HIT', HERO_HIT);
+tune('死亡 DEATH', DEATH);
+tune('治疗 HEAL', HEAL);
+tune('圣盾 SHIELD', SHIELD);
+tune('冻结 FREEZE', FREEZE);
+tune('潜行 STEALTH', STEALTH);
+tune('增益减益 BUFF', BUFF);
+tune('飘字 FLOAT_TEXT', FLOAT_TEXT as unknown as Params);
+tune('裂纹 CRACKS', CRACKS as unknown as Params);
+tune('画面反馈 SCREEN', SCREEN as unknown as Params);
+combat.close();
 const pace = gui.addFolder('节奏');
 pace.add(settings, 'timeScale', 0.05, 2, 0.05).name('全局速度（慢放）').onChange(applySettings);
 pace.add(settings, 'duration', 0.25, 3, 0.05).name('整步时长倍数').onChange(applySettings);
@@ -178,7 +284,6 @@ slam.add(PLAY_MINION, 'squashX', 1, 1.4, 0.01).name('压扁宽度');
 slam.add(PLAY_MINION, 'settle', 0.1, 0.8, 0.01).name('回弹时长');
 slam.add(PLAY_MINION, 'shockwaveCost', 0, 10, 1).name('冲击波费用');
 slam.add(PLAY_MINION, 'shakeCost', 0, 10, 1).name('震屏费用');
-slam.add(PLAY_MINION, 'shake', 0, 0.3, 0.005).name('震屏幅度');
 const look = gui.addFolder('枢纽方案（切换会重新加载）');
 const nexus = { style: new URLSearchParams(location.search).get('nexus') ?? 'b' };
 look.add(nexus, 'style', ['a', 'b', 'c']).name('方案').onChange((v: string) => {
@@ -255,7 +360,16 @@ endTurn.add({ press: () => bench?.scene.endTurn.press() }, 'press').name('按一
 window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyP') play();
   if (e.code === 'KeyR') build();
+  if (e.code === 'KeyC') playCombat();
 });
 
 // 控制台调试入口
-(window as unknown as { bench: unknown }).bench = { get current() { return bench; }, stage, settings, play, build, gsap };
+(window as unknown as { bench: unknown }).bench = {
+  get current() {
+    return bench;
+  },
+  stage, settings, play, build, gsap, base, playEvents, playCombat, recordCombat, benchCombat,
+  fullBoard: () => fullBoard(base, BOARD_CARDS),
+  fullBoardWipe,
+  scenarios: COMBAT_SCENARIOS,
+};

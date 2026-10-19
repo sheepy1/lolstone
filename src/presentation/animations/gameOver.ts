@@ -9,7 +9,8 @@ import gsap from 'gsap';
 import * as THREE from 'three';
 import { other, type Side } from '../../engine';
 import { playSfx } from '../../audio';
-import { BigWord, screenShake } from '../fx/flow';
+import { BigWord } from '../fx/flow';
+import { shakeAt } from '../fx/screen';
 import type { AnimModule } from './types';
 import { tl } from './util';
 
@@ -70,7 +71,7 @@ export const gameOver: AnimModule<'game_over'> = (e, { scene, viewer }) => {
     undefined,
     P.freeze,
   );
-  t.add(screenShake(stage, 'S3', won ? 0.06 : 0.03), P.freeze);
+  t.add(shakeAt(scene, 3, { force: true, flash: won ? 0.06 : 0.03 }), P.freeze);
   const after = P.freeze + P.burst;
   if (won) {
     // 变亮：环境光加 40%，偏暖；碎屑从上方飘落
@@ -92,7 +93,7 @@ export const gameOver: AnimModule<'game_over'> = (e, { scene, viewer }) => {
     t.fromTo(g.scale, { x: 1.15, y: 0.8, z: 1 }, { x: 1, y: 1, z: 1, duration: P.word * 0.55, ease: 'elastic.out(1, 0.45)', immediateRender: false }, wAt + P.word * 0.45);
     t.to(word.halo.material, { opacity: 1, duration: 0.12 }, wAt + P.word * 0.45);
     t.to(word.halo.material, { opacity: 0.55, duration: 0.5, ease: 'power2.out' }, wAt + P.word * 0.45 + 0.12);
-    t.add(screenShake(stage, 'S1'), wAt + P.word * 0.45);
+    t.add(shakeAt(scene, 1), wAt + P.word * 0.45);
   } else {
     // 压暗：饱和度 -50%、亮度 -30%、四边暗角
     t.to(stage.look, { saturation: -0.5, brightness: -0.3, vignette: 0.75, duration: P.dim, ease: 'power2.out' }, after);

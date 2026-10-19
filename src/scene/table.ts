@@ -30,6 +30,7 @@ import {
 import { Text } from 'troika-three-text';
 import { cardFontUrl } from '../assets/manifest';
 import { ParticleSystem } from '../presentation/fx/particles';
+import { warmCombatFx } from '../presentation/fx/warm';
 import type { ViewState } from '../presentation/viewState';
 import { CardView, glowMat as playableGlow } from './cardView';
 import type { CardStats } from './cardText';
@@ -192,6 +193,7 @@ export class TableScene {
       this.endTurn.tick(t);
     });
     this.sync(view, 0);
+    warmCombatFx(this); // 战斗特效（全屏泛红和白闪、枢纽裂纹）的着色器先在后台编译好
   }
 
   // 一盏投影的方向光加半球光（spec 5.4）。阴影贴图 2048，范围只罩住台面（spec 5.10）。
@@ -325,17 +327,6 @@ export class TableScene {
     const bl = toPage(-CARD_W / 2, -CARD_H / 2);
     const br = toPage(CARD_W / 2, -CARD_H / 2);
     return { left: bl.x, top: bl.y, width: br.x - bl.x };
-  }
-
-  // 镜头轻震（英雄受重伤）。幅度要小（spec 5.5）。
-  shake(strength = 0.12): gsap.core.Timeline {
-    const s = this.stage.cameraShake;
-    const t = gsap.timeline();
-    t.to(s, { x: strength, y: -strength * 0.5, duration: 0.04 });
-    t.to(s, { x: -strength, y: strength * 0.4, duration: 0.06 });
-    t.to(s, { x: strength * 0.5, y: 0, duration: 0.05 });
-    t.to(s, { x: 0, y: 0, duration: 0.05 });
-    return t;
   }
 
   // ---------- 同步 ----------

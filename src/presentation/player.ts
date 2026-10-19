@@ -48,7 +48,7 @@ export function createGsapPlayer(scene: TableScene, registry: AnimRegistry = ANI
     const viewer = before.viewer;
     const anims = step.events.map((e, i) => {
       const module = registry[e.kind] as (ev: PresentationEvent, ctx: Parameters<AnimRegistry['draw']>[1]) => ReturnType<AnimRegistry['draw']>;
-      return module(e, { scene, before: i === 0 ? before : after[i - 1], after: after[i], viewer });
+      return module(e, { scene, before: i === 0 ? before : after[i - 1], after: after[i], viewer, step: step.events });
     });
     const master = composeStep(anims);
     api.onTimeline?.(master);

@@ -1,9 +1,11 @@
-// 音效表（spec 5.7）。每类准备 2 到 3 个变体随机选，音高随机浮动正负 5%，同一音效同时最多 4 个实例。
-// M3 只有框架：表里的变体列表都是空的，play 什么也不播。M4 把 CC0 素材放进 public/audio/sfx/ 并填表，
-// 或者合成一张音效表（sprite）后把 src 换成 sprite 名。
+// 音效表（spec 5.7）。每个音效一个文件，是用户在试听页从 2 到 3 个候选里选定的（scripts/data/audio-sources.json 的 selected），
+// 文件在 public/audio/sfx/<id>.ogg|mp3，由 scripts/normalize-audio.ts 统一响度后生成。重复感靠音高随机浮动正负 5%，
+// 同一音效同时最多 4 个实例。
 import { Howl } from 'howler';
 import type { Fx } from '../engine';
 import { channelVolume } from './channels';
+import { sfxSrc } from './files';
+import { playMusic, type TrackId } from './music';
 
 export type SfxId =
   // 界面
@@ -18,6 +20,7 @@ export type SfxId =
   | 'card.play'
   | 'card.land'
   | `spell.${Fx}`
+  | 'spell.big'
   | 'card.buff'
   | 'card.debuff'
   | 'card.bounce'
@@ -41,6 +44,9 @@ export type SfxId =
   | 'hero_power.ionia'
   | 'hero_power.freljord'
   // 流程
+  | 'flow.game_start'
+  | 'flow.nexus_light'
+  | 'flow.nexus_explode'
   | 'flow.turn_start'
   | 'flow.turn_end'
   | 'flow.fatigue'
@@ -48,84 +54,115 @@ export type SfxId =
   | 'flow.defeat'
   | 'flow.mana';
 
-type SfxDef = { variants: string[]; volume: number };
+/**
+ * volume：这个音效相对其他音效的轻重。素材都已经统一过响度，这里只表达"悬停比按钮轻"这类有意的差别。
+ * music：这个键实际是一段音乐，交给音乐通道播（胜负收尾，播时停掉对局音乐）。
+ */
+type SfxDef = { volume: number; music?: TrackId };
 
 const MAX_INSTANCES = 4;
 const PITCH_JITTER = 0.05;
 
-const silent = (volume = 1): SfxDef => ({ variants: [], volume });
+const sfx = (volume = 1): SfxDef => ({ volume });
 
-// 音效表。键覆盖 spec 5.7 的全部分类。
+// 键覆盖 spec 5.7 的全部分类和 5.6 声音列里的开场音、枢纽点亮、群体法术、枢纽爆炸。
 export const SFX_TABLE: Record<SfxId, SfxDef> = {
-  'ui.hover': silent(0.4),
-  'ui.click': silent(),
-  'ui.button': silent(),
-  'ui.pickup': silent(),
-  'ui.drop': silent(),
-  'ui.cancel': silent(),
-  'card.draw': silent(),
-  'card.play': silent(),
-  'card.land': silent(),
-  'spell.physical': silent(),
-  'spell.fire': silent(),
-  'spell.frost': silent(),
-  'spell.holy': silent(),
-  'spell.shadow': silent(),
-  'card.buff': silent(),
-  'card.debuff': silent(),
-  'card.bounce': silent(),
-  'card.transform': silent(),
-  'card.burn': silent(),
-  'combat.swing': silent(),
-  'combat.hit_light': silent(),
-  'combat.hit_heavy': silent(),
-  'combat.hero_hit': silent(),
-  'combat.death': silent(),
-  'combat.shield_break': silent(),
-  'combat.freeze': silent(),
-  'combat.unfreeze': silent(),
-  'combat.stealth': silent(),
-  'combat.heal': silent(),
-  'combat.summon': silent(),
-  'hero_power.demacia': silent(),
-  'hero_power.noxus': silent(),
-  'hero_power.ionia': silent(),
-  'hero_power.freljord': silent(),
-  'flow.turn_start': silent(),
-  'flow.turn_end': silent(),
-  'flow.fatigue': silent(),
-  'flow.victory': silent(),
-  'flow.defeat': silent(),
-  'flow.mana': silent(0.5),
+  'ui.hover': sfx(0.4),
+  'ui.click': sfx(),
+  'ui.button': sfx(),
+  'ui.pickup': sfx(),
+  'ui.drop': sfx(),
+  'ui.cancel': sfx(),
+  'card.draw': sfx(),
+  'card.play': sfx(),
+  'card.land': sfx(),
+  'spell.physical': sfx(),
+  'spell.fire': sfx(),
+  'spell.frost': sfx(),
+  'spell.holy': sfx(),
+  'spell.shadow': sfx(),
+  'spell.big': sfx(),
+  'card.buff': sfx(),
+  'card.debuff': sfx(),
+  'card.bounce': sfx(),
+  'card.transform': sfx(),
+  'card.burn': sfx(),
+  'combat.swing': sfx(),
+  'combat.hit_light': sfx(),
+  'combat.hit_heavy': sfx(),
+  'combat.hero_hit': sfx(),
+  'combat.death': sfx(),
+  'combat.shield_break': sfx(),
+  'combat.freeze': sfx(),
+  'combat.unfreeze': sfx(),
+  'combat.stealth': sfx(),
+  'combat.heal': sfx(),
+  'combat.summon': sfx(),
+  'hero_power.demacia': sfx(),
+  'hero_power.noxus': sfx(),
+  'hero_power.ionia': sfx(),
+  'hero_power.freljord': sfx(),
+  'flow.game_start': sfx(),
+  'flow.nexus_light': sfx(),
+  'flow.nexus_explode': sfx(),
+  'flow.turn_start': sfx(),
+  'flow.turn_end': sfx(),
+  'flow.fatigue': sfx(),
+  'flow.victory': { volume: 1, music: 'victory' },
+  'flow.defeat': { volume: 1, music: 'defeat' },
+  'flow.mana': sfx(0.5),
 };
 
-const howls = new Map<string, Howl>();
+export const SFX_IDS = Object.keys(SFX_TABLE) as SfxId[];
+
+/** 有自己文件的音效（转给音乐通道的不算）。 */
+export function sfxFiles(id: SfxId): string[] | null {
+  return SFX_TABLE[id].music ? null : sfxSrc(id);
+}
+
+const howls = new Map<SfxId, Howl>();
 const playing = new Map<SfxId, number>();
 
-function howlFor(src: string): Howl {
-  let h = howls.get(src);
+function howlFor(id: SfxId, src: string[]): Howl {
+  let h = howls.get(id);
   if (!h) {
-    h = new Howl({ src: [src], preload: true });
-    howls.set(src, h);
+    h = new Howl({ src, preload: true });
+    howls.set(id, h);
   }
   return h;
 }
 
-// 最近播过的音效，调试和测试用（M3 没有真实音效时，从这里能看到每个事件都发出了音效请求）。
+// 预载全部音效，第一次播放时不用现等下载（加起来不到 1 MB）。音频初始化时调。
+export function preloadSfx(): void {
+  for (const id of SFX_IDS) {
+    const src = sfxFiles(id);
+    if (src) howlFor(id, src);
+  }
+}
+
+// 最近播过的音效，调试和测试用：从这里能看到每个事件都发出了音效请求。
 export const sfxLog: SfxId[] = [];
 
-export function playSfx(id: SfxId): void {
+/** pan：左右声像，-1 最左、0 居中、1 最右（spec 5.7 按棋盘位置做声像，表现层按物件在屏幕上的横坐标换算）。 */
+export type SfxOptions = { pan?: number };
+
+export function playSfx(id: SfxId, opts: SfxOptions = {}): void {
   sfxLog.push(id);
   if (sfxLog.length > 200) sfxLog.shift();
   const def = SFX_TABLE[id];
-  if (def.variants.length === 0) return;
+  if (def.music) {
+    playMusic(def.music);
+    return;
+  }
   const count = playing.get(id) ?? 0;
   if (count >= MAX_INSTANCES) return;
-  const src = def.variants[Math.floor(Math.random() * def.variants.length)];
-  const h = howlFor(src);
+  const h = howlFor(id, sfxSrc(id));
   const sound = h.play();
   h.volume(def.volume * channelVolume('sfx'), sound);
   h.rate(1 + (Math.random() * 2 - 1) * PITCH_JITTER, sound);
+  if (opts.pan) h.stereo(Math.max(-1, Math.min(1, opts.pan)), sound);
   playing.set(id, count + 1);
-  h.once('end', () => playing.set(id, Math.max(0, (playing.get(id) ?? 1) - 1)), sound);
+  const done = () => playing.set(id, Math.max(0, (playing.get(id) ?? 1) - 1));
+  h.once('end', done, sound);
+  h.once('stop', done, sound);
 }

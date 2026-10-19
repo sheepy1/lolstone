@@ -1,5 +1,5 @@
 {
-  "$comment": "音效和音乐的来源、授权和候选清单。fetch-sfx.ts 按 sources 下载，normalize-audio.ts 按 sounds 输出 public/audio/sfx|music/<id>/<序号>.ogg|mp3。只收 CC0：加来源前先在页面上确认授权，把依据写进 licenseEvidence。",
+  "$comment": "音效和音乐的来源、授权和候选清单。fetch-sfx.ts 按 sources 下载；normalize-audio.ts 只把每个 sounds 条目里 selected 指的那个候选（序号从 1 起，和试听页一致）做成 public/audio/sfx|music/<id>.ogg|mp3，没选中的候选留着记录，用 --candidates 可以重新生成试听用的全部候选。只收 CC0：加来源前先在页面上确认授权，把依据写进 licenseEvidence。",
   "checkedAt": "2026-10-19",
   "sources": {
     "kenney-interface-sounds": {
@@ -594,6 +594,7 @@
       "label": "悬停",
       "spec": "5.7 界面：悬停",
       "profile": "sfx",
+      "selected": 2,
       "candidates": [
         {
           "source": "kenney-ui-audio",
@@ -615,6 +616,7 @@
       "label": "点击",
       "spec": "5.7 界面：点击",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "kenney-ui-audio",
@@ -636,6 +638,7 @@
       "label": "按钮按下",
       "spec": "5.7 界面：按钮按下",
       "profile": "sfx",
+      "selected": 3,
       "candidates": [
         {
           "source": "kenney-interface-sounds",
@@ -657,6 +660,7 @@
       "label": "拖起手牌",
       "spec": "5.7 界面：拖起",
       "profile": "sfx",
+      "selected": 2,
       "candidates": [
         {
           "source": "kenney-casino-audio",
@@ -678,6 +682,7 @@
       "label": "放下手牌",
       "spec": "5.7 界面：放下",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "kenney-casino-audio",
@@ -699,6 +704,7 @@
       "label": "取消",
       "spec": "5.7 界面：取消",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "kenney-interface-sounds",
@@ -720,6 +726,7 @@
       "label": "抽牌（翻牌声）",
       "spec": "5.6 抽牌；5.7 卡牌：抽牌",
       "profile": "sfx",
+      "selected": 3,
       "candidates": [
         {
           "source": "kenney-casino-audio",
@@ -741,6 +748,7 @@
       "label": "出牌",
       "spec": "5.6 对手出牌；5.7 卡牌：出牌",
       "profile": "sfx",
+      "selected": 3,
       "candidates": [
         {
           "source": "kenney-casino-audio",
@@ -762,6 +770,7 @@
       "label": "随从砸落",
       "spec": "5.6 出随从：砸落声；5.7 卡牌：出牌落地",
       "profile": "sfx",
+      "selected": 2,
       "candidates": [
         {
           "source": "kenney-impact-sounds",
@@ -783,6 +792,7 @@
       "label": "爆牌（燃烧）",
       "spec": "5.6 爆牌；5.7 卡牌：爆牌",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "oga-catching-fire",
@@ -804,6 +814,7 @@
       "label": "增益",
       "spec": "5.6 增益；5.7 卡牌：增益",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "oga-wobbleboxx",
@@ -829,6 +840,7 @@
       "label": "减益、沉默（消音声）",
       "spec": "5.6 减益 / 沉默；5.7 卡牌：减益",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "kenney-digital-audio",
@@ -850,6 +862,7 @@
       "label": "回手",
       "spec": "5.6 回手；5.7 卡牌：回手",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "kenney-casino-audio",
@@ -871,6 +884,7 @@
       "label": "变形",
       "spec": "5.6 变形；5.7 卡牌：变形",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "oga-teleport-spell",
@@ -892,6 +906,7 @@
       "label": "法术：火",
       "spec": "5.6 出法术：火焰飞弹；5.7 法术施放：火",
       "profile": "sfx",
+      "selected": 2,
       "candidates": [
         {
           "source": "oga-80-cc0-rpg-sfx",
@@ -913,6 +928,7 @@
       "label": "法术：冰",
       "spec": "5.6 出法术：冰霜扩散；5.7 法术施放：冰",
       "profile": "sfx",
+      "selected": 2,
       "candidates": [
         {
           "source": "oga-ice-spells",
@@ -934,6 +950,7 @@
       "label": "法术：光",
       "spec": "5.6 出法术：光柱；5.7 法术施放：光",
       "profile": "sfx",
+      "selected": 2,
       "candidates": [
         {
           "source": "oga-magic-spell-1",
@@ -955,6 +972,7 @@
       "label": "法术：影",
       "spec": "5.6 出法术：暗影聚拢；5.7 法术施放：影",
       "profile": "sfx",
+      "selected": 3,
       "candidates": [
         {
           "source": "oga-dark-magic",
@@ -980,6 +998,7 @@
       "label": "法术：物理",
       "spec": "5.6 出法术：物理挥砍；5.7 法术施放：物理",
       "profile": "sfx",
+      "selected": 3,
       "candidates": [
         {
           "source": "oga-sword",
@@ -1002,6 +1021,7 @@
       "spec": "5.6 群体法术",
       "profile": "sfx",
       "inSfxTable": false,
+      "selected": 1,
       "candidates": [
         {
           "source": "oga-dark-magic",
@@ -1023,6 +1043,7 @@
       "label": "挥击（动作层）",
       "spec": "5.6 攻击：挥击声；5.7 战斗：挥击",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "oga-swishes",
@@ -1044,6 +1065,7 @@
       "label": "命中轻（材质层）",
       "spec": "5.6 攻击、受伤：命中声；5.7 战斗：命中轻",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "kenney-impact-sounds",
@@ -1065,6 +1087,7 @@
       "label": "命中重（材质层）",
       "spec": "5.6 攻击：按伤害大小选轻重；5.7 战斗：命中重",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "kenney-impact-sounds",
@@ -1086,6 +1109,7 @@
       "label": "英雄受伤（枢纽重击）",
       "spec": "5.6 英雄受伤：重击声；5.7 战斗：英雄受伤",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "kenney-impact-sounds",
@@ -1107,6 +1131,7 @@
       "label": "随从死亡（碎裂）",
       "spec": "5.6 随从死亡：碎裂声；5.7 战斗：死亡碎裂",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "oga-75-cc0-breaking",
@@ -1128,6 +1153,7 @@
       "label": "破盾",
       "spec": "5.6 圣盾被打破；5.7 战斗：破盾",
       "profile": "sfx",
+      "selected": 3,
       "candidates": [
         {
           "source": "oga-glass-break",
@@ -1149,6 +1175,7 @@
       "label": "结冰",
       "spec": "5.6 冻结；5.7 战斗：结冰",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "oga-ice-shatter",
@@ -1184,6 +1211,7 @@
       "label": "碎冰（解冻）",
       "spec": "5.6 冻结：解冻时碎开；5.7 战斗：碎冰",
       "profile": "sfx",
+      "selected": 2,
       "candidates": [
         {
           "source": "oga-ice-shatter",
@@ -1205,6 +1233,7 @@
       "label": "潜行（烟雾）",
       "spec": "5.6 潜行：烟雾声",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "oga-steam-hisses",
@@ -1230,6 +1259,7 @@
       "label": "治疗",
       "spec": "5.6 治疗：治疗声",
       "profile": "sfx",
+      "selected": 2,
       "candidates": [
         {
           "source": "oga-cure-magic",
@@ -1251,6 +1281,7 @@
       "label": "召唤衍生物（光点凝聚）",
       "spec": "5.6 召唤衍生物：召唤声",
       "profile": "sfx",
+      "selected": 2,
       "candidates": [
         {
           "source": "oga-magic-spell-3",
@@ -1272,6 +1303,7 @@
       "label": "德玛西亚：召集（士兵从光中落地）",
       "spec": "5.6 英雄技能；5.7 职业：德玛西亚",
       "profile": "sfx",
+      "selected": 2,
       "candidates": [
         {
           "source": "oga-horn",
@@ -1307,6 +1339,7 @@
       "label": "诺克萨斯：断头台（斧刃飞向枢纽）",
       "spec": "5.6 英雄技能；5.7 职业：诺克萨斯",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "oga-sword",
@@ -1328,6 +1361,7 @@
       "label": "艾欧尼亚：灵魄（灵魄飞弹）",
       "spec": "5.6 英雄技能；5.7 职业：艾欧尼亚",
       "profile": "sfx",
+      "selected": 3,
       "candidates": [
         {
           "source": "kenney-digital-audio",
@@ -1353,6 +1387,7 @@
       "label": "弗雷尔卓德：寒冰箭",
       "spec": "5.6 英雄技能；5.7 职业：弗雷尔卓德",
       "profile": "sfx",
+      "selected": 3,
       "candidates": [
         {
           "source": "oga-ice-shatter",
@@ -1385,6 +1420,7 @@
       "spec": "5.6 开局：开场音",
       "profile": "sfx",
       "inSfxTable": false,
+      "selected": 2,
       "candidates": [
         {
           "source": "oga-horn",
@@ -1411,6 +1447,7 @@
       "spec": "5.6 开局：枢纽点亮声",
       "profile": "sfx",
       "inSfxTable": false,
+      "selected": 1,
       "candidates": [
         {
           "source": "oga-wobbleboxx",
@@ -1432,6 +1469,7 @@
       "label": "回合开始",
       "spec": "5.6 回合开始：回合提示音；5.7 流程：回合开始",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "oga-100-cc0-sfx",
@@ -1453,6 +1491,7 @@
       "label": "结束回合（按钮声）",
       "spec": "5.6 结束回合：按钮声；5.7 流程：回合结束",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "kenney-interface-sounds",
@@ -1474,6 +1513,7 @@
       "label": "疲劳（低沉钟声）",
       "spec": "5.6 疲劳：低沉钟声；5.7 流程：疲劳",
       "profile": "sfx",
+      "selected": 3,
       "candidates": [
         {
           "source": "oga-100-cc0-sfx",
@@ -1495,6 +1535,7 @@
       "label": "法力变化",
       "spec": "5.6 法力变化：法力声",
       "profile": "sfx",
+      "selected": 1,
       "candidates": [
         {
           "source": "kenney-interface-sounds",
@@ -1517,6 +1558,7 @@
       "spec": "5.6 胜利、失败：枢纽爆炸（画面列有，声音列只写了音乐，这里补一个爆炸声）",
       "profile": "sfx",
       "inSfxTable": false,
+      "selected": 1,
       "candidates": [
         {
           "source": "oga-25-cc0-bang",
@@ -1539,6 +1581,7 @@
       "spec": "5.7 音乐：主菜单一首循环",
       "profile": "music",
       "loop": true,
+      "selected": 3,
       "candidates": [
         {
           "source": "oga-fantasy-orchestral",
@@ -1562,6 +1605,7 @@
       "spec": "5.7 音乐：对局一首循环，音量偏低",
       "profile": "music",
       "loop": true,
+      "selected": 2,
       "candidates": [
         {
           "source": "oga-bards-tale",
@@ -1586,6 +1630,7 @@
       "label": "胜利收尾",
       "spec": "5.6 胜利：胜利音乐；5.7 音乐：胜利短收尾。sfx.ts 的 flow.victory 和 music.ts 的 victory 指同一段，接的时候二选一",
       "profile": "stinger",
+      "selected": 1,
       "candidates": [
         {
           "source": "oga-victory-fanfare",
@@ -1613,6 +1658,7 @@
       "label": "失败收尾",
       "spec": "5.6 失败：失败音乐；5.7 音乐：失败短收尾。sfx.ts 的 flow.defeat 和 music.ts 的 defeat 指同一段，接的时候二选一",
       "profile": "stinger",
+      "selected": 2,
       "candidates": [
         {
           "source": "oga-medieval-defeat",
@@ -1637,6 +1683,7 @@
       "spec": "5.7 环境音：峡谷的风、水声、鸟叫，很轻",
       "profile": "ambience",
       "loop": true,
+      "selected": 2,
       "candidates": [
         {
           "mix": [
@@ -1699,5 +1746,6 @@
         }
       ]
     }
-  ]
+  ],
+  "selectedAt": "2026-10-19"
 }

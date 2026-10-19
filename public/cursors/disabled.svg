@@ -1,0 +1,13 @@
+<!-- 不可用：箭头压暗成灰色，右下角一个红色禁止徽记。热点 (3, 2) -->
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="grey" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#d9dde3"/><stop offset="1" stop-color="#6c737e"/>
+    </linearGradient>
+  </defs>
+  <path d="M3 2 L3 25 L9 19.4 L12.6 28 L17 26 L13.4 17.8 L21.6 17.8 Z" fill="none" stroke="#04070b" stroke-width="3.4" stroke-linejoin="round"/>
+  <path d="M3 2 L3 25 L9 19.4 L12.6 28 L17 26 L13.4 17.8 L21.6 17.8 Z" fill="#141a22" stroke="url(#grey)" stroke-width="1.5" stroke-linejoin="miter"/>
+  <circle cx="23" cy="23" r="6.6" fill="#04070b"/>
+  <circle cx="23" cy="23" r="5.2" fill="#2a0c0e" stroke="#ff5a4e" stroke-width="1.8"/>
+  <path d="M19.6 26.4 L26.4 19.6" stroke="#ff5a4e" stroke-width="1.8" stroke-linecap="round"/>
+</svg>

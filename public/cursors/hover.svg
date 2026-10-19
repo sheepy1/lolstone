@@ -1,0 +1,18 @@
+<!-- 可交互：同一个箭头整体提亮，外圈青色光，右上一颗四角星。热点 (3, 2)，和默认一致，切换时不跳 -->
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="0.4" stop-color="#ffe3a0"/><stop offset="1" stop-color="#c99545"/>
+    </linearGradient>
+    <linearGradient id="ink" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#2f6070"/><stop offset="1" stop-color="#0b1a26"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.4"/></filter>
+  </defs>
+  <path d="M3 2 L3 25 L9 19.4 L12.6 28 L17 26 L13.4 17.8 L21.6 17.8 Z" fill="#3ff0e0" opacity="0.75" filter="url(#glow)"/>
+  <path d="M3 2 L3 25 L9 19.4 L12.6 28 L17 26 L13.4 17.8 L21.6 17.8 Z" fill="none" stroke="#04070b" stroke-width="3.4" stroke-linejoin="round"/>
+  <path d="M3 2 L3 25 L9 19.4 L12.6 28 L17 26 L13.4 17.8 L21.6 17.8 Z" fill="url(#ink)" stroke="url(#gold)" stroke-width="1.6" stroke-linejoin="miter"/>
+  <path d="M5 7.5 L5 20.2 L8.6 16.8" fill="none" stroke="#b6fff7" stroke-width="1.1"/>
+  <path d="M24 3 L25.3 7.2 L29.5 8.5 L25.3 9.8 L24 14 L22.7 9.8 L18.5 8.5 L22.7 7.2 Z" fill="#fff6dc" stroke="#04070b" stroke-width="0.9" stroke-linejoin="round"/>
+  <circle cx="24" cy="8.5" r="1.2" fill="#3ff0e0"/>
+</svg>

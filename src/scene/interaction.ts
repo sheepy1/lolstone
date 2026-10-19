@@ -27,6 +27,9 @@ export type InteractionHost = {
   waiting(): boolean; // 对方行动中，鼠标显示等待
 };
 
+// 画布上的鼠标指针（图和兜底的系统指针在 src/ui/cursors.css）
+export type CursorKind = 'default' | 'hover' | 'grab' | 'target' | 'wait' | 'disabled';
+
 type Pick =
   | { kind: 'hand'; id: number }
   | { kind: 'minion'; id: number; side: 0 | 1 }
@@ -83,6 +86,7 @@ export class Interaction {
   private mode: Mode = { k: 'idle' };
   private hovered: HoverInfo | null = null;
   private hoveredDeck: 0 | 1 | null = null;
+  private hoverPick: Pick | null = null; // 指针下的物件，决定指针样式
   private readonly ray = new THREE.Raycaster();
   private readonly ndc = new THREE.Vector2();
   private readonly tablePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -120,14 +124,14 @@ export class Interaction {
     window.removeEventListener('pointerup', this.onUp);
     this.canvas.removeEventListener('contextmenu', this.onContext);
     window.removeEventListener('keydown', this.onKey);
-    this.canvas.style.cursor = 'default';
+    this.setCursor('default');
   }
 
   // 显示局面或合法操作变化后调用，刷新高亮。
   refresh(): void {
     const legal = this.host.legal();
     if (!legal && this.mode.k !== 'idle') this.cancel();
-    this.canvas.style.cursor = this.host.waiting() ? 'wait' : 'default';
+    this.syncCursor();
     if (!legal || this.scene.view.phase !== 'playing') {
       this.scene.setHighlights(null);
       return;
@@ -317,6 +321,7 @@ export class Interaction {
         gsap.killTweensOf([card.position, card.rotation, card.scale]);
         this.beginSpring(card);
         this.mode = { k: 'drag', card, handIndex, minion: false, options };
+        this.syncCursor();
         return;
       }
       const t = this.targetOf(this.pick());
@@ -358,6 +363,7 @@ export class Interaction {
     this.scene.layers.drag.add(card);
     this.beginSpring(card);
     this.mode = { k: 'drag', card, handIndex, minion, options };
+    this.syncCursor();
     // 剩下的手牌带弹性地重新排开
     this.scene.layoutHand(0.25, 'back.out(1.5)');
   }
@@ -509,6 +515,7 @@ export class Interaction {
   private startAim(a: Omit<Aim, 'k'>): void {
     this.setHover(null);
     this.mode = { k: 'aim', ...a };
+    this.syncCursor();
     this.scene.arrow.start(a.from, COLORS.target);
     this.scene.setTargetMarks({ targets: a.options.map((o) => o.target) });
   }
@@ -531,6 +538,7 @@ export class Interaction {
     if (!(action.kind === 'play_card' && action.position !== undefined)) this.scene.boardGap = null;
     this.blob.visible = false;
     this.mode = { k: 'idle' };
+    this.syncCursor();
     // 打出的牌留在松手的位置，card_played 动画接管它（takeHandCard 时清掉 draggingHand）
     this.host.submit(action);
   }
@@ -538,6 +546,7 @@ export class Interaction {
   cancel(): void {
     const m = this.mode;
     this.mode = { k: 'idle' };
+    this.syncCursor();
     this.scene.arrow.stop();
     this.scene.setTargetMarks(null);
     if (m.k === 'drag') this.returnCard(m.card);
@@ -551,6 +560,8 @@ export class Interaction {
   // ---------- 悬停 ----------
 
   private updateHover(hit: Pick | null): void {
+    this.hoverPick = hit;
+    this.syncCursor();
     const handId = hit?.kind === 'hand' ? hit.id : null;
     if (handId !== this.scene.hoveredHand && this.scene.view.phase === 'playing') {
       this.scene.hoveredHand = handId;
@@ -570,6 +581,41 @@ export class Interaction {
     if (hit?.kind === 'minion') return this.setHover({ kind: 'minion', instanceId: hit.id, side: hit.side });
     if (hit?.kind === 'hero_power') return this.setHover({ kind: 'hero_power', side: hit.side });
     this.setHover(null);
+  }
+
+  // ---------- 指针 ----------
+
+  private setCursor(kind: CursorKind): void {
+    if (this.canvas.dataset.cursor !== kind) this.canvas.dataset.cursor = kind;
+  }
+
+  // 按当前状态选指针：拿着牌、拉着箭头时固定；输入锁定（对方回合、动画）时等待；
+  // 否则看指针下的东西现在能不能操作：能点、能拖的亮起，自己回合里出不了的手牌显示不可用。
+  private syncCursor(): void {
+    const m = this.mode;
+    if (m.k === 'drag') return this.setCursor('grab');
+    if (m.k === 'aim') return this.setCursor('target');
+    const legal = this.host.legal();
+    if (!legal) return this.setCursor(this.host.waiting() || this.host.busy() ? 'wait' : 'default');
+    const hit = this.hoverPick;
+    const view = this.scene.view;
+    if (!hit) return this.setCursor('default');
+    if (view.phase === 'mulligan') {
+      const idx = hit.kind === 'hand' ? handIndexOf(view, hit.id) : -1;
+      return this.setCursor(legal.some((a) => a.kind === 'mulligan' && a.replace.includes(idx)) ? 'hover' : 'default');
+    }
+    const me = view.viewer;
+    let can: boolean | null = null; // null：这东西本来就不能操作，用默认指针
+    if (hit.kind === 'end_turn') can = this.scene.endTurn.mode === 'mine' && legal.some((a) => a.kind === 'end_turn');
+    else if (hit.kind === 'hand') {
+      const idx = handIndexOf(view, hit.id);
+      can = legal.some((a) => a.kind === 'play_card' && a.handIndex === idx);
+    } else if (hit.kind === 'minion' && hit.side === me) {
+      if (legal.some((a) => a.kind === 'attack' && a.attacker.kind === 'minion' && a.attacker.instanceId === hit.id)) can = true;
+    } else if (hit.kind === 'hero_power' && hit.side === me) {
+      if (legal.some((a) => a.kind === 'hero_power')) can = true;
+    }
+    this.setCursor(can === null ? 'default' : can ? 'hover' : 'disabled');
   }
 
   private setHover(h: HoverInfo | null): void {

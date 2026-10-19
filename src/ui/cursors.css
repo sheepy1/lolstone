@@ -1,0 +1,51 @@
+/* 海克斯风格的鼠标指针。图在 public/cursors/：<名>.png（32×32）和 <名>@2x.png（64×64），由同名 SVG 经
+   scripts/render-cursors.ts 渲染。每条规则写两遍：先写只有 1 倍图的 url() 兜底，再写 image-set()，不认识
+   image-set 的浏览器保留前一条。热点坐标按 32 像素的 1 倍图算。最后一项是图加载不出来时的系统指针。
+
+   | 状态     | 图        | 热点     | 系统兜底    | 用在哪 |
+   | 默认     | default   | (3, 2)   | default     | 页面、画布空闲 |
+   | 可交互   | hover     | (3, 2)   | pointer     | 按钮、链接、单选项；画布上能出的牌、能攻击的随从、可用的技能、结束回合 |
+   | 拖拽中   | grab      | (16, 16) | grabbing    | 画布上拿着一张牌 |
+   | 选目标   | target    | (16, 16) | crosshair   | 画布上拉出目标箭头 |
+   | 等待     | wait      | (16, 16) | wait        | 对方回合、动画锁定输入 |
+   | 不可用   | disabled  | (3, 2)   | not-allowed | 禁用的按钮；画布上自己回合里出不了的手牌 |
+
+   画布上的状态由 src/scene/interaction.ts 的 setCursor 写进 canvas 的 data-cursor。 */
+
+html,
+body,
+#stage canvas,
+#stage canvas[data-cursor='default'] {
+  cursor: url('/cursors/default.png') 3 2, default;
+  cursor: image-set(url('/cursors/default.png') 1x, url('/cursors/default@2x.png') 2x) 3 2, default;
+}
+
+#ui button,
+#ui a,
+#ui [role='radio'],
+#stage canvas[data-cursor='hover'] {
+  cursor: url('/cursors/hover.png') 3 2, pointer;
+  cursor: image-set(url('/cursors/hover.png') 1x, url('/cursors/hover@2x.png') 2x) 3 2, pointer;
+}
+
+#stage canvas[data-cursor='grab'] {
+  cursor: url('/cursors/grab.png') 16 16, grabbing;
+  cursor: image-set(url('/cursors/grab.png') 1x, url('/cursors/grab@2x.png') 2x) 16 16, grabbing;
+}
+
+#stage canvas[data-cursor='target'] {
+  cursor: url('/cursors/target.png') 16 16, crosshair;
+  cursor: image-set(url('/cursors/target.png') 1x, url('/cursors/target@2x.png') 2x) 16 16, crosshair;
+}
+
+#stage canvas[data-cursor='wait'] {
+  cursor: url('/cursors/wait.png') 16 16, wait;
+  cursor: image-set(url('/cursors/wait.png') 1x, url('/cursors/wait@2x.png') 2x) 16 16, wait;
+}
+
+#ui button:disabled,
+#ui [aria-disabled='true'],
+#stage canvas[data-cursor='disabled'] {
+  cursor: url('/cursors/disabled.png') 3 2, not-allowed;
+  cursor: image-set(url('/cursors/disabled.png') 1x, url('/cursors/disabled@2x.png') 2x) 3 2, not-allowed;
+}

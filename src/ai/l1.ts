@@ -16,6 +16,7 @@ import {
   type CardDef,
   type EffectAction,
   type GameState,
+  type MinionState,
   type Side,
   type TargetRef,
 } from '../engine/state';
@@ -98,18 +99,46 @@ function candidateActions(state: GameState, side: Side): Action[] {
   );
 }
 
-// 模拟一步后的评估分。增加了当前法力的动作（法力药水）本身不改变场面，单看一步永远不值得做，
-// 所以再往后看一步，取"做完它再做最好的一步"和"只做它"里高的那个。
+// 模拟一步后的评估分。有些动作做完本身不加分，价值在于打开了下一步（见 opensFollowUp），
+// 这类动作再往后看一步，取"做完它再做最好的一步"和"只做它"里高的那个。
 function scoreAction(state: GameState, side: Side, action: Action, w: EvalWeights, lookAhead: boolean): number {
   const r = applyAction(state, action);
   if (!r.ok) return -Infinity;
   let score = evaluate(r.state, side, w);
-  if (lookAhead && r.state.phase === 'playing' && r.state.players[side].mana.current > state.players[side].mana.current) {
+  if (lookAhead && r.state.phase === 'playing' && opensFollowUp(state, r.state, action, side)) {
     for (const next of candidateActions(r.state, side)) {
       score = Math.max(score, scoreAction(r.state, side, next, w, false));
     }
   }
   return score;
+}
+
+// 单看一步会低估的动作：
+// - 当前法力变多（法力药水）：本身不改变场面，单看一步永远不值得做。
+// - 本回合第一张牌，而手里还有连击牌：先出它，连击牌才有连击效果。
+// - 把自己的随从移回手牌（传送回城）：场面分少了，价值在重新打出、再触发一次战吼。
+// - 攻击后攻击者多了一次攻击机会（易消灭随从后可以再次攻击）：第二次攻击的价值要算在这次攻击上。
+function opensFollowUp(before: GameState, after: GameState, action: Action, side: Side): boolean {
+  const b = before.players[side];
+  const a = after.players[side];
+  if (a.mana.current > b.mana.current) return true;
+  if (action.kind === 'play_card') {
+    if (a.hand.some((c) => b.board.some((m) => m.instanceId === c.instanceId))) return true;
+    if (b.cardsPlayedThisTurn === 0 && a.hand.some((c) => c.cardId !== HIDDEN_CARD_ID && hasCombo(getCard(c.cardId)))) {
+      return true;
+    }
+  }
+  if (action.kind === 'attack' && action.attacker.kind === 'minion') {
+    const id = action.attacker.instanceId;
+    const was = b.board.find((m) => m.instanceId === id);
+    const now = a.board.find((m) => m.instanceId === id);
+    if (was && now && now.extraAttacks > was.extraAttacks) return true;
+  }
+  return false;
+}
+
+function hasCombo(def: CardDef): boolean {
+  return (def.effects ?? []).some((e) => e.trigger === 'combo');
 }
 
 // ---------- 斩杀 ----------
@@ -179,6 +208,8 @@ export function damageUpperBound(s: GameState, side: Side): number {
     swings += left;
     bestSwing = Math.max(bestSwing, left);
     minAttack = Math.min(minAttack, m.attack);
+    // 消灭随从后能再次攻击（易）：打死嘲讽不占用打脸的攻击次数，算作只能打随从的攻击
+    if (hasOnKillAttack(m)) tauntOnly += m.attack * killableTaunts(s, side, m.attack);
   }
 
   const cards: CardDef[] = me.hand.filter((c) => c.cardId !== HIDDEN_CARD_ID).map((c) => getCard(c.cardId));
@@ -234,6 +265,17 @@ export function damageUpperBound(s: GameState, side: Side): number {
   );
   const toFace = attackDamage + buff - (canRemoveTaunt ? 0 : Math.max(0, blocked - tauntOnly));
   return Math.max(0, toFace) + direct;
+}
+
+function hasOnKillAttack(m: MinionState): boolean {
+  return !m.silenced && (getCard(m.cardId).effects ?? []).some((e) => e.trigger === 'on_kill' && e.actions.some((a) => a.kind === 'extra_attack'));
+}
+
+// 敌方场上能被这么多攻击力一下打死的嘲讽随从数（圣盾的不算）。
+function killableTaunts(s: GameState, side: Side, attack: number): number {
+  return s.players[other(side)].board.filter(
+    (m) => hasKeyword(m, 'taunt') && !hasKeyword(m, 'stealth') && !hasKeyword(m, 'divine_shield') && m.health <= attack,
+  ).length;
 }
 
 // 斩杀搜索里只试可能有用的动作：打脸、打嘲讽、能加伤害或解嘲讽的牌。按"先打脸、再直伤、再其他"排序，

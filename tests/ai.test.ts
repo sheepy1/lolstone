@@ -60,6 +60,13 @@ describe('评估函数', () => {
     const dead = scenario().health(1, 0).build();
     expect(evaluate(dead.state, 0)).toBeCloseTo(1000 + 30);
   });
+
+  it('法力上限差每个水晶 2 分，上限按 10 封顶', () => {
+    const g = scenario().mana(0, 3, 5).mana(1, 4, 7).build();
+    expect(evaluate(g.state, 0)).toBeCloseTo(2 * (5 - 7));
+    const full = scenario().mana(0, 10, 10).mana(1, 4, 7).build();
+    expect(evaluate(full.state, 0)).toBeCloseTo(2 * (10 - 7));
+  });
 });
 
 describe('L1 换牌', () => {
@@ -158,6 +165,62 @@ describe('L1 交换', () => {
     const { actions } = playTurn(g.state);
     expect(actions[0]).toEqual({ kind: 'play_card', handIndex: 0 });
     expect(actions[1]).toMatchObject({ kind: 'play_card', handIndex: 0 });
+  });
+});
+
+describe('L1 往后多看一步的动作', () => {
+  it('2 费没有更好的用法时打凛冬将至', () => {
+    const g = scenario().classes('freljord', 'demacia').mana(0, 2).hand(0, ['凛冬将至']).build();
+    const { actions, state } = playTurn(g.state);
+    expect(actions[0]).toEqual({ kind: 'play_card', handIndex: 0 });
+    expect(state.players[0].mana.max).toBe(3);
+  });
+
+  it('有 2 费随从时先出随从，不打凛冬将至', () => {
+    const g = scenario().classes('freljord', 'demacia').mana(0, 2).hand(0, ['凛冬将至', '奥拉夫']).build();
+    expect(firstAction(g)).toMatchObject({ kind: 'play_card', handIndex: 1 });
+  });
+
+  it('手里有连击牌时先出别的牌，让连击生效', () => {
+    // 单看一步阿卡丽（+3.9）比近战小兵（+2.4）高；先出小兵再出阿卡丽，阿卡丽是 4/2
+    const g = scenario().classes('ionia', 'demacia').mana(0, 4).hand(0, ['阿卡丽', '近战小兵']).build();
+    const { actions, state } = playTurn(g.state);
+    expect(actions[0]).toMatchObject({ kind: 'play_card', handIndex: 1 });
+    const akali = state.players[0].board.find((m) => m.cardId === 'ionia.akali');
+    expect(akali?.attack).toBe(4);
+  });
+
+  it('用传送回城收回受伤的永恩，重新打出再触发战吼', () => {
+    const g = scenario()
+      .classes('ionia', 'demacia')
+      .mana(0, 6)
+      .board(0, [{ card: '永恩', health: 1 }])
+      .board(1, ['魔狼'])
+      .hand(0, ['传送回城'])
+      .build();
+    const { actions, state } = playTurn(g.state);
+    expect(actions[0]).toEqual({ kind: 'play_card', handIndex: 0, target: g.m(0, '永恩') });
+    expect(state.players[1].board).toHaveLength(0);
+    expect(state.players[0].board.map((m) => [m.cardId, m.health])).toEqual([['ionia.yone', 5]]);
+  });
+
+  it('易先消灭随从再用多出来的攻击打脸', () => {
+    // 只看一步打脸 4 分比消灭远程小兵（+1.7）高；算上消灭后的第二次攻击，先打随从更好
+    const g = scenario().classes('ionia', 'demacia').board(0, ['易']).board(1, ['远程小兵']).build();
+    const { actions } = playTurn(g.state);
+    expect(actions.slice(0, 2)).toEqual([
+      { kind: 'attack', attacker: g.m(0, '易'), target: g.m(1, '远程小兵') },
+      { kind: 'attack', attacker: g.m(0, '易'), target: g.hero(1) },
+    ]);
+  });
+
+  it('斩杀估算算上易打死嘲讽后的再次攻击', () => {
+    const g = scenario().classes('ionia', 'demacia').health(1, 4).mana(0, 0).board(0, ['易']).board(1, ['石甲虫']).build();
+    expect(findLethal(maskHidden(g.state, 0), 0, 2000)).toEqual({
+      kind: 'attack',
+      attacker: g.m(0, '易'),
+      target: g.m(1, '石甲虫'),
+    });
   });
 });
 

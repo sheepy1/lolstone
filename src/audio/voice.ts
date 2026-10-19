@@ -3,6 +3,7 @@
 import { Howl } from 'howler';
 import { voiceUrl } from '../assets/manifest';
 import { channelVolume } from './channels';
+import { withMp3 } from './files';
 import { duckMusic } from './music';
 
 type Which = 'choose' | 'ban';
@@ -18,8 +19,8 @@ export function preloadVoice(champion: string, which: Which, url = voiceUrl(cham
   if (known !== undefined) return Promise.resolve(known !== null);
   return new Promise((resolve) => {
     const h = new Howl({
-      src: [url],
-      format: ['ogg'],
+      // normalize-audio 在 ogg 旁边生成同名 mp3，浏览器不支持 ogg 时用它
+      src: withMp3(url),
       preload: true,
       onload: () => {
         voices.set(key, h);

@@ -12,6 +12,8 @@ export const SOURCES_JSON = path.join(REPO_DIR, 'scripts/data/audio-sources.json
 export const ASSETS_SRC = path.join(REPO_DIR, 'assets-src/audio');
 /** 每个来源下载、解压后的目录：assets-src/audio/sources/<来源 id>/。 */
 export const SOURCES_DIR = path.join(ASSETS_SRC, 'sources');
+/** normalize-audio.ts --candidates 的输出根目录，结构和 public/ 一样，给试听页用。 */
+export const CANDIDATES_DIR = path.join(ASSETS_SRC, 'candidates');
 
 /** 一个来源：一个素材包或单个文件，对应来源网站上的一个页面。 */
 export type Source = {
@@ -69,6 +71,8 @@ export type SoundEntry = {
   profile: Profile;
   inSfxTable?: boolean;
   loop?: boolean;
+  /** 选定的候选，序号从 1 起，和试听页一致。成品只做这一个。 */
+  selected: number;
   candidates: (Candidate & { note?: string })[];
 };
 
@@ -84,6 +88,13 @@ export async function loadSources(): Promise<SourcesFile> {
 
 export function candidateInputs(c: Candidate): Input[] {
   return 'mix' in c ? c.mix : [c];
+}
+
+/** 一个条目要用到的候选：只要成品时是选中的那个，要试听时是全部。 */
+export function usedCandidates(s: SoundEntry, all: boolean): Candidate[] {
+  if (all) return s.candidates;
+  const c = s.candidates[s.selected - 1];
+  return c ? [c] : [];
 }
 
 /** 来源里某个文件在本地的路径：单文件来源就是下载的文件，压缩包来源在解压目录里。 */

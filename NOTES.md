@@ -448,6 +448,150 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
 - 同类之间的轻重（悬停比按钮轻）不靠素材，靠 `src/audio/sfx.ts` 音效表的 volume。音效表的 volume 最大是 1，素材太轻
   就补不回来，所以宁可目标低一点。
 
+### 选定和接入（2026-10-19）
+
+- 用户在试听页听完，每类选了一个，记在清单的 `selected`。spec 5.7 原来写"每类 2 到 3 个变体随机选"，现在每类只有一个
+  文件，重复感靠音高随机浮动正负 5%。
+- `src/audio` 已经接好：
+  - `sfx.ts` 的 44 个键里，42 个各对应 `audio/sfx/<id>.ogg|mp3`；`flow.victory`、`flow.defeat` 转给音乐通道放胜负收尾
+    （停掉对局音乐，环境音不停）。补了 `spell.big`、`flow.game_start`、`flow.nexus_light`、`flow.nexus_explode` 四个键。
+  - `playSfx(id, { pan })` 支持左右声像，-1 到 1，表现层按物件横坐标换算后传进来。
+  - `initAudio()` 在解锁音频时预载全部音效，加起来不到 1 MB。
+  - `music.ts` 分两层：音乐层同一时刻一首（菜单、对局、收尾），环境音单独一层可以和对局音乐同时放；语音时两层一起压低。
+    循环曲用 Web Audio 解码播放，循环点没有缝。同一首循环曲在放时再调 `playMusic` 不会从头来。
+  - 语音的 Howl 带上同名 mp3 兜底。
+- 选中候选的说明：`card.play` 选的 3 号原素材很轻，放大了 19 dB，听的时候留意底噪；菜单音乐选的 3 号（Prepare your swords）
+  是普通曲子，循环时首尾可能有接缝；对局音乐 2 号、环境音 2 号是循环版。
+
+### 表现层还没调用的（留给 M4）
+
+| 音效或曲目 | 应该在哪里调 | 现在的情况 |
+| --- | --- | --- |
+| `ui.pickup`、`ui.drop`、`ui.cancel` | 拖起手牌、放下（落点合法）、拖回手牌或右键取消 | `src/scene/interaction.ts` 没有调用 |
+| `flow.game_start`、`flow.nexus_light` | 开局镜头推进、双方枢纽依次点亮（5.6 开局） | `gameStart.ts` 只有横幅 |
+| `flow.nexus_explode` | 胜负时枢纽爆炸 | `gameOver.ts` 只放收尾 |
+| `spell.big` | 群体法术（5.6），效果同时落到所有目标时 | `spellCast.ts` 一律按 fx 放 |
+| `combat.stealth` 进入潜行 | 5.6 潜行"进入时一卷烟雾" | 只在失去潜行时放 |
+| 战吼选目标"按 fx 类型" | 5.6 | `trigger.ts` 放的是 `ui.click` |
+| 声像 | 5.7 按棋盘位置左右声像 | 所有调用都没传 `pan` |
+| `playMusic('match')`、`playMusic('ambience')` | 进入对局时 | 没人调，菜单音乐会一直放进对局 |
+| `stopAmbience()` 或 `playMusic('menu')` | 回到主菜单时停环境音 | 主菜单会调 `playMusic('menu')`，但环境音要单独停 |
+
+### 踩过的坑
+
+- GSAP 动画去改已经销毁的物件会在 GSAP 的帧回调里抛错，那一帧之后所有动画都停住，导演永远等不到这一步结束。
+  所有销毁都先停掉子树上的全部动画（`scene/dispose.ts`），换局时停掉全局时间线上的全部动画。
+- 浏览器标签页或面板不可见时 requestAnimationFrame 停掉，GSAP 和渲染都不动，对局暂停，回来后继续。自动化验证时要在
+  页面里手动调 `gsap.ticker.tick()` 和 `melol.renderFrame()`；后台页面的 setTimeout 会被节流到几百毫秒一次，要精确
+  推进时间就用 MessageChannel 让出。CSS 动画在后台也不前进，截结算页前要关掉。
+- 自动化验证时要推进的是应用自己的 GSAP（`melol.gsap`）。从网络请求列表里 import 的 gsap 模块，在 Vite 重新预构建依赖后
+  可能是另一份实例，推它的时钟对应用没有作用。要截动画中间帧，最稳的办法是把全局时间线调慢
+  （`melol.gsap.globalTimeline.timeScale(0.05)`），不管页面在不在后台都有效。
+
+- 自动化录帧要完全接管 GSAP 的时钟：`gsap.ticker.sleep()` 之后再把 `gsap.ticker.wake` 换成空函数，然后每步
+  `gsap.updateRoot(T += 1/60)`、`stage.frame(1/60)`，再用 MessageChannel 让出一次（处理 promise 和 troika 的 worker 回复）。
+  GSAP 建新补间时会自己唤醒 ticker，不拦住就有两个时钟同时推全局时间线，时间来回跳，时间线开头的回调反复触发
+  （换牌的 takeHandCard 被调了几百次，留下几百张没销毁的牌）。手动推时钟时也不要快进：改全局时间线的 timeScale 会
+  按 ticker 的真实时间重新对齐，之后新建的补间全落在"未来"，永远播不完。
+- Vite 的 `server.watch.ignored` 不能写 `'**/.claude/**'`：在 `.claude/worktrees/<名>` 里起开发服务器时，项目自己的文件路径
+  也带 `.claude`，全被忽略，改了代码页面还是旧的。现在按相对项目根目录的路径判断，只忽略根目录下的 `.claude/`。
+- canvas 贴图的像素内存不在 JS 堆里，垃圾回收按堆的压力触发，飘字、横幅、血条这类一次性 canvas 只靠回收会越积越多，
+  连续自动对局几分钟后页面崩溃。释放 canvas 贴图时把 canvas 缩成 0×0（`releaseTexture`），像素内存马上还回去。
+- 设备像素比 2 时 1080p 窗口实际渲染 4K，后处理的半精度缓冲再开 4 倍多重采样会吃掉几百 MB 显存；像素比 ≥ 1.5 时不开
+  多重采样（本身已经是超采样）。
+
+### 回放夹具
+
+`tests/fixtures/l0-replay.json`：种子 181、弗雷尔卓德对德玛西亚的 L0 对 L0，按批存原始事件和开局显示局面。
+`pnpm fixture:record` 重新录制（卡池或事件改了之后）。它没有回手和失去潜行，这两种由构造的事件测试覆盖。
+
+## fxId 透传（spec 3.4，2026-10-19）
+
+- 带 fx 的动作都可以写可选的 `fxId`（招牌卡专属特效 id）。引擎不读它，只在发事件时原样放进去，涉及 `minion_summoned`、
+  `damage`、`heal`、`buff`、`silence`、`freeze`、`bounce`、`transform`。
+- 动作没写 fxId 时，事件里**这个键不出现**（不是 `null`）。表现层用 `e.fxId !== undefined` 或 `'fxId' in e` 判断。
+  这样没有招牌卡的老事件和录制的夹具保持原样；事件字段表（`tests/helpers/events.ts`）里 fxId 是可选字段，只在有值时才允许出现。
+- 引擎自己产生的事件（攻击伤害、疲劳、吸血治疗、激怒、增益到期）没有动作可挂，永远没有 fxId。随从自己打出时的
+  `minion_summoned`（via 为 play）也没有。
+- `destroy` 动作本身不发事件，所以 fxId 没处可放。做法：消灭带 fxId 时，引擎记下 fx 和 fxId，随后该随从的 `death` 事件
+  同时带上 `fx` 和 `fxId`（只有被带 fxId 的消灭动作消灭时才有，其余死亡的 death 事件字段不变）。德玛西亚正义就是这样。
+  代价是 death 比别的事件多了两个可选字段；如果表现层希望消灭有独立事件，要改事件契约，这里没做。
+- 校验（`src/cards/validate.ts`）：fxId 必须是字符串，匹配 `^[a-z0-9_]+\.[a-z0-9_]+$`（小写字母、数字、下划线，
+  中间恰好一个点，写成"英雄 key.招式"）；没有 fx 的动作（draw、gain_mana、extra_attack、random_keyword）不能写 fxId。
+  spec 只写了字符集和"英雄 key.招式"的形状，"恰好一个点"是我按这个形状收紧的，要放宽改 `FX_ID`。
+- 已标 fxId 的 9 张：狂风绝息斩（damage）、暴风雪（damage 和 freeze 都标，两种事件都带）、丽桑卓（freeze）、卡特琳娜（damage）、
+  审判（damage）、德玛西亚正义（destroy，在 death 上）、劫（summon）、李青（combo 的 bounce）、纳什男爵（turn_end 的 buff）。
+  泰达米尔和易数据没改，由表现层按 (卡牌 id, 触发时机) 映射。
+- 测试：`tests/fxid.test.ts`（透传、没写时键不出现、9 张卡各一条、卡池里带 fxId 的恰好是这 9 张、校验），
+  测试专用卡 `test.fxid_*` 在 `tests/helpers/testCards.ts`。
+
+## 非英雄卡的配图（fetch-icons）
+
+`scripts/data/card-art.json` 是映射表：没有 champion 字段的 47 张卡（小兵、野怪、亚龙、法术、衍生物）、4 个英雄技能、11 个关键词，
+每项写来源、裁切建议、选图理由和备选。`scripts/fetch-icons.ts` 按它下载，`scripts/art-review.ts` 出逐张对照页。还没接进卡面和场景，
+等 M3 定稿后再接：卡面原画窗口读 `art`（按 `crop` 裁），场上随从头像读 `icon`，清单是 `public/art/icons-manifest.json`。
+
+### 来源
+
+- 峡谷单位（小兵、野怪、亚龙、男爵、虚空幼虫和虚空螨）：CommunityDragon 的 `characters/<单位>/hud/<名>_square.png`，128×128。
+  目录可以用 `https://raw.communitydragon.org/json/latest/game/assets/characters/<单位>/hud/` 列出来，返回 JSON。
+  虚空幼虫对应 `sru_horde`（Voidgrub），虚空蠕虫对应 `sru_horde_mini`（Voidmite）。
+- 技能、被动、物品、召唤师技能图标：Data Dragon，64×64，地址带版本号。回城图标 Data Dragon 没有，用 CommunityDragon 的
+  `game/assets/spells/icons2d/recallhome.png`。
+- 皮肤原画：Data Dragon `cdn/img/champion/splash/<Key>_<编号>.jpg`，1215×717，和竖版原画一样不带版本号，带了返回 403。
+- 符文之地传说（Legends of Runeterra）卡牌原画：`https://dd.b.pvp.net/7_10_0/<set>/en_us/img/cards/<卡号>-full.png`，2048×1024。
+  卡号和 set 查 `https://dd.b.pvp.net/latest/<set>/en_us/data/<set>-en_us.json`（zh_cn 返回 403，en_us 能用）；set 有
+  set1 到 set9 以及 set6cde、set7b，卡号前两位不能直接推出 set（06 开头的分在 set6 和 set6cde）。服务器是没有 CDN 的 S3，
+  单张 15 到 100 秒，所以 http.ts 加了 `timeoutMs`，这类来源放宽到 10 分钟。
+
+### 选图的取舍（用户 2026-10-19 定）
+
+- 中立卡有官方大图的用大图：蓝色哨兵、山脉、海洋、云端亚龙、远古巨龙用符文之地传说的同名卡原画。其余中立卡和虚空蠕虫先用峡谷头像
+  （128 像素，放进原画窗口偏糊），映射表里带 `generate`（生成要求）和 `generatePriority`（先后，纳什男爵第一，其余按费用从高到低），
+  `fetch-icons.ts` 跑完会按先后列出来。失去坐骑的克烈、法力药水也在这个清单里，排最后。
+- 场上随从头像（`icon`）一律用峡谷头像，有大图的卡也一样。
+- 法术优先用符文之地传说里效果或名字对得上的卡（审判、大杀四方、回城、魔法水晶箭等），再退到皮肤原画。英雄本人的原皮原画已经
+  被随从卡或职业英雄用了，法术要用皮肤原画时换别的皮肤，避免两张卡同图。符文之地传说已确认可以作为来源，spec 5.9 由设计会话补。
+- 符文之地传说的法术原画是黑底上的圆形画面，`crop.zoom` 设 1.55（窗口宽高比 1:0.86 时四角刚好落在圆里）；单位原画是满幅的，不用放大。
+- 英雄技能图标不和任何法术、关键词同图：召集用盖伦 W「勇气」（spec 5.9 原来写的 GarenE 是法术「审判」的图标），诺克萨斯断头台用
+  德莱厄斯 W「致残打击」（DariusExecute 给了法术「处决」）。灵魄（阿狸 Q）和法术灵魄突袭（阿狸 R、灵魂莲华阿狸原画）本来就不同图。
+  映射表里所有主选图（icon 和 art）两两不重复。
+- 嘲讽用拉莫斯 E「狂乱嘲讽」。spec 5.4 写的 W 是笔误，设计会话会改。
+- spec 5.9 写 fetch-icons 输出到 `public/art/icons/`，实际按卡牌、英雄技能、关键词分成 `cards/`、`heropowers/`、`keywords/` 三个目录。
+
+## 音效和音乐素材（M4 准备，2026-10-19）
+
+脚本和用法见 README 的"音效和音乐"。这里记选择和踩过的坑。
+
+### 来源
+
+- 只用 CC0：Kenney 7 个音效包（页面写 CC0，包里带 License.txt），加 OpenGameArt 上 35 个页面（43 个文件）的素材，这些页面的授权一栏都只写了 CC0。
+  每个来源的页面、作者、授权依据在 `scripts/data/audio-sources.json` 的 `sources`。双授权（CC0 和 OGA-BY 并列）、
+  CC-BY 的一律没收，哪怕更合适（比如 YannZ 的菜单曲、JC Sounds 的自然环境音包）。
+- 没用 freesound：下原始文件要登录，不登录只能拿 128 kbps 的试听版。以后要补冷门音效再去，记得只挑 CC0 的。
+- 环境音用 Thimras 的公园录音（风、河水、鸟叫三条），每条十几分钟、七八十到一百 MB，`maxBytes` 只取开头一段，
+  混成 60 秒，结尾 4 秒叠回开头做成无缝循环。
+
+### 响度目标（建议写进 spec 5.7"一致性和分层"）
+
+| 类别 | 对齐指标 | 目标 | 声道 | 限幅器最多压 |
+| --- | --- | --- | --- | --- |
+| 音效 | 最大瞬时响度（400 毫秒窗口） | -18 LUFS | 单声道 | 6 dB |
+| 语音 | 积分响度 | -18 LUFS | 单声道 | 3 dB |
+| 胜负收尾 | 积分响度 | -18 LUFS | 立体声 | 3 dB |
+| 菜单、对局音乐 | 积分响度 | -20 LUFS | 立体声 | 3 dB |
+| 环境音 | 积分响度 | -30 LUFS | 立体声 | 3 dB |
+
+统一 48 kHz，真峰值不超过 -1 dBTP，ogg（Vorbis）加 mp3 兜底。音效单声道是为了按位置做声像时左右干净。
+
+- 音效不用积分响度：短于 400 毫秒的算不出来，几百毫秒的也偏低。
+- 增益是整段的静态增益，不做动态压缩。起音很尖（撞击、碎裂、冰咒）或只有几十毫秒（点击）的音效，要达到目标峰值得
+  高出上限十几 dB，所以增益有上限：限幅器最多压 6 dB，再多就停在峰值上限。这类音效最终的响度只取决于这个上限，和目标
+  无关；目标从 -14 降到 -18，就是为了让撞击、碎裂这些重要的声音不比"增益"这类柔和的声音轻太多。实测处理后音效的
+  最大瞬时响度中位数 -19.3，最轻的 10% 在 -26 以下（基本是界面点击声）。
+- 同类之间的轻重（悬停比按钮轻）不靠素材，靠 `src/audio/sfx.ts` 音效表的 volume。音效表的 volume 最大是 1，素材太轻
+  就补不回来，所以宁可目标低一点。
+
 ### 接进 src/audio 时要做的
 
 - 清单 `public/audio/manifest.json` 的 `id` 和 `sfx.ts` 的 `SfxId`、`music.ts` 的 `TrackId` 一一对应。用户在试听页

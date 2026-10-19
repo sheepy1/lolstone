@@ -1,7 +1,8 @@
 // 按 scripts/data/audio-sources.json 下载音效和音乐的原始素材到 assets-src/audio/sources/<来源 id>/，见 docs/spec.md 5.7、5.9。
 // 下载完再跑 normalize-audio.ts 统一响度，成品输出到 public/audio/sfx/ 和 public/audio/music/。
 //
-//   node scripts/fetch-sfx.ts              已下载且完整的跳过
+//   node scripts/fetch-sfx.ts              只下选中的候选用到的来源，已下载且完整的跳过
+//   node scripts/fetch-sfx.ts --candidates 没选中的候选用到的来源也下，重新试听、换选择时用
 //   node scripts/fetch-sfx.ts --force      全部重下
 //   node scripts/fetch-sfx.ts --record     把下载到的字节数和 sha256 写回 audio-sources.json（新加来源时用）
 //
@@ -15,7 +16,9 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { parseArgs } from 'node:util';
 import type { Source } from './lib/audio.ts';
-import { SOURCES_DIR, SOURCES_JSON, candidateInputs, inputPath, loadSources, run, sha256File } from './lib/audio.ts';
+import {
+  SOURCES_DIR, SOURCES_JSON, candidateInputs, inputPath, loadSources, run, sha256File, usedCandidates,
+} from './lib/audio.ts';
 import { formatBytes, runPool } from './lib/files.ts';
 
 const ATTEMPTS = 6;
@@ -120,13 +123,21 @@ async function extract(src: Source, file: string, dir: string, digest: string): 
 
 async function main(): Promise<void> {
   const { values } = parseArgs({
-    options: { force: { type: 'boolean', default: false }, record: { type: 'boolean', default: false } },
+    options: {
+      force: { type: 'boolean', default: false },
+      record: { type: 'boolean', default: false },
+      candidates: { type: 'boolean', default: false },
+    },
   });
   const data = await loadSources();
-  const used = new Set(data.sounds.flatMap((s) => s.candidates.flatMap((c) => candidateInputs(c).map((i) => i.source))));
-  const unused = Object.keys(data.sources).filter((id) => !used.has(id));
+  const all = values.candidates;
+  const used = new Set(
+    data.sounds.flatMap((s) => usedCandidates(s, all).flatMap((c) => candidateInputs(c).map((i) => i.source))),
+  );
+  const everUsed = new Set(data.sounds.flatMap((s) => s.candidates.flatMap((c) => candidateInputs(c).map((i) => i.source))));
+  const unused = Object.keys(data.sources).filter((id) => !everUsed.has(id));
   const ids = Object.keys(data.sources).filter((id) => used.has(id));
-  console.log(`来源 ${ids.length} 个，并发 ${CONCURRENCY}`);
+  console.log(`来源 ${ids.length} 个（${all ? '全部候选' : '只有选中的候选'}），并发 ${CONCURRENCY}`);
 
   let downloaded = 0;
   let skipped = 0;
@@ -167,7 +178,7 @@ async function main(): Promise<void> {
   // 每个候选引用的文件都要在
   const missing: string[] = [];
   for (const sound of data.sounds) {
-    for (const c of sound.candidates) {
+    for (const c of usedCandidates(sound, all)) {
       for (const input of candidateInputs(c)) {
         if (failed.some((f) => f.id === input.source)) continue;
         if ((await fileSize(inputPath(data.sources, input))) === null) missing.push(`${sound.id}：${input.source}/${input.member}`);

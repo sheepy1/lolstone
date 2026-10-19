@@ -11,6 +11,7 @@ import { createGsapPlayer, type GsapPlayer } from '../presentation/player';
 import type { ViewState } from '../presentation/viewState';
 import type { ReplayFixture } from '../presentation/fixture';
 import { Interaction, type HoverInfo } from '../scene/interaction';
+import { KeywordHover } from '../scene/keywordHover';
 import { preloadCardFont } from '../scene/cardText';
 import { Stage } from '../scene/stage';
 import { TableScene } from '../scene/table';
@@ -35,6 +36,7 @@ type Session = {
   director: Director;
   player: GsapPlayer;
   interaction: Interaction;
+  keywordHover: KeywordHover;
   match: Match | null; // 回放时为 null
   unsubscribe: () => void;
 };
@@ -46,6 +48,8 @@ export class GameApp {
   // 调试用的自动驾驶：玩家这一方也随机选合法动作，走和界面相同的 submit 路径，快进播放
   private autoplayOn = false;
   private autoRng = seedRng(20261019);
+  // 指针下的关键词图标（KEYWORD_HELP 的词条名），不在图标上时为 null
+  private hoverKeyword: string | null = null;
 
   async init(host: HTMLElement): Promise<void> {
     this.stage = new Stage(host);
@@ -147,8 +151,13 @@ export class GameApp {
       mulliganChanged: (marked) => setUi({ mulligan: { open: getUi().mulligan.open, marked: marked.size } }),
       waiting: () => !!match && !match.over && !match.humanToAct(),
     });
+    // 悬停在随从的关键词图标上：关键词面板里把那一条排到最前、高亮
+    const keywordHover = new KeywordHover(scene, (k) => {
+      this.hoverKeyword = k;
+      setUi((s) => (s.hover ? { hover: { ...s.hover, keyword: k } } : {}));
+    });
     const unsubscribe = director.subscribe(() => this.onDirector());
-    this.session = { scene, director, player, interaction, match, unsubscribe };
+    this.session = { scene, director, player, interaction, keywordHover, match, unsubscribe };
     setUi({ screen: 'match' });
     // 进对局换成对局音乐，再叠上峡谷环境音（两层可以同时放）
     playMusic('match');
@@ -161,6 +170,7 @@ export class GameApp {
     if (!s) return;
     s.unsubscribe();
     s.interaction.destroy();
+    s.keywordHover.destroy();
     s.player.resetSpeed();
     // 先停掉这一局的全部动画：GSAP 里只有对局场景的动画。留着的循环动画（河面反光、按钮脉动）会去改
     // 已经销毁的 Pixi 对象，在 GSAP 的帧回调里抛错，下一局的动画就全部停住
@@ -251,7 +261,7 @@ export class GameApp {
     const card = this.hoverCard(h);
     if (s) s.scene.showInspect(card && h?.kind !== 'hand' ? card.cardId : null, card?.stats ?? null);
     const anchor = s?.scene.inspectAnchor() ?? null;
-    setUi({ hover: card ? { ...card, anchor } : null });
+    setUi({ hover: card ? { ...card, anchor, keyword: h?.kind === 'minion' ? this.hoverKeyword : null } : null });
   }
 
   private hoverCard(h: HoverInfo | null) {

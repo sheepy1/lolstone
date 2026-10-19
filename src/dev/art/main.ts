@@ -1,7 +1,8 @@
 // 卡牌配图总览 /dev/art（只进开发构建）：把卡池里每张卡（含衍生物）和四个英雄技能排成一张大图，每张卡三处显示：
 // 悬停大卡（左）、手牌（右上，和大卡是同一个 CardView，只是缩小）、场上随从（右下，按对局镜头的俯角倾斜）。
 // 英雄技能的右侧是台面上的技能按钮。灯光、材质、色调映射和对局一致（半球光 0.85 + 方向光 1.9，ACES），没有泛光。
-// 地址参数：?page=N（从 1 开始，每页 PER 张）；?only=generate 只看小图放大、以后要生成大图的卡。
+// 地址参数：?page=N（从 1 开始，每页 PER 张）；?only=generate 只看小图放大、以后要生成大图的卡；?only=long 只看正文最长的。
+// ?view=board 是按对局镜头摆的固定局面（board.ts）。
 // 页面上"保存"把整页存到 .dev-output/art-gallery-<页>.png。
 import * as THREE from 'three';
 import map from '../../../scripts/data/card-art.json';
@@ -12,6 +13,7 @@ import { installDefaultPool } from '../../cards';
 import { allCards, allHeroClasses, getCard, type CardDef, type HeroClass, type Keyword } from '../../engine';
 import { CAMERA_PITCH } from '../../presentation/layout';
 import { CardView } from '../../scene/cardView';
+import { approxMeasure } from '../../scene/cardTextLayout';
 import { preloadCardFont } from '../../scene/cardText';
 import { HeroPowerView } from '../../scene/heroView';
 import { MinionView } from '../../scene/minionView';
@@ -39,14 +41,21 @@ const items: Item[] = [
 const params = new URLSearchParams(location.search);
 // ?only=generate 只排映射表标了"以后生成大图"的卡（小图放大的那几张），按生成先后排
 const onlyGenerate = params.get('only') === 'generate';
+// ?only=long 只排正文最长的 16 张（检查卡面正文折行和缩字号）
+const onlyLong = params.get('only') === 'long';
+if (onlyLong) {
+  const keep = items.filter((it) => it.kind === 'card').sort((a, b) => approxMeasure(b.def.text) - approxMeasure(a.def.text)).slice(0, PER);
+  items.splice(0, items.length, ...keep);
+}
 if (onlyGenerate) {
   const prio = (id: string) => (map.cards as Record<string, { generatePriority?: number }>)[id]?.generatePriority ?? 99;
   const keep = items.filter((it) => cardArtOf(it.def.id)?.generate).sort((a, b) => prio(a.def.id) - prio(b.def.id));
   items.splice(0, items.length, ...keep);
 }
-const pages = Math.ceil(items.length / PER) + (onlyGenerate ? 0 : 1); // 最后一页是关键词图标
+const only = params.get('only');
+const pages = Math.ceil(items.length / PER) + (only ? 0 : 1); // 最后一页是关键词图标
 const page = Math.min(pages, Math.max(1, Number(params.get('page') ?? 1)));
-const keywordPage = !onlyGenerate && page === pages;
+const keywordPage = !only && page === pages;
 
 const SOURCE: Record<string, string> = {
   lor: '符文之地传说原画',
@@ -96,7 +105,7 @@ const H = Math.max(1, rows) * CELL_H;
 const bar = document.getElementById('bar')!;
 bar.innerHTML =
   `<b>卡牌配图总览</b> 第 ${page} / ${pages} 页（共 ${cards.length} 张卡 + 4 个英雄技能）` +
-  Array.from({ length: pages }, (_, i) => `<a href="?page=${i + 1}${onlyGenerate ? "&only=generate" : ""}">${i + 1}</a>`).join(' ') +
+  Array.from({ length: pages }, (_, i) => `<a href="?page=${i + 1}${only ? `&only=${only}` : ''}">${i + 1}</a>`).join(' ') +
   ` <button id="save">保存整页 PNG</button> <span id="status">加载中…</span>`;
 const status = document.getElementById('status')!;
 
@@ -228,7 +237,7 @@ async function save(): Promise<string> {
   compose();
   await new Promise((r) => setTimeout(r, 300));
   const url = out.toDataURL('image/png');
-  const r = await fetch(`/__dev/screenshot?name=art-gallery-${onlyGenerate ? 'generate-' : ''}${page}`, { method: 'POST', body: url });
+  const r = await fetch(`/__dev/screenshot?name=art-gallery-${only ? `${only}-` : ''}${page}`, { method: 'POST', body: url });
   return r.text();
 }
 document.getElementById('save')!.onclick = () => void save().then((f) => (status.textContent = `已保存 ${f}`));

@@ -8,6 +8,7 @@
 // 新加特效时：在 REHEARSAL 里加一项（tests/presentation-warm.test.ts 会检查新的着色器材质有没有登记在这里）。
 import gsap from 'gsap';
 import * as THREE from 'three';
+import { Text } from 'troika-three-text';
 import { HIDDEN_CARD_ID, getCard } from '../../engine';
 import { cardFaceTexture, portraitTexture } from '../../scene/canvasArt';
 import { CardView } from '../../scene/cardView';
@@ -60,7 +61,8 @@ type Rehearsal = { g: THREE.Group; scene: TableScene; at: () => { x: number; y: 
 
 // 每一项建一种特效物件，返回要在拆掉时收尾的时间线（建出来的物件都挂在 r.g 下面）
 export const REHEARSAL: Record<string, (r: Rehearsal) => gsap.core.Timeline[] | void> = {
-  // 手牌、对方手牌（牌背）、英雄卡（冠饰）、法术卡；发光边、换牌叉号；法术展示的卡面发光；爆牌的燃烧（裁切平面变体）
+  // 手牌、对方手牌（牌背）、英雄卡（冠饰）、法术卡；发光边、换牌叉号；法术展示的卡面发光；爆牌的燃烧（裁切平面变体）；
+  // 疲劳的牌（复制过的材质）
   cards: (r) => {
     const ids = ['neutral.ancient_krug', 'ionia.recall', 'ionia.zed', HIDDEN_CARD_ID];
     const cards = ids.filter((id) => id === HIDDEN_CARD_ID || safeCard(id)).map((id, i) => new CardView(-100 - i, id));
@@ -70,6 +72,14 @@ export const REHEARSAL: Record<string, (r: Rehearsal) => gsap.core.Timeline[] | 
       r.g.add(c);
     }
     if (cards[1]) glowCard(cards[1], 'fire', 0.001);
+    // 疲劳的牌（animations/fatigue.ts）消散时把牌背各部分的材质复制一份再调暗。复制出来的材质不带卡面的着色器改动
+    // （onBeforeCompile），是另一组程序，这里照样复制一份画一次
+    const tired = new CardView(-110, HIDDEN_CARD_ID);
+    tired.body.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh && m.material && !Array.isArray(m.material) && !(o instanceof Text)) m.material = m.material.clone();
+    });
+    r.g.add(tired);
     const burning = cards[0];
     return burning ? [burnAway(burning, 1)] : [];
   },

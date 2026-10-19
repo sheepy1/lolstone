@@ -6,8 +6,9 @@ import { CARD_T } from '../presentation/layout';
 import { EDGE_GLOW, glowMaterial, markBloom } from '../presentation/fx/materials';
 import { cardBackTexture, cardFaceTexture } from './canvasArt';
 import { CardTexts, type CardStats } from './cardText';
-import { CARD_BODY, CARD_FACE, CARD_GLOW } from './geometry';
-import { COLORS } from './theme';
+import { CARD_BODY, CARD_FACE, CARD_FRAME, CARD_GLOW } from './geometry';
+import { COLORS, REGION_COLORS } from './theme';
+import type { CardClass } from '../engine';
 import { shared } from './dispose';
 
 const bodyMat = shared(new THREE.MeshStandardMaterial({ color: 0x8a7650, roughness: 0.6, metalness: 0.3 }));
@@ -36,13 +37,25 @@ const markMat = shared((() => {
   return new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false });
 })());
 const markGeo = shared(new THREE.PlaneGeometry(0.9, 0.9));
+// 凸起边框的金属材质：按地区配色，五个地区加卡背各一份
+const frameMats = new Map<string, THREE.MeshStandardMaterial>();
+function frameMat(key: CardClass | 'back'): THREE.MeshStandardMaterial {
+  let m = frameMats.get(key);
+  if (!m) {
+    const color = key === 'back' ? 0xc8aa6e : REGION_COLORS[key].frame;
+    m = shared(new THREE.MeshStandardMaterial({ color, metalness: 0.85, roughness: 0.28 }));
+    frameMats.set(key, m);
+  }
+  return m;
+}
 
 export class CardView extends THREE.Group {
   readonly instanceId: number;
   cardId = '';
   // 动画在 body 上做局部的抖动、倾斜，外层 Group 的变换归布局管
   readonly body = new THREE.Group();
-  private readonly front: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
+  private readonly front: THREE.Mesh<THREE.BufferGeometry, THREE.MeshPhysicalMaterial>;
+  private readonly frame: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
   private readonly glow: THREE.Mesh;
   private readonly mark: THREE.Mesh;
   private dimmed = false;
@@ -54,7 +67,11 @@ export class CardView extends THREE.Group {
     const slab = new THREE.Mesh(CARD_BODY, bodyMat);
     slab.castShadow = true;
     // 卡面材质每张牌一份（变暗、烧红只改自己），贴图按卡牌 id 共用
-    this.front = new THREE.Mesh(CARD_FACE, new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.1 }));
+    // 卡面有一层清漆：高光随视角移动，转动时光线在卡面上流动
+    this.front = new THREE.Mesh(
+      CARD_FACE,
+      new THREE.MeshPhysicalMaterial({ roughness: 0.55, metalness: 0.05, clearcoat: 0.75, clearcoatRoughness: 0.2 }),
+    );
     this.front.position.z = CARD_T / 2 + 0.002;
     const back = new THREE.Mesh(CARD_FACE, backMat);
     back.position.z = -CARD_T / 2 - 0.002;
@@ -66,7 +83,10 @@ export class CardView extends THREE.Group {
     this.mark = new THREE.Mesh(markGeo, markMat);
     this.mark.position.set(0, 0.3, CARD_T / 2 + 0.01);
     this.mark.visible = false;
-    this.body.add(this.glow, slab, this.front, back, this.mark);
+    this.frame = new THREE.Mesh(CARD_FRAME, frameMat('back'));
+    this.frame.position.z = CARD_T / 2 - 0.004;
+    this.frame.castShadow = true;
+    this.body.add(this.glow, slab, this.front, back, this.frame, this.mark);
     this.texts = new CardTexts(this.body);
     this.add(this.body);
     this.userData.pick = { kind: 'hand', id: instanceId };
@@ -82,6 +102,7 @@ export class CardView extends THREE.Group {
     this.cardId = cardId;
     if (cardId !== HIDDEN_CARD_ID) getCard(cardId);
     this.front.material.map = cardId === HIDDEN_CARD_ID ? cardBackTexture() : cardFaceTexture(cardId);
+    this.frame.material = frameMat(cardId === HIDDEN_CARD_ID ? 'back' : getCard(cardId).class);
     this.front.material.needsUpdate = true;
     this.texts.setCard(cardId === HIDDEN_CARD_ID ? null : cardId);
   }
@@ -105,6 +126,12 @@ export class CardView extends THREE.Group {
   // 场上随从的当前数值（悬停大卡用）
   setStats(stats: CardStats | null): void {
     this.texts.setStats(stats);
+  }
+
+  // 法术退场时卡面提亮
+  flare(): void {
+    this.front.material.emissive.setHex(0xfff1b8);
+    this.front.material.emissiveIntensity = 0.7;
   }
 
   // 爆牌时烧红

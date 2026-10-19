@@ -1,9 +1,9 @@
-// 受伤：目标泛红抖动，弹出伤害飘字，生命数字跳变；被圣盾挡下的部分弹白色飘字。
+// 受伤：目标泛红抖动，弹出伤害飘字，生命徽章数字跳变、徽章弹一下并闪红；被圣盾挡下的部分弹白色飘字。
 // 英雄受到 5 点及以上伤害时镜头轻震。
 import { playSfx } from '../../audio';
 import { floatText } from '../fx/effects';
 import type { AnimModule } from './types';
-import { flash, pointOf, shake, tl } from './util';
+import { flash, pointOf, popStat, shake, TINT, tl } from './util';
 
 export const damage: AnimModule<'damage'> = (e, { scene }) => {
   const t = tl();
@@ -15,6 +15,7 @@ export const damage: AnimModule<'damage'> = (e, { scene }) => {
     if (e.target.kind === 'hero') scene.heroes[e.target.side].setHealth(e.healthAfter, scene.view.players[e.target.side].hero.maxHealth);
     else scene.minion(e.target.instanceId)?.showHealth(e.healthAfter);
   });
+  if (e.amount > 0) t.add(popStat(scene, e.target, 'health', TINT.damage), 0);
   if (body) {
     t.add(flash(body.flash, 0xff2020, 0.75, 0.35), 0);
     t.add(shake(body.body, e.amount >= 5 ? 0.14 : 0.08, 0.3), 0);

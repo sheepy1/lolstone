@@ -1,9 +1,9 @@
-// 增益 / 减益：头像绕一圈金光（减益时暗一下），弹出数值变化，数值变绿或变红。
+// 增益 / 减益：头像绕一圈金光（减益时暗一下），变化的徽章弹一下，数值变绿或变红。
 import { playSfx } from '../../audio';
 import { KEYWORD_NAMES } from '../keywordText';
 import { floatText, ring } from '../fx/effects';
 import type { AnimModule } from './types';
-import { flash, pointOf, syncTo, tl } from './util';
+import { flash, pointOf, popStat, syncTo, TINT, tl } from './util';
 
 
 const signed = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
@@ -23,6 +23,9 @@ export const buff: AnimModule<'buff'> = (e, { scene, after }) => {
   if (e.keywordsLost.length > 0) parts.push(`失去${e.keywordsLost.map((k) => KEYWORD_NAMES[k]).join(' ')}`);
   if (e.reason === 'enrage') parts.unshift('激怒');
   if (parts.length > 0) t.add(floatText(scene.layers.fx, where, parts.join(' '), color, 32), 0);
-  t.add(syncTo(scene, after, 0.1), 0.25);
+  // 数值先同步到增益后的值，再让变化的徽章弹一下
+  t.add(syncTo(scene, after, 0.05), 0.15);
+  if (e.attack !== 0) t.add(popStat(scene, e.target, 'attack', e.attack > 0 ? TINT.buff : TINT.debuff), 0.2);
+  if (e.health !== 0 || e.maxHealthAfter !== e.maxHealthBefore) t.add(popStat(scene, e.target, 'health', e.health >= 0 ? TINT.buff : TINT.debuff), 0.2);
   return { tl: t };
 };

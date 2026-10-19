@@ -1,110 +1,149 @@
-// 英雄：水晶枢纽（spec 5.2）。六棱台座上悬着一块缓慢旋转的自发光多面体晶体，台座正面嵌着朝向镜头的
-// 英雄头像圆盘，旁边是生命数字。生命低于 10 时晶体闪烁。英雄技能是台面上的六棱柱，顶面是技能名，
-// 用过之后变灰。都是占位几何体，M4 换材质和贴图。
+// 英雄：水晶枢纽（spec 5.2 v0.6.2）。枢纽和英雄头像融为一体，小巧、不悬空、不挡视线：头像圆盘嵌在底座上，
+// 生命值是底座右前角的一枚六边形生命徽章（和随从的生命徽章同一套造型，大一号）。造型待用户定稿，先做三个方案：
+//   a 水晶台座：底座本身是半透明的发光水晶六棱台，上面一圈金属沿，头像嵌在顶面；
+//   b 金属台座加嵌件：深色金属六棱台，六个角上嵌着发光的小水晶，头像嵌在顶面；
+//   c 水晶环：薄的金属底座，头像外围一圈发光的水晶环。
+// 方案用地址参数 ?nexus=a|b|c 切换（默认 c，待用户定稿）。生命低于 10 时水晶部分闪烁；输掉时水晶碎掉。
 import gsap from 'gsap';
 import * as THREE from 'three';
 import { getCard, getHeroClass, type HeroClass } from '../engine';
 import { NEXUS } from '../presentation/layout';
 import { EDGE_GLOW, flashMaterial, glowMaterial, markBloom } from '../presentation/fx/materials';
 import { makeLabelCanvas, portraitTexture, strokeText, hexPath } from './canvasArt';
+import { StatBadge } from './statBadge';
 import { COLORS, FONT_CN, FONT_NUM, REGION_COLORS } from './theme';
 import { shared } from './dispose';
 
-const pedestalGeo = shared(new THREE.CylinderGeometry(1.15, 1.3, 0.38, 6));
-const crystalGeo = shared(new THREE.OctahedronGeometry(0.62, 0));
+export type NexusStyle = 'a' | 'b' | 'c';
+
+export function nexusStyle(): NexusStyle {
+  const v = new URLSearchParams(globalThis.location?.search ?? '').get('nexus');
+  return v === 'a' || v === 'b' ? v : 'c';
+}
+
 const discGeo = shared(new THREE.CircleGeometry(NEXUS.discRadius, 40));
-const discRimGeo = shared(new THREE.TorusGeometry(0.64, 0.06, 8, 40));
-const targetRingGeo = shared(new THREE.TorusGeometry(1.45, 0.07, 8, 48));
+const discRimGeo = shared(new THREE.TorusGeometry(NEXUS.discRadius + 0.02, 0.05, 8, 40));
+const targetRingGeo = shared(new THREE.TorusGeometry(1.32, 0.07, 8, 48));
+const shardGeo = shared(new THREE.OctahedronGeometry(0.16, 0));
 
 export class HeroView extends THREE.Group {
   readonly body = new THREE.Group();
   readonly flash: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>;
-  readonly crystal: THREE.Mesh<THREE.OctahedronGeometry, THREE.MeshStandardMaterial>;
+  // 会发光、会闪烁、输掉时碎掉的水晶部分
+  private readonly crystalMat: THREE.MeshStandardMaterial;
+  private readonly crystals: THREE.Object3D[] = [];
   private readonly targetRing: THREE.Mesh;
-  private readonly hp = makeLabelCanvas(160, 160);
+  private readonly hp = new StatBadge('health');
   private low: gsap.core.Tween | null = null;
-  private lastHp = '';
   private dimmed = false;
+  private readonly glow: number;
 
-  constructor(cls: HeroClass, enemy: boolean, side: 0 | 1) {
+  constructor(cls: HeroClass, enemy: boolean, side: 0 | 1, style: NexusStyle = nexusStyle()) {
     super();
     const col = REGION_COLORS[cls];
-    const pedestal = new THREE.Mesh(pedestalGeo, new THREE.MeshStandardMaterial({ color: 0x2a2e34, roughness: 0.55, metalness: 0.5 }));
-    pedestal.position.y = 0.19;
-    pedestal.castShadow = true;
-    pedestal.receiveShadow = true;
-    this.crystal = new THREE.Mesh(
-      crystalGeo,
-      new THREE.MeshStandardMaterial({
-        // 我方蓝、对方红，自发光用同一种颜色，泛光后仍是饱和的蓝红，不会白成一片
-        color: enemy ? 0xb02828 : 0x1f5fd0,
-        emissive: enemy ? 0xff3030 : 0x3a8cff,
-        emissiveIntensity: 0.55,
-        roughness: 0.25,
-        metalness: 0.3,
-        flatShading: true,
-      }),
-    );
-    this.crystal.scale.set(1, 1.6, 1);
-    this.crystal.position.y = 1.65;
-    this.crystal.castShadow = true;
-    // 头像圆盘：嵌在台座正面，朝向镜头
+    const teamColor = enemy ? 0xff3030 : 0x3a8cff;
+    this.glow = style === 'a' ? 0.9 : 1.1;
+    this.crystalMat = new THREE.MeshStandardMaterial({
+      color: enemy ? 0x9a2020 : 0x1f5fd0,
+      emissive: teamColor,
+      emissiveIntensity: this.glow,
+      roughness: 0.2,
+      metalness: 0.3,
+      flatShading: true,
+      transparent: style === 'a',
+      opacity: style === 'a' ? 0.85 : 1,
+    });
+    const metal = new THREE.MeshStandardMaterial({ color: 0x2a2e34, roughness: 0.45, metalness: 0.75, flatShading: true });
+    const trim = new THREE.MeshStandardMaterial({ color: col.accent, roughness: 0.3, metalness: 0.85, flatShading: true });
+    const add = (m: THREE.Mesh, crystal = false) => {
+      m.castShadow = true;
+      m.receiveShadow = true;
+      this.body.add(m);
+      if (crystal) {
+        this.crystals.push(m);
+        markBloom(m);
+      }
+      return m;
+    };
+    if (style === 'a') {
+      // 水晶六棱台，上面一圈金属沿
+      const c = add(new THREE.Mesh(new THREE.CylinderGeometry(0.98, 1.12, 0.34, 6), this.crystalMat), true);
+      c.position.y = 0.17;
+      const lip = add(new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.07, 6), trim));
+      lip.position.y = 0.37;
+    } else if (style === 'b') {
+      // 深色金属六棱台，六个角上嵌着发光的小水晶
+      const base = add(new THREE.Mesh(new THREE.CylinderGeometry(0.98, 1.1, 0.34, 6), metal));
+      base.position.y = 0.17;
+      const lip = add(new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.05, 6), trim));
+      lip.position.y = 0.36;
+      for (let i = 0; i < 6; i++) {
+        const a = (Math.PI / 3) * i;
+        const shard = add(new THREE.Mesh(shardGeo, this.crystalMat), true);
+        shard.position.set(Math.cos(a) * 1.0, 0.22, Math.sin(a) * 1.0);
+        shard.scale.set(0.8, 1.5, 0.8);
+        shard.rotation.y = -a;
+      }
+    } else {
+      // 薄金属底座，头像外围一圈发光水晶环
+      const base = add(new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.05, 0.22, 6), metal));
+      base.position.y = 0.11;
+    }
+    // 头像圆盘嵌在底座上，朝镜头倾斜
     const disc = new THREE.Group();
     disc.position.set(NEXUS.discPos.x, NEXUS.discPos.y, NEXUS.discPos.z);
     disc.rotation.x = NEXUS.discTilt;
-    const portrait = new THREE.Mesh(discGeo, new THREE.MeshStandardMaterial({ map: portraitTexture(`hero:${cls}`, getHeroClass(cls).champion), roughness: 0.6 }));
-    const rim = new THREE.Mesh(discRimGeo, new THREE.MeshStandardMaterial({ color: col.accent, roughness: 0.3, metalness: 0.8 }));
+    const portrait = new THREE.Mesh(discGeo, new THREE.MeshStandardMaterial({ map: portraitTexture(`hero:${cls}`, getHeroClass(cls).champion), roughness: 0.55 }));
+    const rim = new THREE.Mesh(discRimGeo, style === 'c' ? this.crystalMat : trim);
+    if (style === 'c') {
+      rim.scale.set(1.12, 1.12, 2.4);
+      this.crystals.push(rim);
+      markBloom(rim);
+    }
+    rim.castShadow = true;
+    const backing = new THREE.Mesh(new THREE.CylinderGeometry(NEXUS.discRadius + 0.06, NEXUS.discRadius + 0.1, 0.12, 24), metal);
+    backing.rotation.x = Math.PI / 2;
+    backing.position.z = -0.065;
+    backing.castShadow = true;
     this.flash = new THREE.Mesh(discGeo, flashMaterial());
     this.flash.position.z = 0.01;
-    // 生命数字
-    const hpSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.hp.texture, transparent: true, toneMapped: false }));
-    hpSprite.scale.set(NEXUS.hpSize, NEXUS.hpSize, 1);
-    hpSprite.position.set(NEXUS.hpOffset.x, NEXUS.hpOffset.y, NEXUS.hpOffset.z);
-    hpSprite.renderOrder = 4;
-    disc.add(portrait, rim, this.flash, hpSprite);
+    disc.add(backing, portrait, rim, this.flash);
+    this.body.add(disc);
+    // 生命徽章嵌在底座右前角
+    this.hp.position.set(NEXUS.hpPos.x, NEXUS.hpPos.y - 0.05, NEXUS.hpPos.z);
+    this.hp.scale.setScalar(NEXUS.hpScale);
+    this.body.add(this.hp);
     this.targetRing = new THREE.Mesh(targetRingGeo, glowMaterial(COLORS.target, 2.0));
     this.targetRing.rotation.x = -Math.PI / 2;
     this.targetRing.position.y = 0.05;
     this.targetRing.visible = false;
-    markBloom(this.crystal);
     markBloom(this.targetRing);
-    this.body.add(pedestal, this.crystal, disc, this.targetRing);
+    this.body.add(this.targetRing);
     this.add(this.body);
     this.userData.pick = { kind: 'hero', side };
   }
 
-  // 每帧调：晶体缓慢旋转、上下浮动
+  // 每帧调：水晶的光缓慢呼吸
   tick(t: number): void {
-    this.crystal.rotation.y = t * 0.5;
-    this.crystal.position.y = 1.65 + Math.sin(t * 1.3) * 0.08;
+    if (this.low) return;
+    this.crystalMat.emissiveIntensity = this.glow * (0.85 + 0.15 * Math.sin(t * 1.6));
   }
 
   setHealth(health: number, max: number): void {
-    const key = `${health}/${max}`;
-    if (key !== this.lastHp) {
-      this.lastHp = key;
-      const g = this.hp.g;
-      g.clearRect(0, 0, 160, 160);
-      g.beginPath();
-      g.arc(80, 80, 66, 0, Math.PI * 2);
-      g.fillStyle = '#b02020';
-      g.fill();
-      g.lineWidth = 8;
-      g.strokeStyle = '#2a0606';
-      g.stroke();
-      // 生命数字最低显示 0（引擎里的值可以是负的）
-      const shown = Math.max(0, health);
-      strokeText(g, String(shown), 80, 84, shown >= 10 ? 64 : 76, health < max ? '#ffd0d0' : '#ffffff', FONT_NUM, 0.14);
-      this.hp.texture.needsUpdate = true;
-    }
+    this.hp.set(health, health < max ? COLORS.debuffed : 0xffffff);
     const lowNow = health < 10;
     if (lowNow && !this.low) {
-      this.low = gsap.to(this.crystal.material, { emissiveIntensity: 0.12, duration: 0.6, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+      this.low = gsap.to(this.crystalMat, { emissiveIntensity: 0.15, duration: 0.6, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     } else if (!lowNow && this.low) {
       this.low.kill();
       this.low = null;
-      this.crystal.material.emissiveIntensity = 0.55;
+      this.crystalMat.emissiveIntensity = this.glow;
     }
+  }
+
+  // 受伤、治疗时生命徽章弹一下
+  popHealth(tint: number): void {
+    this.hp.pop(tint);
   }
 
   setTargetable(mode: 'none' | 'target' | 'dim'): void {
@@ -112,15 +151,17 @@ export class HeroView extends THREE.Group {
     const dim = mode === 'dim';
     if (dim !== this.dimmed) {
       this.dimmed = dim;
-      this.crystal.material.color.multiplyScalar(dim ? 0.45 : 1 / 0.45);
+      this.crystalMat.color.multiplyScalar(dim ? 0.45 : 1 / 0.45);
     }
   }
 
-  // 输掉时晶体熄灭碎裂（胜负动画用）
+  // 输掉时水晶闪亮后碎掉（胜负动画用）
   shatter(): gsap.core.Timeline {
     const t = gsap.timeline();
-    t.to(this.crystal.material, { emissiveIntensity: 2.5, duration: 0.25 });
-    t.to(this.crystal.scale, { x: 0.01, y: 0.01, z: 0.01, duration: 0.35, ease: 'power3.in' });
+    this.low?.kill();
+    this.low = null;
+    t.to(this.crystalMat, { emissiveIntensity: 3, duration: 0.25 });
+    for (const c of this.crystals) t.to(c.scale, { x: 0.01, y: 0.01, z: 0.01, duration: 0.35, ease: 'power3.in' }, 0.25);
     return t;
   }
 }

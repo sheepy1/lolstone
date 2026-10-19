@@ -98,8 +98,10 @@ export class Stage {
   }
 
   // 渲染一帧。动画循环每帧调；测试时页面不可见、requestAnimationFrame 停了，可以手动调。
-  frame(): void {
-    const dt = Math.min(0.1, this.clock.getDelta());
+  // fixedDt 给定时按固定步长推进每帧逻辑（录逐帧画面用），不看真实时间。
+  frame(fixedDt?: number): void {
+    const real = Math.min(0.1, this.clock.getDelta());
+    const dt = fixedDt ?? real;
     const t = this.clock.elapsedTime;
     for (const fn of this.hooks) fn(dt, t);
     this.camera.position.copy(this.cameraBase).add(this.cameraShake);

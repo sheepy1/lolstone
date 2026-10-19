@@ -1,63 +1,70 @@
-// 手牌、展示中的牌：海克斯风格的棱角边框（占位版），费用六边形在左上角，名字横幅，原画窗口，文本框，
-// 随从底部左右是攻击和生命。看不到的牌显示卡背。
-import { Container, Graphics, Text } from 'pixi.js';
+// 卡牌（spec 5.4）：有厚度的圆角薄板，正面是 canvas 合成的卡面贴图（原画、海克斯边框、费用六边形、
+// 名字、文本），背面是卡背。看不到的牌两面都是卡背。能出的牌背后有一圈发光边（bloom）。
+import * as THREE from 'three';
 import { getCard, HIDDEN_CARD_ID } from '../engine';
-import { CARD_H, CARD_W } from '../presentation/layout';
-import { glowFilter } from '../presentation/fx/filters';
-import { Portrait } from './portrait';
-import { COLORS, FONT_CN, FONT_NUM, REGION_COLORS } from './theme';
-import { dispose } from './dispose';
+import { CARD_T } from '../presentation/layout';
+import { glowMaterial } from '../presentation/fx/materials';
+import { cardBackTexture, cardFaceTexture } from './canvasArt';
+import { CARD_BODY, CARD_FACE, CARD_GLOW } from './geometry';
+import { COLORS } from './theme';
 
-const W = CARD_W;
-const H = CARD_H;
-const BEVEL = 14;
+const bodyMat = new THREE.MeshStandardMaterial({ color: 0x8a7650, roughness: 0.6, metalness: 0.3 });
+const backMat = new THREE.MeshStandardMaterial({ map: cardBackTexture(), roughness: 0.55, metalness: 0.15 });
+const glowMat = glowMaterial(COLORS.playable, 3.7);
+const markMat = (() => {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d')!;
+  g.fillStyle = 'rgba(0,0,0,0.55)';
+  g.beginPath();
+  g.arc(64, 64, 60, 0, Math.PI * 2);
+  g.fill();
+  g.strokeStyle = '#ff4040';
+  g.lineWidth = 16;
+  g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(34, 34);
+  g.lineTo(94, 94);
+  g.moveTo(94, 34);
+  g.lineTo(34, 94);
+  g.stroke();
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false });
+})();
+const markGeo = new THREE.PlaneGeometry(0.9, 0.9);
 
-function bevelRect(g: Graphics, w: number, h: number, b: number): Graphics {
-  const x = -w / 2;
-  const y = -h / 2;
-  return g.poly([x + b, y, x + w - b, y, x + w, y + b, x + w, y + h - b, x + w - b, y + h, x + b, y + h, x, y + h - b, x, y + b]);
-}
-
-function hexagon(g: Graphics, r: number): Graphics {
-  const pts: number[] = [];
-  for (let i = 0; i < 6; i++) {
-    const a = (Math.PI / 3) * i + Math.PI / 6;
-    pts.push(Math.cos(a) * r, Math.sin(a) * r);
-  }
-  return g.poly(pts);
-}
-
-function label(text: string, size: number, fill: number, font = FONT_CN, stroke = 0x000000): Text {
-  const t = new Text({
-    text,
-    style: { fontFamily: font, fontSize: size, fill, fontWeight: '700', stroke: { color: stroke, width: Math.max(2, size / 7) } },
-  });
-  t.anchor.set(0.5);
-  t.resolution = 2;
-  return t;
-}
-
-export class CardView extends Container {
-  instanceId: number;
+export class CardView extends THREE.Group {
+  readonly instanceId: number;
   cardId = '';
-  private face = new Container();
-  private back = new Container();
-  private highlight = new Graphics();
-  private dim = new Graphics();
-  private mark = new Container();
-  private highlighted = false;
+  // 动画在 body 上做局部的抖动、倾斜，外层 Group 的变换归布局管
+  readonly body = new THREE.Group();
+  private readonly front: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
+  private readonly glow: THREE.Mesh;
+  private readonly mark: THREE.Mesh;
+  private dimmed = false;
 
   constructor(instanceId: number, cardId: string) {
     super();
     this.instanceId = instanceId;
-    bevelRect(this.highlight, W + 10, H + 10, BEVEL + 3).stroke({ width: 5, color: COLORS.playable });
-    this.highlight.visible = false;
-    this.highlight.filters = [glowFilter(COLORS.playable)];
-    bevelRect(this.dim, W, H, BEVEL).fill({ color: 0x000000, alpha: 0.45 });
-    this.dim.visible = false;
-    this.buildBack();
-    this.buildMark();
-    this.addChild(this.highlight, this.face, this.back, this.dim, this.mark);
+    const slab = new THREE.Mesh(CARD_BODY, bodyMat);
+    slab.castShadow = true;
+    // 卡面材质每张牌一份（变暗、烧红只改自己），贴图按卡牌 id 共用
+    this.front = new THREE.Mesh(CARD_FACE, new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.1 }));
+    this.front.position.z = CARD_T / 2 + 0.002;
+    this.front.userData.owned = true;
+    const back = new THREE.Mesh(CARD_FACE, backMat);
+    back.position.z = -CARD_T / 2 - 0.002;
+    back.rotation.y = Math.PI;
+    this.glow = new THREE.Mesh(CARD_GLOW, glowMat);
+    this.glow.position.z = -CARD_T / 2 - 0.006;
+    this.glow.visible = false;
+    this.mark = new THREE.Mesh(markGeo, markMat);
+    this.mark.position.set(0, 0.3, CARD_T / 2 + 0.01);
+    this.mark.visible = false;
+    this.body.add(this.glow, slab, this.front, back, this.mark);
+    this.add(this.body);
+    this.userData.pick = { kind: 'hand', id: instanceId };
     this.setCard(cardId);
   }
 
@@ -68,103 +75,29 @@ export class CardView extends Container {
   setCard(cardId: string): void {
     if (cardId === this.cardId) return;
     this.cardId = cardId;
-    this.face.removeChildren().forEach((c) => dispose(c));
-    if (cardId === HIDDEN_CARD_ID) {
-      this.face.visible = false;
-      this.back.visible = true;
-      return;
-    }
-    this.face.visible = true;
-    this.back.visible = false;
-    this.buildFace(cardId);
+    if (cardId !== HIDDEN_CARD_ID) getCard(cardId);
+    this.front.material.map = cardId === HIDDEN_CARD_ID ? cardBackTexture() : cardFaceTexture(cardId);
+    this.front.material.needsUpdate = true;
   }
 
   setHighlight(on: boolean): void {
-    if (on === this.highlighted) return;
-    this.highlighted = on;
-    this.highlight.visible = on;
+    this.glow.visible = on;
   }
 
+  // 费用不够的牌变暗
   setDim(on: boolean): void {
-    this.dim.visible = on;
+    if (on === this.dimmed) return;
+    this.dimmed = on;
+    this.front.material.color.setScalar(on ? 0.45 : 1);
   }
 
   setMarked(on: boolean): void {
     this.mark.visible = on;
   }
 
-  private buildBack(): void {
-    const g = new Graphics();
-    bevelRect(g, W, H, BEVEL).fill(COLORS.cardBack).stroke({ width: 4, color: COLORS.hexGold });
-    bevelRect(g, W - 26, H - 26, BEVEL - 4).stroke({ width: 2, color: COLORS.cardBackAccent });
-    g.poly([0, -50, 34, 0, 0, 50, -34, 0]).fill({ color: COLORS.cardBackAccent, alpha: 0.8 }).stroke({ width: 3, color: COLORS.hexGold });
-    g.circle(0, 0, 10).fill(COLORS.hexGold);
-    this.back.addChild(g);
-  }
-
-  private buildMark(): void {
-    const g = new Graphics();
-    g.circle(0, -30, 38).fill({ color: 0x000000, alpha: 0.55 });
-    g.moveTo(-22, -52).lineTo(22, -8).moveTo(22, -52).lineTo(-22, -8).stroke({ width: 9, color: 0xff4040, cap: 'round' });
-    this.mark.addChild(g);
-    this.mark.visible = false;
-  }
-
-  private buildFace(cardId: string): void {
-    const def = getCard(cardId);
-    const colors = REGION_COLORS[def.class];
-    const isChampion = !!def.champion;
-    const frame = new Graphics();
-    bevelRect(frame, W, H, BEVEL).fill(colors.frame);
-    bevelRect(frame, W - 10, H - 10, BEVEL - 3).fill(colors.inner);
-    if (isChampion) bevelRect(frame, W - 18, H - 18, BEVEL - 5).stroke({ width: 2, color: colors.accent });
-    this.face.addChild(frame);
-
-    const art = new Portrait(isChampion ? 104 : 96);
-    art.show(cardId);
-    art.y = -40;
-    const artFrame = new Graphics().rect(-54, -94, 108, 108).stroke({ width: 3, color: colors.accent });
-    this.face.addChild(art, artFrame);
-
-    const banner = new Graphics().rect(-W / 2 + 6, 14, W - 12, 26).fill({ color: 0x000000, alpha: 0.55 });
-    const name = label(def.name, def.name.length > 6 ? 14 : 17, COLORS.textLight);
-    name.y = 27;
-    this.face.addChild(banner, name);
-
-    const text = new Text({
-      text: def.text,
-      style: {
-        fontFamily: FONT_CN,
-        fontSize: def.text.length > 22 ? 11 : 13,
-        fill: def.class === 'demacia' ? 0x2a2418 : 0xe8e2d0,
-        wordWrap: true,
-        breakWords: true,
-        wordWrapWidth: W - 24,
-        align: 'center',
-        lineHeight: def.text.length > 22 ? 13 : 16,
-      },
-    });
-    text.anchor.set(0.5, 0);
-    text.y = 46;
-    text.resolution = 2;
-    this.face.addChild(text);
-
-    const cost = hexagon(new Graphics(), 20).fill(COLORS.mana).stroke({ width: 3, color: COLORS.hexGold });
-    cost.position.set(-W / 2 + 14, -H / 2 + 14);
-    const costText = label(String(def.cost), 22, 0xffffff, FONT_NUM);
-    costText.position.copyFrom(cost.position);
-    this.face.addChild(cost, costText);
-
-    if (def.type === 'minion') {
-      const atk = new Graphics().circle(0, 0, 18).fill(0xd9a024).stroke({ width: 3, color: 0x3a2a08 });
-      atk.position.set(-W / 2 + 14, H / 2 - 14);
-      const atkText = label(String(def.attack ?? 0), 20, 0xffffff, FONT_NUM);
-      atkText.position.copyFrom(atk.position);
-      const hp = new Graphics().circle(0, 0, 18).fill(0xc8302c).stroke({ width: 3, color: 0x3a0808 });
-      hp.position.set(W / 2 - 14, H / 2 - 14);
-      const hpText = label(String(def.health ?? 0), 20, 0xffffff, FONT_NUM);
-      hpText.position.copyFrom(hp.position);
-      this.face.addChild(atk, atkText, hp, hpText);
-    }
+  // 爆牌时烧红
+  setBurning(): void {
+    this.front.material.color.setRGB(1.6, 0.6, 0.25);
+    this.front.material.emissive.setHex(0x802000);
   }
 }

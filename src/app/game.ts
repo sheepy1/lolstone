@@ -1,6 +1,5 @@
 // 对局控制：把对局层、导演、场景、输入、界面状态接起来。一局一套，回主菜单时整套销毁。
 import gsap from 'gsap';
-import { Application } from 'pixi.js';
 import { matchManifest } from '../assets/manifest';
 import { loadManifest } from '../assets/loader';
 import { initAudio } from '../audio';
@@ -9,10 +8,10 @@ import { getHeroClass, maskEvents, maskHidden, seedRng, type Action, type HeroCl
 import { Director } from '../presentation/director';
 import type { PresentationEvent } from '../presentation/events';
 import { createGsapPlayer, type GsapPlayer } from '../presentation/player';
-import { STAGE_H, STAGE_W } from '../presentation/layout';
 import type { ViewState } from '../presentation/viewState';
 import type { ReplayFixture } from '../presentation/fixture';
 import { Interaction, type HoverInfo } from '../scene/interaction';
+import { Stage } from '../scene/stage';
 import { TableScene } from '../scene/table';
 import { KEYWORD_NAMES } from '../presentation/keywordText';
 import { describe, LogNames } from '../ui/logText';
@@ -32,7 +31,7 @@ type Session = {
 };
 
 export class GameApp {
-  private pixi = new Application();
+  private stage: Stage | null = null;
   private session: Session | null = null;
   private names = new LogNames();
   // 调试用的自动驾驶：玩家这一方也随机选合法动作，走和界面相同的 submit 路径，快进播放
@@ -40,19 +39,8 @@ export class GameApp {
   private autoRng = seedRng(20261019);
 
   async init(host: HTMLElement): Promise<void> {
-    await this.pixi.init({
-      preference: 'webgpu',
-      resizeTo: window,
-      antialias: true,
-      background: 0x0b1410,
-      autoDensity: true,
-      resolution: Math.min(2, window.devicePixelRatio || 1),
-    });
-    host.appendChild(this.pixi.canvas);
-    this.pixi.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-    window.addEventListener('resize', () => this.fit());
-    const r = this.pixi.renderer as unknown as { name?: string };
-    setUi((s) => ({ status: { ...s.status, renderer: r.name ?? 'unknown' } }));
+    this.stage = new Stage(host);
+    setUi((s) => ({ status: { ...s.status, renderer: this.stage!.rendererName } }));
     // 调试入口：在控制台看显示局面、对局状态
     (window as unknown as { melol: unknown }).melol = this;
   }
@@ -61,18 +49,14 @@ export class GameApp {
     return this.session;
   }
 
-  private fit(): void {
-    const s = this.session;
-    if (!s) return;
-    const w = this.pixi.screen.width;
-    const h = this.pixi.screen.height;
-    const k = Math.min(w / STAGE_W, h / STAGE_H);
-    s.scene.root.scale.set(k);
-    s.scene.root.position.set((w - STAGE_W * k) / 2, (h - STAGE_H * k) / 2);
+  // 手动渲染一帧（页面不可见、requestAnimationFrame 停了的时候，自动化验证用）
+  renderFrame(): void {
+    this.stage?.frame();
   }
 
   // 开一局：先在加载页预载两套卡组的美术和语音，再进对局。
-  async startMatch(humanClass: HeroClass, aiClass: HeroClass): Promise<void> {
+  // seed 不给时随机；给了就能复现同一局（调试、自动化验证用，自动驾驶的随机数也从头开始）。
+  async startMatch(humanClass: HeroClass, aiClass: HeroClass, seed?: number): Promise<void> {
     initAudio();
     this.teardown();
     const decks: [string[], string[]] = [[...(PRESET_DECKS[humanClass] ?? [])], [...(PRESET_DECKS[aiClass] ?? [])]];
@@ -81,9 +65,10 @@ export class GameApp {
       setUi((s) => ({ loading: { ...s.loading, progress: p } })),
     );
     if (report.missing.length > 0) console.info(`[assets] ${report.missing.length} 个资源缺失，用纯色兜底`, report.missing.slice(0, 5));
-    const seed = Math.floor(Math.random() * 1_000_000);
-    console.info(`[match] seed ${seed}`);
-    const match = new Match({ seed, classes: [humanClass, aiClass], decks, human: 0 });
+    const matchSeed = seed ?? Math.floor(Math.random() * 1_000_000);
+    if (seed !== undefined) this.autoRng = seedRng(seed);
+    console.info(`[match] seed ${matchSeed}`);
+    const match = new Match({ seed: matchSeed, classes: [humanClass, aiClass], decks, human: 0 });
     this.names = new LogNames();
     match.onBatch = (events) => this.log(events, 0);
     this.open(match.initial, match);
@@ -106,7 +91,7 @@ export class GameApp {
   }
 
   private open(initial: ViewState, match: Match | null): void {
-    const scene = new TableScene(initial, () => this.submit({ kind: 'end_turn' }));
+    const scene = new TableScene(initial, this.stage!);
     const player = createGsapPlayer(scene);
     const director = new Director(initial, player.play);
     const interaction = new Interaction(scene, {
@@ -121,10 +106,8 @@ export class GameApp {
       mulliganChanged: (marked) => setUi({ mulligan: { open: getUi().mulligan.open, marked: marked.size } }),
       waiting: () => !!match && !match.over && !match.humanToAct(),
     });
-    this.pixi.stage.addChild(scene.root);
     const unsubscribe = director.subscribe(() => this.onDirector());
     this.session = { scene, director, player, interaction, match, unsubscribe };
-    this.fit();
     setUi({ screen: 'match' });
     this.onDirector();
   }
@@ -138,8 +121,7 @@ export class GameApp {
     // 先停掉这一局的全部动画：GSAP 里只有对局场景的动画。留着的循环动画（河面反光、按钮脉动）会去改
     // 已经销毁的 Pixi 对象，在 GSAP 的帧回调里抛错，下一局的动画就全部停住
     for (const anim of gsap.globalTimeline.getChildren(false, true, true)) anim.kill();
-    this.pixi.stage.removeChild(s.scene.root);
-    s.scene.root.destroy({ children: true });
+    s.scene.dispose();
     this.session = null;
     setUi({ hover: null, mulligan: { open: false, marked: 0 }, status: { ...getUi().status, replay: false, busy: false } });
   }

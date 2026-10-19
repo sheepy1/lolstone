@@ -3,7 +3,7 @@
 // - AI 只看 maskHidden 过的局面选动作，动作在真实局面上执行。AI 的两个动作之间往队列插一个
 //   ai_thinking 等待事件。
 // - 表现层只吃 maskEvents 遮过的事件。
-import { l0ChooseAction } from '../ai/l0';
+import { l1ChooseAction } from '../ai/l1';
 import {
   applyAction,
   checkAction,
@@ -24,7 +24,7 @@ import type { Director } from '../presentation/director';
 import type { PresentationEvent } from '../presentation/events';
 import { initialView, type ViewState } from '../presentation/viewState';
 
-// AI 接口和 L0 一样：看遮过的局面，返回动作和推进后的随机数流。L1 合并后换成 L1。
+// AI 接口（src/ai/types.ts 的 ChooseAction）：看遮过的局面，返回动作和推进后的随机数流。默认 L1。
 export type AiPolicy = (state: GameState, side: Side, rng: RngState) => { action: Action; rng: RngState } | null;
 
 export type MatchConfig = {
@@ -57,7 +57,7 @@ export class Match {
     this.pendingStart = created.events;
     this.human = config.human;
     this.aiSide = other(config.human);
-    this.ai = config.ai ?? l0ChooseAction;
+    this.ai = config.ai ?? l1ChooseAction;
     this.thinkSeconds = config.thinkSeconds ?? 0.7;
     this.aiRng = seedRng(config.seed ^ 0x5eed);
     this.initial = initialView(this.state, this.human);

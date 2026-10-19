@@ -14,10 +14,10 @@ export const spellCast: AnimModule<'spell_cast'> = (e, { scene }) => {
   const show = showcaseSlot();
   t.call(() => playSfx(`spell.${fx}`));
   if (e.target) {
-    t.add(projectile(scene.layers.fx, at(show), pointOf(scene, e.target), color, 0.3));
+    t.add(projectile(scene.layers.fx, at(show.pos), pointOf(scene, e.target), color, 0.3));
     t.add(ring(scene.layers.fx, pointOf(scene, e.target), color, 70, 0.25));
   } else {
-    t.add(ring(scene.layers.fx, at(show), color, 260, 0.5));
+    t.add(ring(scene.layers.fx, at(show.pos), color, 260, 0.5));
   }
   return { tl: t };
 };

@@ -21,7 +21,7 @@ const LABELS: Record<TriggerTiming, string> = {
 function sourcePoint(scene: TableScene, s: SourceRef) {
   if (s.kind === 'minion') return pointOf(scene, { side: s.side, kind: 'minion', instanceId: s.instanceId } as TargetRef);
   if (s.kind === 'hero_power') return () => scene.heroPowerPoint(s.side);
-  if (s.kind === 'spell') return () => showcaseSlot();
+  if (s.kind === 'spell') return () => showcaseSlot().pos;
   return pointOf(scene, { side: s.side, kind: 'hero' });
 }
 
@@ -30,7 +30,7 @@ export const trigger: AnimModule<'trigger'> = (e, { scene }) => {
   const from = sourcePoint(scene, e.source);
   t.call(() => playSfx('ui.click'));
   t.add(ring(scene.layers.fx, from, 0xffd070, 70, 0.3));
-  t.add(floatText(scene.layers.fx, () => ({ x: from().x, y: from().y - 70 }), LABELS[e.timing], 0xffd070, 28), 0);
+  t.add(floatText(scene.layers.fx, () => ({ ...from(), y: from().y + 0.5 }), LABELS[e.timing], 0xffd070, 28), 0);
   if (e.target) {
     t.add(projectile(scene.layers.fx, from, pointOf(scene, e.target), 0xffd070, 0.25), 0.1);
     t.add(ring(scene.layers.fx, pointOf(scene, e.target), 0xffffff, 50, 0.2));

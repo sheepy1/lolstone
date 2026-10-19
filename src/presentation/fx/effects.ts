@@ -1,167 +1,238 @@
-// 占位动画用的通用效果：飘字、闪光圈、飞弹、横幅、粒子。每个函数返回一条 GSAP 时间线，
-// 显示对象在时间线播放时才创建（.call），播完自己销毁。M4 换成精细版本时这些函数的签名不变。
+// 占位动画用的通用 3D 效果：飘字、扩散光圈、飞弹、横幅、粒子。每个函数返回一条 GSAP 时间线，
+// 3D 对象在时间线播放时才创建（.call），播完自己移除并释放。M4 换成精细版本时签名不变。
 import gsap from 'gsap';
-import { Container, Graphics, Text } from 'pixi.js';
+import * as THREE from 'three';
 import { FONT_CN, FONT_NUM } from '../../scene/theme';
-import type { Point } from './arrow';
+import type { Vec3 } from '../layout';
+import { hdr } from './materials';
 
 const MAX_PARTICLES = 2000; // spec 5.10
 let liveParticles = 0;
 
-function text(str: string, size: number, color: number, font = FONT_NUM): Text {
-  const t = new Text({
-    text: str,
-    style: { fontFamily: font, fontSize: size, fill: color, fontWeight: '900', stroke: { color: 0x000000, width: Math.max(4, size / 6) } },
-  });
-  t.anchor.set(0.5);
-  t.resolution = 2;
-  return t;
+function css(hex: number): string {
+  return `#${hex.toString(16).padStart(6, '0')}`;
 }
 
-// 伤害、治疗等飘字：弹出、上浮、淡出。
-export function floatText(layer: Container, at: () => Point, str: string, color: number, size = 46): gsap.core.Timeline {
+// 一行字的 sprite。height 是世界单位里的字高。
+export function textSprite(str: string, color: number, height: number, font = FONT_NUM, band = false): THREE.Sprite {
+  const px = 96;
+  const c = document.createElement('canvas');
+  const g = c.getContext('2d')!;
+  g.font = `900 ${px}px ${font}`;
+  const w = Math.ceil(g.measureText(str).width + px * 0.6);
+  const bandW = band ? Math.max(w + px * 2, px * 8) : w;
+  c.width = bandW;
+  c.height = Math.ceil(px * (band ? 1.9 : 1.4));
+  if (band) {
+    g.fillStyle = 'rgba(0,0,0,0.62)';
+    g.fillRect(0, c.height * 0.08, c.width, c.height * 0.84);
+    g.fillStyle = '#c8aa6e';
+    g.fillRect(0, c.height * 0.08, c.width, 6);
+    g.fillRect(0, c.height * 0.92 - 6, c.width, 6);
+  }
+  g.font = `900 ${px}px ${font}`;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.lineJoin = 'round';
+  g.lineWidth = px * 0.16;
+  g.strokeStyle = '#000';
+  g.strokeText(str, c.width / 2, c.height / 2);
+  g.fillStyle = css(color);
+  g.fillText(str, c.width / 2, c.height / 2);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, toneMapped: false });
+  const s = new THREE.Sprite(mat);
+  const h = height * (c.height / px);
+  s.scale.set((h * c.width) / c.height, h, 1);
+  s.renderOrder = 20;
+  return s;
+}
+
+function disposeSprite(s: THREE.Sprite | null): void {
+  if (!s) return;
+  s.removeFromParent();
+  s.material.map?.dispose();
+  s.material.dispose();
+}
+
+// 伤害、治疗等飘字：弹出、上浮、淡出。size 沿用 2D 版的像素字号，换算成世界单位。
+export function floatText(layer: THREE.Object3D, at: () => Vec3, str: string, color: number, size = 46): gsap.core.Timeline {
   const tl = gsap.timeline();
-  let t: Text | null = null;
-  const holder = { y: 0, a: 1, s: 0.4 };
+  let s: THREE.Sprite | null = null;
+  const st = { k: 0.4, rise: 0, a: 1 };
+  const base = { x: 0, y: 0, z: 0, sx: 1, sy: 1 };
+  const apply = () => {
+    if (!s) return;
+    s.position.set(base.x, base.y + st.rise, base.z);
+    s.scale.set(base.sx * st.k, base.sy * st.k, 1);
+    s.material.opacity = st.a;
+  };
   tl.call(() => {
-    t = text(str, size, color);
+    s = textSprite(str, color, (size / 46) * 0.62);
     const p = at();
-    t.position.set(p.x, p.y);
-    t.scale.set(0.4);
-    layer.addChild(t);
-    holder.y = p.y;
+    Object.assign(base, { x: p.x, y: p.y + 1.1, z: p.z, sx: s.scale.x, sy: s.scale.y });
+    layer.add(s);
+    apply();
   });
-  tl.to(holder, {
-    s: 1.15,
-    duration: 0.14,
-    ease: 'back.out(3)',
-    onUpdate: () => t?.scale.set(holder.s),
-  });
-  tl.to(holder, {
-    y: '-=46',
-    a: 0,
-    duration: 0.5,
-    ease: 'power1.in',
-    onUpdate: () => {
-      if (!t) return;
-      t.y = holder.y;
-      t.alpha = holder.a;
-    },
-  });
-  tl.call(() => t?.destroy());
+  tl.to(st, { k: 1.15, duration: 0.14, ease: 'back.out(3)', onUpdate: apply });
+  tl.to(st, { rise: 0.9, a: 0, duration: 0.5, ease: 'power1.in', onUpdate: apply });
+  tl.call(() => disposeSprite(s));
   return tl;
 }
 
-// 扩散的光圈。
-export function ring(layer: Container, at: () => Point, color: number, radius = 80, duration = 0.4): gsap.core.Timeline {
+const ringGeo = new THREE.RingGeometry(0.82, 1, 48);
+
+// 贴着台面扩散的光圈。radius 沿用 2D 版的像素半径，换算成世界单位。
+export function ring(layer: THREE.Object3D, at: () => Vec3, color: number, radius = 80, duration = 0.4): gsap.core.Timeline {
   const tl = gsap.timeline();
-  let g: Graphics | null = null;
-  const st = { r: 10, a: 1 };
+  let m: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial> | null = null;
+  const st = { r: 0.15, a: 1 };
+  const r1 = radius / 80;
   tl.call(() => {
-    g = new Graphics();
-    layer.addChild(g);
+    const mat = new THREE.MeshBasicMaterial({
+      color: hdr(color, 4),
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      toneMapped: false,
+      side: THREE.DoubleSide,
+    });
+    m = new THREE.Mesh(ringGeo, mat);
+    m.rotation.x = -Math.PI / 2;
+    layer.add(m);
   });
   tl.to(st, {
-    r: radius,
+    r: r1,
     a: 0,
     duration,
     ease: 'power2.out',
     onUpdate: () => {
-      if (!g) return;
+      if (!m) return;
       const p = at();
-      g.clear().circle(p.x, p.y, st.r).stroke({ width: 8, color, alpha: st.a });
+      m.position.set(p.x, Math.max(0.06, p.y + 0.06), p.z);
+      m.scale.setScalar(st.r);
+      m.material.opacity = st.a;
     },
   });
-  tl.call(() => g?.destroy());
+  tl.call(() => {
+    m?.removeFromParent();
+    m?.material.dispose();
+  });
   return tl;
 }
 
-// 飞弹：一个发光圆点从 from 飞到 to。
-export function projectile(layer: Container, from: () => Point, to: () => Point, color: number, duration = 0.3): gsap.core.Timeline {
+const ballGeo = new THREE.SphereGeometry(0.16, 16, 12);
+
+// 飞弹：一颗发光的球沿弧线从 from 飞到 to。
+export function projectile(layer: THREE.Object3D, from: () => Vec3, to: () => Vec3, color: number, duration = 0.3): gsap.core.Timeline {
   const tl = gsap.timeline();
-  let g: Graphics | null = null;
+  let m: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
   const st = { t: 0 };
   tl.call(() => {
-    g = new Graphics().circle(0, 0, 14).fill(color).circle(0, 0, 24).fill({ color, alpha: 0.35 });
+    m = new THREE.Mesh(ballGeo, new THREE.MeshBasicMaterial({ color: hdr(color, 6), toneMapped: false }));
     const p = from();
-    g.position.set(p.x, p.y);
-    layer.addChild(g);
+    m.position.set(p.x, p.y + 0.6, p.z);
+    layer.add(m);
   });
   tl.to(st, {
     t: 1,
     duration,
     ease: 'power1.in',
     onUpdate: () => {
-      if (!g) return;
+      if (!m) return;
       const a = from();
       const b = to();
-      g.position.set(a.x + (b.x - a.x) * st.t, a.y + (b.y - a.y) * st.t - Math.sin(st.t * Math.PI) * 60);
+      const k = st.t;
+      m.position.set(a.x + (b.x - a.x) * k, a.y + 0.6 + (b.y - a.y) * k + Math.sin(k * Math.PI) * 1.4, a.z + (b.z - a.z) * k);
     },
   });
-  tl.call(() => g?.destroy());
+  tl.call(() => {
+    m?.removeFromParent();
+    m?.material.dispose();
+  });
   return tl;
 }
 
-// 中央横幅："你的回合"、"对方回合"、"胜利"。滑入、停顿、淡出。
-export function banner(layer: Container, center: Point, str: string, color: number, hold = 0.6, size = 84): gsap.core.Timeline {
+// 横幅："你的回合"、"对方回合"、"胜利"。在镜头前滑入、停顿、淡出。
+export function banner(layer: THREE.Object3D, center: { pos: Vec3 }, str: string, color: number, hold = 0.6, size = 84): gsap.core.Timeline {
   const tl = gsap.timeline();
-  let c: Container | null = null;
-  const st = { x: -400, a: 0 };
-  tl.call(() => {
-    c = new Container();
-    const bg = new Graphics().rect(-560, -70, 1120, 140).fill({ color: 0x000000, alpha: 0.6 });
-    bg.rect(-560, -70, 1120, 4).fill(0xc8aa6e).rect(-560, 66, 1120, 4).fill(0xc8aa6e);
-    c.addChild(bg, text(str, size, color, FONT_CN));
-    c.position.set(center.x + st.x, center.y);
-    c.alpha = 0;
-    layer.addChild(c);
-  });
+  let s: THREE.Sprite | null = null;
+  const st = { x: -3, a: 0 };
   const sync = () => {
-    if (!c) return;
-    c.x = center.x + st.x;
-    c.alpha = st.a;
+    if (!s) return;
+    s.position.set(center.pos.x + st.x, center.pos.y, center.pos.z);
+    s.material.opacity = st.a;
   };
+  tl.call(() => {
+    s = textSprite(str, color, (size / 84) * 1.0, FONT_CN, true);
+    layer.add(s);
+    sync();
+  });
   tl.to(st, { x: 0, a: 1, duration: 0.3, ease: 'power3.out', onUpdate: sync });
   tl.to(st, { duration: hold });
-  tl.to(st, { x: 300, a: 0, duration: 0.3, ease: 'power2.in', onUpdate: sync });
-  tl.call(() => c?.destroy({ children: true }));
+  tl.to(st, { x: 2.5, a: 0, duration: 0.3, ease: 'power2.in', onUpdate: sync });
+  tl.call(() => disposeSprite(s));
   return tl;
 }
 
-// 粒子迸发：n 个小方块从中心向外飞散后消失。总数超过上限时不再生成（spec 5.10）。
-export function burst(layer: Container, at: () => Point, color: number, n = 14, duration = 0.5): gsap.core.Timeline {
+// 粒子迸发：n 个光点从中心向四周飞散、受重力下落、淡出。总数超过上限时不再生成（spec 5.10）。
+export function burst(layer: THREE.Object3D, at: () => Vec3, color: number, n = 14, duration = 0.5): gsap.core.Timeline {
   const tl = gsap.timeline();
-  const parts: { g: Graphics; vx: number; vy: number }[] = [];
+  let points: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial> | null = null;
+  let vel: Float32Array | null = null;
+  let origin: Vec3 = { x: 0, y: 0, z: 0 };
+  let count = 0;
   const st = { t: 0 };
-  let origin: Point = { x: 0, y: 0 };
   tl.call(() => {
     origin = at();
-    const count = Math.max(0, Math.min(n, MAX_PARTICLES - liveParticles));
+    count = Math.max(0, Math.min(n, MAX_PARTICLES - liveParticles));
     liveParticles += count;
+    const pos = new Float32Array(count * 3);
+    vel = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2;
-      const v = 60 + Math.random() * 110;
-      const g = new Graphics().rect(-4, -4, 8, 8).fill(color);
-      g.position.set(origin.x, origin.y);
-      layer.addChild(g);
-      parts.push({ g, vx: Math.cos(a) * v, vy: Math.sin(a) * v });
+      const sp = 0.8 + Math.random() * 1.6;
+      vel[i * 3] = Math.cos(a) * sp;
+      vel[i * 3 + 1] = 1 + Math.random() * 2;
+      vel[i * 3 + 2] = Math.sin(a) * sp;
     }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const mat = new THREE.PointsMaterial({
+      color: hdr(color, 3.5),
+      size: 0.14,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      toneMapped: false,
+    });
+    points = new THREE.Points(geo, mat);
+    layer.add(points);
   });
   tl.to(st, {
     t: 1,
     duration,
     ease: 'power2.out',
     onUpdate: () => {
-      for (const p of parts) {
-        p.g.position.set(origin.x + p.vx * st.t, origin.y + p.vy * st.t + 40 * st.t * st.t);
-        p.g.alpha = 1 - st.t;
+      if (!points || !vel) return;
+      const attr = points.geometry.getAttribute('position') as THREE.BufferAttribute;
+      const t = st.t;
+      for (let i = 0; i < count; i++) {
+        attr.setXYZ(i, origin.x + vel[i * 3] * t, origin.y + 0.5 + vel[i * 3 + 1] * t - 2.2 * t * t, origin.z + vel[i * 3 + 2] * t);
       }
+      attr.needsUpdate = true;
+      points.material.opacity = 1 - t;
     },
   });
   tl.call(() => {
-    liveParticles -= parts.length;
-    for (const p of parts) p.g.destroy();
-    parts.length = 0;
+    liveParticles -= count;
+    count = 0;
+    if (points) {
+      points.removeFromParent();
+      points.geometry.dispose();
+      points.material.dispose();
+    }
   });
   return tl;
 }

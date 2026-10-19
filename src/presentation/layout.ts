@@ -1,128 +1,159 @@
-// 槽位坐标（spec 5.8）。所有动画以这里给出的槽位为起止点。坐标系是 1920×1080 的逻辑分辨率（spec 5.4），
-// 画布等比缩放到窗口。上半边是对手，下半边是我方；side 是相对 viewer 的：viewer 自己总在下方。
+// 槽位（spec 5.8）：每个槽位是 3D 世界里的位置、朝向和缩放，所有动画以槽位为起止点。
+// 坐标系：台面顶面是 y = 0 的平面，x 向右，z 朝向镜头（我方在 z 正方向），y 向上；单位是"台面单位"，
+// 一张手牌宽 1.5。side 是相对 viewer 的：viewer 自己总在近处（near）。
 import type { Side } from '../engine';
 
-export const STAGE_W = 1920;
-export const STAGE_H = 1080;
+export type Vec3 = { x: number; y: number; z: number };
+export type Slot = { pos: Vec3; rot: Vec3; scale: number };
 
-export type Slot = { x: number; y: number; rotation: number; scale: number };
+// 分辨率基准 1920×1080（spec 5.4）：画布按 16:9 等比缩放，最窄 1280 宽。
+export const ASPECT = 16 / 9;
 
-const CX = STAGE_W / 2;
+// 固定透视镜头，从我方一侧斜着俯视棋盘。俯角 atan(18 / 11) ≈ 58.6°（spec 5.4：50° 到 60°）。
+export const CAMERA = {
+  fov: 38,
+  pos: { x: 0, y: 18, z: 12.4 },
+  target: { x: 0, y: 0, z: 1.4 },
+};
+// 镜头视线和水平面的夹角
+export const CAMERA_PITCH = Math.atan2(CAMERA.pos.y - CAMERA.target.y, CAMERA.pos.z - CAMERA.target.z);
+
+// 台面尺寸
+export const TABLE = { width: 22, depth: 14.4, thickness: 0.7 };
 
 // 卡牌原始尺寸（scale 为 1 时）。
-export const CARD_W = 150;
-export const CARD_H = 210;
-// 场上随从头像尺寸。
-export const MINION_SIZE = 104;
+export const CARD_W = 1.5;
+export const CARD_H = 2.1;
+export const CARD_T = 0.04;
+// 随从底座
+export const MINION_SIZE = 1.5;
+export const MINION_HEIGHT = 0.32;
 
-export type Placement = 'near' | 'far'; // near：我方（下方），far：对手（上方）
+export type Placement = 'near' | 'far';
 
 export function placementOf(side: Side, viewer: Side): Placement {
   return side === viewer ? 'near' : 'far';
 }
 
 const ROWS = {
-  near: { hand: 985, board: 668, hero: 872, deck: 760, mana: 1050 },
-  far: { hand: 40, board: 408, hero: 196, deck: 300, mana: 32 },
+  near: { board: 2.05, hero: 4.85, deck: 3.0, mana: 6.3 },
+  far: { board: -2.05, hero: -4.95, deck: -3.0, mana: -6.4 },
 } as const;
 
-export const RIVER_Y = 538;
-export const HAND_TOP_Y = 880; // 我方手牌区的上沿，拖出这条线算离开手牌区
-export const BOARD_ROW_HALF = 96; // 随从行的半高，落点判定用
+export const RIVER_Z = 0;
+// 我方随从行的 z 半宽，落点判定用
+export const BOARD_ROW_HALF = 1.3;
+// 手牌区的边界：拖牌时指针投到台面上的 z 超过它就算还在手牌区
+export const HAND_ZONE_Z = 5.6;
 
-// 手牌扇形。count 张里的第 index 张。张数多时自动收紧。
+const v = (x: number, y: number, z: number): Vec3 => ({ x, y, z });
+const flat = { x: -Math.PI / 2, y: 0, z: 0 }; // 平放在台面上，正面朝上
+// 立起来朝向镜头
+const facing = (tilt = 0): Vec3 => ({ x: -CAMERA_PITCH + tilt, y: 0, z: 0 });
+
+// 我方手牌：在台面近处边缘外侧，朝镜头立着，排成扇形；张数多时自动收紧。
+// 对方手牌：在远处台面边缘，牌背朝上斜放。
 export function handSlot(p: Placement, index: number, count: number): Slot {
-  const scale = p === 'near' ? 0.95 : 0.62;
-  const maxSpan = p === 'near' ? 820 : 560;
-  const step = Math.min(p === 'near' ? 118 : 74, count > 1 ? maxSpan / (count - 1) : 0);
   const offset = index - (count - 1) / 2;
-  const angle = offset * (p === 'near' ? 3.2 : 3.6) * (Math.PI / 180);
-  const sag = Math.abs(offset) * Math.abs(offset) * (p === 'near' ? 3 : 2);
+  if (p === 'near') {
+    const step = Math.min(1.3, count > 1 ? 8.6 / (count - 1) : 0);
+    const sag = offset * offset * 0.045;
+    return {
+      pos: v(offset * step, 2.6 - sag + index * 0.004, 7.35 + Math.abs(offset) * 0.02),
+      rot: { x: -CAMERA_PITCH + 0.12, y: 0, z: -offset * 0.05 },
+      scale: 1.3,
+    };
+  }
+  const step = Math.min(0.75, count > 1 ? 6 / (count - 1) : 0);
   return {
-    x: CX + offset * step,
-    y: p === 'near' ? ROWS.near.hand + sag : ROWS.far.hand - sag,
-    rotation: p === 'near' ? angle : -angle,
-    scale,
+    pos: v(offset * step, 0.25 + index * 0.012, -7.75 - offset * offset * 0.02),
+    rot: { x: -Math.PI / 2 + 0.35, y: 0, z: Math.PI + offset * 0.05 },
+    scale: 0.75,
   };
 }
 
-// 悬停的那张手牌：上浮放大到清晰可读。
+// 悬停的那张手牌：抬起、放大、朝镜头转正。
 export function handHoverSlot(index: number, count: number): Slot {
   const base = handSlot('near', index, count);
-  return { x: Math.min(Math.max(base.x, 160), STAGE_W - 160), y: 836, rotation: 0, scale: 1.55 };
+  return { pos: v(Math.max(-8, Math.min(8, base.pos.x)), 3.9, 7.1), rot: facing(0), scale: 1.95 };
 }
 
-// 悬停时邻牌让开的偏移量。
+// 悬停时邻牌让开的偏移量（x 方向）。
 export function handNeighborShift(index: number, hovered: number): number {
   if (index === hovered) return 0;
   const d = index - hovered;
-  return Math.sign(d) * Math.max(0, 70 - (Math.abs(d) - 1) * 20);
+  return Math.sign(d) * Math.max(0, 0.9 - (Math.abs(d) - 1) * 0.25);
 }
 
-// 换牌阶段的起手牌，横排在中央放大。
+// 换牌阶段的起手牌：在台面中央上方立起来，放大。
 export function mulliganSlot(index: number, count: number): Slot {
-  const step = 250;
-  return { x: CX + (index - (count - 1) / 2) * step, y: 500, rotation: 0, scale: 1.45 };
+  return { pos: v((index - (count - 1) / 2) * 2.6, 3.4, 2.6), rot: facing(0), scale: 1.45 };
 }
 
-// 场上第 index 个随从（共 count 个）。gapAt 不为 null 时在那个位置空出一格（拖随从牌时的空位阴影）。
+// 场上第 index 个随从（共 count 个）。gapAt 不为 null 时在那个位置空出一格（拖随从牌时的空位）。
 export function boardSlot(p: Placement, index: number, count: number, gapAt: number | null = null): Slot {
-  const step = 140;
+  const step = 1.95;
   const total = gapAt === null ? count : count + 1;
   const i = gapAt !== null && index >= gapAt ? index + 1 : index;
-  return { x: CX + (i - (total - 1) / 2) * step, y: ROWS[p].board, rotation: 0, scale: 1 };
+  return { pos: v((i - (total - 1) / 2) * step, 0, ROWS[p].board), rot: v(0, 0, 0), scale: 1 };
 }
 
-// 拖到我方随从行时，鼠标 x 对应的入场位置。
+// 拖到我方随从行时，指针 x 对应的入场位置。
 export function boardInsertIndex(x: number, count: number): number {
   for (let i = 0; i < count; i++) {
-    if (x < boardSlot('near', i, count).x) return i;
+    if (x < boardSlot('near', i, count).pos.x) return i;
   }
   return count;
 }
 
-export function boardRowY(p: Placement): number {
+export function boardRowZ(p: Placement): number {
   return ROWS[p].board;
 }
 
 export function heroSlot(p: Placement): Slot {
-  return { x: CX, y: ROWS[p].hero, rotation: 0, scale: 1 };
+  return { pos: v(0, 0, ROWS[p].hero), rot: v(0, 0, 0), scale: 1 };
 }
 
 export function heroPowerSlot(p: Placement): Slot {
-  return { x: CX + 170, y: ROWS[p].hero + (p === 'near' ? 14 : -14), rotation: 0, scale: 1 };
+  return { pos: v(2.35, 0, ROWS[p].hero + (p === 'near' ? 0.2 : -0.2)), rot: v(0, 0, 0), scale: 1 };
 }
 
 export function deckSlot(p: Placement): Slot {
-  return { x: 1810, y: ROWS[p].deck, rotation: 0, scale: 0.62 };
+  return { pos: v(9.2, 0, ROWS[p].deck), rot: { ...flat, z: p === 'near' ? 0 : Math.PI }, scale: 1 };
 }
 
-// 法力条左端。10 格从左往右排。
+// 法力条左端，10 颗水晶从左往右排，间距 MANA_STEP。
 export function manaSlot(p: Placement): Slot {
-  return { x: 1500, y: ROWS[p].mana, rotation: 0, scale: 1 };
+  return { pos: v(4.4, 0, ROWS[p].mana), rot: v(0, 0, 0), scale: 1 };
 }
 
-export const MANA_CELL = 38;
+export const MANA_STEP = 0.56;
 
 export function endTurnSlot(): Slot {
-  return { x: 1690, y: RIVER_Y, rotation: 0, scale: 1 };
+  return { pos: v(9.0, 0, RIVER_Z), rot: v(0, 0, 0), scale: 1 };
 }
 
-// 对手出牌时展示的位置，和自己出法术时的展示位置。
+// 对手出牌、自己出法术时展示的位置：台面中央上方，朝镜头。
 export function showcaseSlot(): Slot {
-  return { x: CX, y: RIVER_Y - 10, rotation: 0, scale: 1.7 };
+  return { pos: v(0, 4.2, 3.2), rot: facing(0), scale: 1.7 };
 }
 
 // 拖法术进入施法状态后牌停的位置（箭头从这里出发）。
 export function castSlot(): Slot {
-  return { x: CX - 330, y: 860, rotation: 0, scale: 0.8 };
+  return { pos: v(-5.2, 2.6, 6.0), rot: facing(0), scale: 0.9 };
 }
 
 // 爆牌时牌停的位置：手牌上方。
 export function burnSlot(p: Placement): Slot {
-  return { x: CX + 360, y: p === 'near' ? 760 : 300, rotation: 0, scale: 1.2 };
+  return { pos: v(4.2, 3.4, p === 'near' ? 5.0 : -3.5), rot: facing(0), scale: 1.2 };
 }
 
+// 横幅：镜头前方，台面中央上空。
 export function bannerSlot(): Slot {
-  return { x: CX, y: RIVER_Y, rotation: 0, scale: 1 };
+  return { pos: v(0, 5.5, 3.0), rot: facing(0), scale: 1 };
+}
+
+// 一个点在台面上的投影高度：飘字等效果从目标上方出发
+export function above(p: Vec3, dy = 1): Vec3 {
+  return { x: p.x, y: p.y + dy, z: p.z };
 }

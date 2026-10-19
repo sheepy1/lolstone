@@ -21,6 +21,7 @@
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^6.1.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
@@ -30,9 +31,8 @@
   "dependencies": {
     "gsap": "^3.15.0",
     "howler": "^2.2.4",
-    "pixi-filters": "^6.1.5",
-    "pixi.js": "^8.22.0",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "three": "^0.186.1"
   }
 }

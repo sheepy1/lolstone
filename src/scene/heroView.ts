@@ -1,117 +1,179 @@
-// 英雄：水晶枢纽上嵌着英雄头像，生命值数字显示在枢纽上（spec 5.2）。生命低于 10 时枢纽闪烁。
-// 枢纽、技能图标都是占位图形，M4 换成素材。
+// 英雄：水晶枢纽（spec 5.2）。六棱台座上悬着一块缓慢旋转的自发光多面体晶体，台座正面嵌着朝向镜头的
+// 英雄头像圆盘，旁边是生命数字。生命低于 10 时晶体闪烁。英雄技能是台面上的六棱柱，顶面是技能名，
+// 用过之后变灰。都是占位几何体，M4 换材质和贴图。
 import gsap from 'gsap';
-import { Container, Graphics, Text } from 'pixi.js';
+import * as THREE from 'three';
 import { getCard, getHeroClass, type HeroClass } from '../engine';
-import { glowFilter } from '../presentation/fx/filters';
-import { Portrait } from './portrait';
+import { CAMERA_PITCH } from '../presentation/layout';
+import { flashMaterial, glowMaterial } from '../presentation/fx/materials';
+import { makeLabelCanvas, portraitTexture, strokeText, hexPath } from './canvasArt';
 import { COLORS, FONT_CN, FONT_NUM, REGION_COLORS } from './theme';
 
-function num(size: number, fill = 0xffffff): Text {
-  const t = new Text({
-    text: '',
-    style: { fontFamily: FONT_NUM, fontSize: size, fill, fontWeight: '900', stroke: { color: 0x000000, width: 6 } },
-  });
-  t.anchor.set(0.5);
-  t.resolution = 2;
-  return t;
-}
+const pedestalGeo = new THREE.CylinderGeometry(1.15, 1.3, 0.38, 6);
+const crystalGeo = new THREE.OctahedronGeometry(0.62, 0);
+const discGeo = new THREE.CircleGeometry(0.62, 40);
+const discRimGeo = new THREE.TorusGeometry(0.64, 0.06, 8, 40);
+const targetRingGeo = new THREE.TorusGeometry(1.45, 0.07, 8, 48);
 
-export class HeroView extends Container {
-  readonly body = new Container();
-  readonly flash = new Graphics();
-  private crystal = new Graphics();
-  private portrait = new Portrait(96);
-  private hp = num(34);
-  private glow = new Graphics();
+export class HeroView extends THREE.Group {
+  readonly body = new THREE.Group();
+  readonly flash: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>;
+  readonly crystal: THREE.Mesh<THREE.OctahedronGeometry, THREE.MeshStandardMaterial>;
+  private readonly targetRing: THREE.Mesh;
+  private readonly hp = makeLabelCanvas(160, 160);
   private low: gsap.core.Tween | null = null;
-  readonly radius = 86;
+  private lastHp = '';
+  private dimmed = false;
 
-  constructor(cls: HeroClass, enemy: boolean) {
+  constructor(cls: HeroClass, enemy: boolean, side: 0 | 1) {
     super();
-    const colors = REGION_COLORS[cls];
-    const r = this.radius;
-    this.crystal
-      .poly([0, -r, r * 0.95, -r * 0.3, r * 0.6, r * 0.8, -r * 0.6, r * 0.8, -r * 0.95, -r * 0.3])
-      .fill({ color: enemy ? 0x5a1a22 : 0x1a3a5a })
-      .stroke({ width: 6, color: colors.frame });
-    this.crystal.poly([0, -r + 14, r * 0.8, -r * 0.26, 0, r * 0.2, -r * 0.8, -r * 0.26]).fill({ color: 0xffffff, alpha: 0.08 });
-    const champion = getHeroClass(cls).champion;
-    this.portrait.show(`hero:${cls}`, champion);
-    this.portrait.y = -6;
-    const mask = new Graphics().circle(0, -6, 46).fill(0xffffff);
-    this.portrait.mask = mask;
-    const ring = new Graphics().circle(0, -6, 48).stroke({ width: 4, color: colors.accent });
-    const hpBack = new Graphics().circle(0, 0, 26).fill(0xb02020).stroke({ width: 3, color: 0x300000 });
-    hpBack.position.set(r * 0.62, r * 0.55);
-    this.hp.position.copyFrom(hpBack.position);
-    this.glow.circle(0, -6, 60).stroke({ width: 6, color: COLORS.target });
-    this.glow.filters = [glowFilter(COLORS.target)];
-    this.glow.visible = false;
-    this.flash.circle(0, -6, 48).fill(0xffffff);
-    this.flash.alpha = 0;
-    this.body.addChild(this.crystal, this.glow, this.portrait, mask, ring, this.flash, hpBack, this.hp);
-    this.addChild(this.body);
+    const col = REGION_COLORS[cls];
+    const pedestal = new THREE.Mesh(pedestalGeo, new THREE.MeshStandardMaterial({ color: 0x2a2e34, roughness: 0.55, metalness: 0.5 }));
+    pedestal.position.y = 0.19;
+    pedestal.castShadow = true;
+    pedestal.receiveShadow = true;
+    this.crystal = new THREE.Mesh(
+      crystalGeo,
+      new THREE.MeshStandardMaterial({
+        color: enemy ? 0xff6a6a : 0x6ab8ff,
+        emissive: col.frame,
+        emissiveIntensity: 2.4,
+        roughness: 0.15,
+        metalness: 0.2,
+        flatShading: true,
+      }),
+    );
+    this.crystal.scale.set(1, 1.6, 1);
+    this.crystal.position.y = 1.65;
+    this.crystal.castShadow = true;
+    // 头像圆盘：嵌在台座正面，朝向镜头
+    const disc = new THREE.Group();
+    disc.position.set(0, 0.85, 0.35);
+    disc.rotation.x = -CAMERA_PITCH + 0.25;
+    const portrait = new THREE.Mesh(discGeo, new THREE.MeshStandardMaterial({ map: portraitTexture(`hero:${cls}`, getHeroClass(cls).champion), roughness: 0.6 }));
+    const rim = new THREE.Mesh(discRimGeo, new THREE.MeshStandardMaterial({ color: col.accent, roughness: 0.3, metalness: 0.8 }));
+    this.flash = new THREE.Mesh(discGeo, flashMaterial());
+    this.flash.position.z = 0.01;
+    // 生命数字
+    const hpSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.hp.texture, transparent: true, toneMapped: false }));
+    hpSprite.scale.set(0.95, 0.95, 1);
+    hpSprite.position.set(0.72, -0.42, 0.12);
+    hpSprite.renderOrder = 4;
+    disc.add(portrait, rim, this.flash, hpSprite);
+    this.targetRing = new THREE.Mesh(targetRingGeo, glowMaterial(COLORS.target, 4.4));
+    this.targetRing.rotation.x = -Math.PI / 2;
+    this.targetRing.position.y = 0.05;
+    this.targetRing.visible = false;
+    this.body.add(pedestal, this.crystal, disc, this.targetRing);
+    this.add(this.body);
+    this.userData.pick = { kind: 'hero', side };
+  }
+
+  // 每帧调：晶体缓慢旋转、上下浮动
+  tick(t: number): void {
+    this.crystal.rotation.y = t * 0.5;
+    this.crystal.position.y = 1.65 + Math.sin(t * 1.3) * 0.08;
   }
 
   setHealth(health: number, max: number): void {
-    this.hp.text = String(health);
-    this.hp.style.fill = health < max ? COLORS.debuffed : 0xffffff;
+    const key = `${health}/${max}`;
+    if (key !== this.lastHp) {
+      this.lastHp = key;
+      const g = this.hp.g;
+      g.clearRect(0, 0, 160, 160);
+      g.beginPath();
+      g.arc(80, 80, 66, 0, Math.PI * 2);
+      g.fillStyle = '#b02020';
+      g.fill();
+      g.lineWidth = 8;
+      g.strokeStyle = '#2a0606';
+      g.stroke();
+      strokeText(g, String(health), 80, 84, health >= 10 || health < 0 ? 64 : 76, health < max ? '#ffd0d0' : '#ffffff', FONT_NUM, 0.14);
+      this.hp.texture.needsUpdate = true;
+    }
     const lowNow = health < 10;
     if (lowNow && !this.low) {
-      this.low = gsap.to(this.crystal, { alpha: 0.55, duration: 0.6, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+      this.low = gsap.to(this.crystal.material, { emissiveIntensity: 0.3, duration: 0.6, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     } else if (!lowNow && this.low) {
       this.low.kill();
       this.low = null;
-      this.crystal.alpha = 1;
+      this.crystal.material.emissiveIntensity = 2.4;
     }
   }
 
   setTargetable(mode: 'none' | 'target' | 'dim'): void {
-    this.glow.visible = mode === 'target';
-    this.body.alpha = mode === 'dim' ? 0.7 : 1;
+    this.targetRing.visible = mode === 'target';
+    const dim = mode === 'dim';
+    if (dim !== this.dimmed) {
+      this.dimmed = dim;
+      this.crystal.material.color.multiplyScalar(dim ? 0.45 : 1 / 0.45);
+    }
+  }
+
+  // 输掉时晶体熄灭碎裂（胜负动画用）
+  shatter(): gsap.core.Timeline {
+    const t = gsap.timeline();
+    t.to(this.crystal.material, { emissiveIntensity: 4, duration: 0.25 });
+    t.to(this.crystal.scale, { x: 0.01, y: 0.01, z: 0.01, duration: 0.35, ease: 'power3.in' });
+    return t;
   }
 }
 
-// 英雄技能：方形技能图标，用过之后盖上灰色冷却遮罩。
-export class HeroPowerView extends Container {
-  readonly body = new Container();
-  private cover = new Graphics();
-  private glow = new Graphics();
-  readonly size = 76;
+const powerGeo = new THREE.CylinderGeometry(0.62, 0.66, 0.24, 6);
+const powerTopGeo = new THREE.CircleGeometry(0.6, 6);
+const powerRingGeo = new THREE.TorusGeometry(0.78, 0.05, 8, 6);
 
-  constructor(cls: HeroClass) {
+// 英雄技能：台面上的六棱柱，顶面画技能名和费用；用过盖灰，能用时一圈绿色发光边。
+export class HeroPowerView extends THREE.Group {
+  readonly body = new THREE.Group();
+  private readonly topMat: THREE.MeshStandardMaterial;
+  private readonly ring: THREE.Mesh;
+  private used = false;
+
+  constructor(cls: HeroClass, side: 0 | 1) {
     super();
     const def = getCard(getHeroClass(cls).heroPower);
-    const colors = REGION_COLORS[cls];
-    const s = this.size;
-    const bg = new Graphics().rect(-s / 2, -s / 2, s, s).fill(colors.inner).stroke({ width: 4, color: colors.frame });
-    bg.poly([0, -s / 2 + 10, s / 2 - 10, 0, 0, s / 2 - 10, -s / 2 + 10, 0]).fill({ color: colors.accent, alpha: 0.6 });
-    const name = new Text({
-      text: def.name,
-      style: { fontFamily: FONT_CN, fontSize: 20, fill: 0xffffff, fontWeight: '700', stroke: { color: 0x000000, width: 4 } },
-    });
-    name.anchor.set(0.5);
-    name.resolution = 2;
-    const cost = new Graphics().circle(0, 0, 14).fill(COLORS.mana).stroke({ width: 2, color: COLORS.hexGold });
-    cost.position.set(0, -s / 2 - 4);
-    const costText = num(16);
-    costText.text = String(def.cost);
-    costText.position.copyFrom(cost.position);
-    this.cover.rect(-s / 2, -s / 2, s, s).fill({ color: 0x202020, alpha: 0.72 });
-    this.cover.visible = false;
-    this.glow.rect(-s / 2 - 6, -s / 2 - 6, s + 12, s + 12).stroke({ width: 5, color: COLORS.playable });
-    this.glow.filters = [glowFilter(COLORS.playable)];
-    this.glow.visible = false;
-    this.body.addChild(this.glow, bg, name, this.cover, cost, costText);
-    this.addChild(this.body);
+    const col = REGION_COLORS[cls];
+    const label = makeLabelCanvas(256, 256);
+    const g = label.g;
+    hexPath(g, 128, 128, 124);
+    g.fillStyle = `#${col.inner.toString(16).padStart(6, '0')}`;
+    g.fill();
+    hexPath(g, 128, 128, 100);
+    g.lineWidth = 8;
+    g.strokeStyle = `#${col.accent.toString(16).padStart(6, '0')}`;
+    g.stroke();
+    strokeText(g, def.name, 128, 140, 64, '#ffffff', FONT_CN, 0.12);
+    g.beginPath();
+    g.arc(128, 48, 30, 0, Math.PI * 2);
+    g.fillStyle = '#2f8cff';
+    g.fill();
+    strokeText(g, String(def.cost), 128, 50, 40, '#fff', FONT_NUM);
+    label.texture.needsUpdate = true;
+    const prism = new THREE.Mesh(powerGeo, new THREE.MeshStandardMaterial({ color: col.frame, roughness: 0.4, metalness: 0.6 }));
+    prism.position.y = 0.12;
+    prism.castShadow = true;
+    this.topMat = new THREE.MeshStandardMaterial({ map: label.texture, roughness: 0.5 });
+    const top = new THREE.Mesh(powerTopGeo, this.topMat);
+    top.rotation.x = -Math.PI / 2;
+    top.rotation.z = Math.PI / 2;
+    top.position.y = 0.245;
+    this.ring = new THREE.Mesh(powerRingGeo, glowMaterial(COLORS.playable, 4.1));
+    this.ring.rotation.x = -Math.PI / 2;
+    this.ring.position.y = 0.05;
+    this.ring.visible = false;
+    this.body.add(prism, top, this.ring);
+    this.add(this.body);
+    this.userData.pick = { kind: 'hero_power', side };
   }
 
   setUsed(used: boolean): void {
-    this.cover.visible = used;
+    if (used === this.used) return;
+    this.used = used;
+    this.topMat.color.setScalar(used ? 0.3 : 1);
   }
 
   setUsable(on: boolean): void {
-    this.glow.visible = on;
+    this.ring.visible = on;
   }
 }

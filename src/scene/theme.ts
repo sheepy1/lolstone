@@ -1,4 +1,4 @@
-// 配色和字体（spec 5.4）。M3 用纯色和简单图形占位，M4 换成图集里的素材。
+// 配色和字体（spec 5.4）。M3 用纯色和简单几何体占位，M4 换贴图和材质。
 import type { CardClass, Fx } from '../engine';
 
 export const FONT_CN = '"LXGW WenKai", "Songti SC", "Noto Serif SC", "PingFang SC", serif';
@@ -59,4 +59,9 @@ function hslToHex(h: number, s: number, l: number): number {
   const a = s * Math.min(l, 1 - l);
   const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
   return (Math.round(f(0) * 255) << 16) | (Math.round(f(8) * 255) << 8) | Math.round(f(4) * 255);
+}
+
+// 0xRRGGBB 转成 canvas 用的颜色字符串
+export function css(color: number): string {
+  return `#${color.toString(16).padStart(6, '0')}`;
 }

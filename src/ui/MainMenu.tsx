@@ -1,4 +1,4 @@
-// 主菜单（spec 5.1）：选职业和 AI 职业，开始。第一版用预组卡组，AI 先只有 L0。
+// 主菜单（spec 5.1）：选职业和 AI 职业，开始。第一版用预组卡组，AI 用 L1 贪心。
 import { PRESET_DECKS } from '../cards';
 import { allHeroClasses, type HeroClass } from '../engine';
 import type { GameApp } from '../app/game';
@@ -34,7 +34,7 @@ export function MainMenu({ app }: { app: GameApp }) {
       </div>
       <div className="menu-row">
         <span className="menu-label">AI 难度</span>
-        <button className="chip on">L0 随机</button>
+        <button className="chip on">L1 贪心</button>
       </div>
       <button className="hex-button" onClick={() => void app.startMatch(menu.humanClass, menu.aiClass)}>
         开始对局

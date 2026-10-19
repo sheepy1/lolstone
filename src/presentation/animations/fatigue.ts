@@ -8,7 +8,7 @@ export const fatigue: AnimModule<'fatigue'> = (e, { scene, after }) => {
   const t = tl();
   const deck = scene.deckPoint(e.side);
   t.call(() => playSfx('flow.fatigue'));
-  t.add(floatText(scene.layers.top, at({ x: 960, y: 540 }), `疲劳 ${e.amount}`, 0xb080ff, 72));
+  t.add(floatText(scene.layers.top, at({ x: 0, y: 3.5, z: 2.5 }), `疲劳 ${e.amount}`, 0xb080ff, 72));
   t.add(projectile(scene.layers.fx, at(deck), pointOf(scene, { side: e.side, kind: 'hero' }), 0x9050ff, 0.4), 0.2);
   t.add(syncTo(scene, after, 0.1));
   return { tl: t };

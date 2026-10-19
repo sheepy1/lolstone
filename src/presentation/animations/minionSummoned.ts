@@ -16,7 +16,7 @@ export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, after 
       const champ = championOf(e.cardId);
       if (champ) playVoice(champ, 'choose');
     }, undefined, 0.15);
-    t.add(burst(scene.layers.fx, () => ({ x: where().x, y: where().y + 50 }), 0x9a8060, 16, 0.45), 0.15);
+    t.add(burst(scene.layers.fx, () => ({ ...where(), y: 0.05 }), 0x9a8060, 16, 0.45), 0.15);
   } else {
     t.call(() => playSfx('combat.summon'), undefined, 0);
     t.add(ring(scene.layers.fx, where, 0xfff1a0, 90, 0.45), 0);

@@ -7,7 +7,7 @@ import { pointOf, syncTo, tl } from './util';
 export const shieldBroken: AnimModule<'shield_broken'> = (e, { scene, after }) => {
   const t = tl();
   const where = pointOf(scene, e.target);
-  const top = () => ({ x: where().x, y: where().y - 70 });
+  const top = () => ({ ...where(), y: where().y + 0.5 });
   t.call(() => playSfx('combat.shield_break'));
   t.add(burst(scene.layers.fx, top, 0xffffff, 18, 0.4), 0);
   t.add(floatText(scene.layers.fx, top, '破盾', 0xffffff, 30), 0);

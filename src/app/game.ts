@@ -16,11 +16,19 @@ import { Stage } from '../scene/stage';
 import { TableScene } from '../scene/table';
 import { KEYWORD_NAMES } from '../presentation/keywordText';
 import { describe, LogNames } from '../ui/logText';
+import type { Difficulty } from '../ui/menuData';
 import { l0ChooseAction } from '../ai/l0';
 import { Match } from './match';
 import { getUi, setUi } from './store';
 
 const LOG_LIMIT = 400;
+// 对局加载页的最短停留时间（毫秒）
+const MIN_LOADING_MS = 1400;
+
+function waitUntil(t: number): Promise<void> {
+  const ms = t - performance.now();
+  return ms > 0 ? new Promise((r) => setTimeout(r, ms)) : Promise.resolve();
+}
 
 type Session = {
   scene: TableScene;
@@ -71,23 +79,37 @@ export class GameApp {
 
   // 开一局：先在加载页预载两套卡组的美术和语音，再进对局。
   // seed 不给时随机；给了就能复现同一局（调试、自动化验证用，自动驾驶的随机数也从头开始）。
-  async startMatch(humanClass: HeroClass, aiClass: HeroClass, seed?: number): Promise<void> {
+  // difficulty 是 AI 难度（spec 4.1）：l0 随机，l1 贪心。
+  async startMatch(humanClass: HeroClass, aiClass: HeroClass, seed?: number, difficulty: Difficulty = 'l1'): Promise<void> {
     initAudio();
     this.teardown();
+    const loadStart = performance.now();
     const decks: [string[], string[]] = [[...(PRESET_DECKS[humanClass] ?? [])], [...(PRESET_DECKS[aiClass] ?? [])]];
-    setUi({ screen: 'loading', loading: { progress: 0, label: '载入英雄美术和语音' }, result: null, log: [], error: null });
+    setUi((s) => ({
+      screen: 'loading',
+      loading: { progress: 0, label: '载入英雄美术和语音' },
+      menu: { ...s.menu, humanClass, aiClass, difficulty },
+      result: null,
+      log: [],
+      error: null,
+    }));
+    // 进度条：美术和语音占前 90%，卡面字体占最后 10%
     const report = await loadManifest(matchManifest(decks, [humanClass, aiClass]), (p) =>
-      setUi((s) => ({ loading: { ...s.loading, progress: p } })),
+      setUi((s) => ({ loading: { ...s.loading, progress: p * 0.9 } })),
     );
     // 卡面 SDF 字体和本局两套卡组用到的字，开局时不用临时排版
     setUi((s) => ({ loading: { ...s.loading, label: '载入卡面字体' } }));
     const chars = [...decks[0], ...decks[1]].map((id) => getCard(id)).map((d) => d.name + d.text).join('') + '0123456789';
     await preloadCardFont(chars);
+    setUi((s) => ({ loading: { ...s.loading, progress: 1, label: '准备就绪' } }));
+    // 资源已在缓存里时加载只要几十毫秒，加载页至少停留一小段，双方英雄对峙的画面和进度条走完都看得见
+    await waitUntil(loadStart + MIN_LOADING_MS);
     if (report.missing.length > 0) console.info(`[assets] ${report.missing.length} 个资源缺失，用纯色兜底`, report.missing.slice(0, 5));
     const matchSeed = seed ?? Math.floor(Math.random() * 1_000_000);
     if (seed !== undefined) this.autoRng = seedRng(seed);
     console.info(`[match] seed ${matchSeed}`);
-    const match = new Match({ seed: matchSeed, classes: [humanClass, aiClass], decks, human: 0 });
+    const ai = difficulty === 'l0' ? l0ChooseAction : undefined;
+    const match = new Match({ seed: matchSeed, classes: [humanClass, aiClass], decks, human: 0, ai });
     this.names = new LogNames();
     match.onBatch = (events) => this.log(events, 0);
     this.open(match.initial, match);

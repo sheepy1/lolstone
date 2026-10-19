@@ -1,6 +1,7 @@
 // 界面状态：React 文字界面和对局控制之间共享的一小块状态，用 useSyncExternalStore 订阅。
 import { useSyncExternalStore } from 'react';
 import type { HeroClass, Side } from '../engine';
+import type { Difficulty } from '../ui/menuData';
 
 export type Screen = 'boot' | 'menu' | 'loading' | 'match';
 
@@ -15,7 +16,7 @@ export type HoverCard = {
 export type UiState = {
   screen: Screen;
   loading: { progress: number; label: string };
-  menu: { humanClass: HeroClass; aiClass: HeroClass };
+  menu: { humanClass: HeroClass; aiClass: HeroClass; difficulty: Difficulty };
   // 换牌页：显示局面在换牌阶段、轮到玩家提交时打开
   mulligan: { open: boolean; marked: number };
   result: { winner: Side | 'draw'; won: boolean; turns: number } | null;
@@ -29,7 +30,7 @@ export type UiState = {
 let state: UiState = {
   screen: 'boot',
   loading: { progress: 0, label: '' },
-  menu: { humanClass: 'demacia', aiClass: 'freljord' },
+  menu: { humanClass: 'demacia', aiClass: 'freljord', difficulty: 'l1' },
   mulligan: { open: false, marked: 0 },
   result: null,
   hover: null,

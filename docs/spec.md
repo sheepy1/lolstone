@@ -1,9 +1,10 @@
 # MeLoL 设计规格
 
-版本 v0.6.5 · 2026-10-19
+版本 v0.6.6 · 2026-10-19
 
 修订记录：
 
+- v0.6.6：音效管线合并后（main 0a45f7d），5.7 写入各类音频的响度目标和真峰值上限，5.9 的音效来源改为只收 CC0、记录在 scripts/data/audio-sources.json，管线加 fetch-sfx。
 - v0.6.5：素材管线做完后的取舍：5.9 加符文之地传说的官方卡牌原画作为法术配图来源，写明非英雄卡的配图规则和英雄技能配图不与同名法术共用，映射表在 scripts/data/card-art.json；5.4 嘲讽图标改为拉莫斯的 E。
 - v0.6.4：为 M4 并行开工补三份文档：docs/m4-storyboard.md（5.6 每行的分镜、交互手感参数、约定）、docs/m4-first-minutes.md（新玩家前几分钟的纵切片验收）、docs/m4-signature-fx.md（11 张招牌卡的 fxId 和专属特效）。第 7 节 M4 改为先做纵切片。
 - v0.6.3：第 7 节注明 M1、M2 完成，M2 的平衡验收数据记在 cards-v1 的平衡调整记录。
@@ -670,7 +671,17 @@ M4 按这张表逐条做、逐条验收。时长是目标值，调试时可以�
 
 一致性和分层：
 
-- 所有音效过同一条处理链：响度归一到同一目标（ffmpeg loudnorm），统一的 EQ 和混响，不同来源的素材听起来是一套。管线见 5.9。
+- 所有音频过同一条归一管线（scripts/normalize-audio.ts），不同来源的素材听起来是一套。响度目标以实现为准，细节在 NOTES.md 的"音效和音乐素材（M4 准备）"一节：
+
+| 类别 | 目标 | 说明 |
+| --- | --- | --- |
+| 音效 | 最大瞬时响度 -18 LUFS | 起音很尖、很短的音效会被真峰值上限卡住而比目标轻，这是有意的，不硬压 |
+| 语音 | 积分响度 -18 LUFS | |
+| 胜负收尾 | -18 LUFS | |
+| 音乐 | -20 LUFS | |
+| 环境音 | -30 LUFS | |
+
+  真峰值上限 -1 dBTP，统一采样率，输出 ogg，带 mp3 兜底。分镜里不写音量，靠这张表。
 - 战斗事件的声音固定分三层：动作层（挥击、冲刺）、材质层（命中轻重、碎裂、结冰）、语音层。每层各自随机变体。
 - 按棋盘位置做左右声像：左边的随从攻击，声音偏左。
 
@@ -734,14 +745,15 @@ M4 按这张表逐条做、逐条验收。时长是目标值，调试时可以�
 - 英雄技能的配图不和同名或同效果的法术共用一张图，免得玩家混淆。
 - 每张卡用哪张图记在 `scripts/data/card-art.json`，抓取脚本按它取图，加卡先加映射。
 
-音效和音乐：不自己录。音效从 CC0 库（freesound、Kenney 等）挑，按 5.7 的分类整理成清单。音乐由你自己放几首进 `public/audio/music/`，占位先用 CC0 曲子。
+音效和音乐：不自己录。音效只收 CC0 授权的素材，来源和授权逐条记在 `scripts/data/audio-sources.json`（第一轮 50 个来源全部 CC0-1.0；没用 freesound，它要登录才能下原始文件），按 5.7 的分类整理。音乐由你自己放几首进 `public/audio/music/`，占位先用 CC0 曲子。
 
 管线：
 
 - `scripts/fetch-art.ts`：按卡池里的 champion 字段拉头像和竖版原画到 `public/art/`。
 - `scripts/fetch-voice.ts`：拉语音到 `public/audio/voice/`。
 - `scripts/fetch-icons.ts`：按关键词和英雄技能的映射表拉技能、物品、被动图标，按单位列表拉野怪图，到 `public/art/icons/`。
-- `scripts/normalize-audio.ts`：音效和语音统一响度、统一格式，输出到 `public/audio/`，原始素材放 `assets-src/` 不进构建。
+- `scripts/fetch-sfx.ts`：按 `scripts/data/audio-sources.json` 下载原始音效到 `assets-src/`，不进构建。
+- `scripts/normalize-audio.ts`：按 5.7 的响度目标归一音效、语音、音乐，统一格式，输出到 `public/audio/` 并生成清单。
 - `scripts/pack-atlas.ts`：把卡框、徽章、图标、粒子贴图打成图集。
 - `src/assets/manifest.ts`：所有资源的清单，加载页按它预载。
 - 卡框和棋盘贴图没有现成的：用 AI 生图出底图，再切图、做高度图，走图集；徽章、法力条这类简单件用矢量画。不需要建模素材：卡牌、随从底座、水晶枢纽都是几何体加贴图。

@@ -342,7 +342,8 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
   结算面板也用这个子集（`src/ui/menu.css` 的 @font-face），缺的字会由系统宋体补，字形不统一。
   界面文字由 `src/dev/fontChars.ts` 扫 `src/ui` 和 `src/app` 的源码收集：去掉注释后，字符串和 JSX 文本里的非 ASCII 字符
   （ASCII 本来就全带）。`src/app` 也扫，是因为加载页的进度说明、出错提示这些字符串写在对局层里。
-  卡池或界面加了新字后运行 `pnpm font:subset <NotoSerifSC-Bold.otf 的路径>` 重新生成（要 Python 的 fonttools）；
+  卡池或界面加了新字后运行 `pnpm font:subset assets-src/fonts/NotoSerifSC-Bold.otf` 重新生成（要 Python 的 fonttools）。
+  源字体放在不进 git 的 `assets-src/fonts/`；新的检出里没有的话，从 Google Fonts 下载思源宋体（Noto Serif SC）的 Bold 放进去。
   `tests/presentation-font.test.ts` 在卡池或界面缺字时失败。子集去掉了 OpenType 排版特性：思源的标点挤压会让 troika 把全角冒号挤没。
 - 悬停大卡：悬停场上随从或英雄技能时，场景左侧显示一张放大的卡（`TableScene.showInspect`，和场上同一套光照），
   随从显示当前数值；关键词解释是 DOM，贴在放大卡下面（位置用镜头投影算出）。悬停手牌时手牌自己抬起放大，不另外显示。

@@ -520,8 +520,7 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
 - 控制台 `pfx`：`pfx.shots(前缀)` 18 个预设各截一张；`pfx.capture(名字, [毫秒…], 前缀)` 按固定步长推进、截指定时刻的帧
   （不依赖页面在前台）；`pfx.bench('idle' | 'heavy5' | 'fill', 秒)` 测帧率（要页面在前台，rAF 才跑）。
   截图存到 `.dev-output/`。
-- 坑：`vite.config.ts` 的 `watch.ignored: ['**/.claude/**']` 在 worktree 里也会匹配到 worktree 自己的路径，
-  开发服务器看不到任何文件改动，改完代码要重启服务器才生效。
+- 开发服务器的监听规则按相对项目根判断（5a811ca），在 worktree 里起服务器也能看到自己的改动，不用重启。
 
 ### 性能（2026-10-19，Apple M4 Pro，不是 spec 的 M1 基准机；Chrome 内置浏览器，120Hz 屏）
 
@@ -572,9 +571,6 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
 
 ### 截图和验证
 
-- 开发服务器不监听本 worktree：`vite.config.ts` 的 `watch.ignored` 有 `**/.claude/**`，而 worktree 本身就在
-  `.claude/worktrees/` 下，改了文件页面不会更新，开发服务器还会继续发旧的转换结果。在 worktree 里调界面要每次改完重启
-  开发服务器。
 - 原尺寸截图用 Playwright 缓存里的 `chrome-headless-shell`（`~/Library/Caches/ms-playwright/chromium_headless_shell-*/`）
   加 `--use-angle=metal` 走 GPU，通过 CDP 设视口、点按钮、`Page.captureScreenshot`。`Runtime.evaluate` 要带
   `replMode: true` 才能在表达式里 `await import('/src/app/store.ts')` 拿到和应用同一份的界面状态。

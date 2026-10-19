@@ -4,16 +4,17 @@
 import gsap from 'gsap';
 import * as THREE from 'three';
 import { getCard, getHeroClass, type HeroClass } from '../engine';
-import { CAMERA_PITCH } from '../presentation/layout';
-import { flashMaterial, glowMaterial } from '../presentation/fx/materials';
+import { NEXUS } from '../presentation/layout';
+import { EDGE_GLOW, flashMaterial, glowMaterial } from '../presentation/fx/materials';
 import { makeLabelCanvas, portraitTexture, strokeText, hexPath } from './canvasArt';
 import { COLORS, FONT_CN, FONT_NUM, REGION_COLORS } from './theme';
+import { shared } from './dispose';
 
-const pedestalGeo = new THREE.CylinderGeometry(1.15, 1.3, 0.38, 6);
-const crystalGeo = new THREE.OctahedronGeometry(0.62, 0);
-const discGeo = new THREE.CircleGeometry(0.62, 40);
-const discRimGeo = new THREE.TorusGeometry(0.64, 0.06, 8, 40);
-const targetRingGeo = new THREE.TorusGeometry(1.45, 0.07, 8, 48);
+const pedestalGeo = shared(new THREE.CylinderGeometry(1.15, 1.3, 0.38, 6));
+const crystalGeo = shared(new THREE.OctahedronGeometry(0.62, 0));
+const discGeo = shared(new THREE.CircleGeometry(NEXUS.discRadius, 40));
+const discRimGeo = shared(new THREE.TorusGeometry(0.64, 0.06, 8, 40));
+const targetRingGeo = shared(new THREE.TorusGeometry(1.45, 0.07, 8, 48));
 
 export class HeroView extends THREE.Group {
   readonly body = new THREE.Group();
@@ -48,16 +49,16 @@ export class HeroView extends THREE.Group {
     this.crystal.castShadow = true;
     // 头像圆盘：嵌在台座正面，朝向镜头
     const disc = new THREE.Group();
-    disc.position.set(0, 0.85, 0.35);
-    disc.rotation.x = -CAMERA_PITCH + 0.25;
+    disc.position.set(NEXUS.discPos.x, NEXUS.discPos.y, NEXUS.discPos.z);
+    disc.rotation.x = NEXUS.discTilt;
     const portrait = new THREE.Mesh(discGeo, new THREE.MeshStandardMaterial({ map: portraitTexture(`hero:${cls}`, getHeroClass(cls).champion), roughness: 0.6 }));
     const rim = new THREE.Mesh(discRimGeo, new THREE.MeshStandardMaterial({ color: col.accent, roughness: 0.3, metalness: 0.8 }));
     this.flash = new THREE.Mesh(discGeo, flashMaterial());
     this.flash.position.z = 0.01;
     // 生命数字
     const hpSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.hp.texture, transparent: true, toneMapped: false }));
-    hpSprite.scale.set(0.95, 0.95, 1);
-    hpSprite.position.set(0.72, -0.42, 0.12);
+    hpSprite.scale.set(NEXUS.hpSize, NEXUS.hpSize, 1);
+    hpSprite.position.set(NEXUS.hpOffset.x, NEXUS.hpOffset.y, NEXUS.hpOffset.z);
     hpSprite.renderOrder = 4;
     disc.add(portrait, rim, this.flash, hpSprite);
     this.targetRing = new THREE.Mesh(targetRingGeo, glowMaterial(COLORS.target, 4.4));
@@ -88,7 +89,9 @@ export class HeroView extends THREE.Group {
       g.lineWidth = 8;
       g.strokeStyle = '#2a0606';
       g.stroke();
-      strokeText(g, String(health), 80, 84, health >= 10 || health < 0 ? 64 : 76, health < max ? '#ffd0d0' : '#ffffff', FONT_NUM, 0.14);
+      // 生命数字最低显示 0（引擎里的值可以是负的）
+      const shown = Math.max(0, health);
+      strokeText(g, String(shown), 80, 84, shown >= 10 ? 64 : 76, health < max ? '#ffd0d0' : '#ffffff', FONT_NUM, 0.14);
       this.hp.texture.needsUpdate = true;
     }
     const lowNow = health < 10;
@@ -119,9 +122,9 @@ export class HeroView extends THREE.Group {
   }
 }
 
-const powerGeo = new THREE.CylinderGeometry(0.62, 0.66, 0.24, 6);
-const powerTopGeo = new THREE.CircleGeometry(0.6, 6);
-const powerRingGeo = new THREE.TorusGeometry(0.78, 0.05, 8, 6);
+const powerGeo = shared(new THREE.CylinderGeometry(0.62, 0.66, 0.24, 6));
+const powerTopGeo = shared(new THREE.CircleGeometry(0.6, 6));
+const powerRingGeo = shared(new THREE.TorusGeometry(0.78, 0.05, 8, 6));
 
 // 英雄技能：台面上的六棱柱，顶面画技能名和费用；用过盖灰，能用时一圈绿色发光边。
 export class HeroPowerView extends THREE.Group {
@@ -158,7 +161,7 @@ export class HeroPowerView extends THREE.Group {
     top.rotation.x = -Math.PI / 2;
     top.rotation.z = Math.PI / 2;
     top.position.y = 0.245;
-    this.ring = new THREE.Mesh(powerRingGeo, glowMaterial(COLORS.playable, 4.1));
+    this.ring = new THREE.Mesh(powerRingGeo, glowMaterial(COLORS.playable, EDGE_GLOW));
     this.ring.rotation.x = -Math.PI / 2;
     this.ring.position.y = 0.05;
     this.ring.visible = false;

@@ -54,6 +54,11 @@ export class GameApp {
     this.stage?.frame();
   }
 
+  // 应用自己用的 GSAP 实例。自动化验证时页面不可见，要手动推进它的时钟（gsap.ticker.tick()）。
+  get gsap(): typeof gsap {
+    return gsap;
+  }
+
   // 开一局：先在加载页预载两套卡组的美术和语音，再进对局。
   // seed 不给时随机；给了就能复现同一局（调试、自动化验证用，自动驾驶的随机数也从头开始）。
   async startMatch(humanClass: HeroClass, aiClass: HeroClass, seed?: number): Promise<void> {

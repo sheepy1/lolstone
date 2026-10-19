@@ -3,15 +3,17 @@
 import * as THREE from 'three';
 import { getCard, HIDDEN_CARD_ID } from '../engine';
 import { CARD_T } from '../presentation/layout';
-import { glowMaterial } from '../presentation/fx/materials';
+import { EDGE_GLOW, glowMaterial } from '../presentation/fx/materials';
 import { cardBackTexture, cardFaceTexture } from './canvasArt';
 import { CARD_BODY, CARD_FACE, CARD_GLOW } from './geometry';
 import { COLORS } from './theme';
+import { shared } from './dispose';
 
-const bodyMat = new THREE.MeshStandardMaterial({ color: 0x8a7650, roughness: 0.6, metalness: 0.3 });
-const backMat = new THREE.MeshStandardMaterial({ map: cardBackTexture(), roughness: 0.55, metalness: 0.15 });
-const glowMat = glowMaterial(COLORS.playable, 3.7);
-const markMat = (() => {
+const bodyMat = shared(new THREE.MeshStandardMaterial({ color: 0x8a7650, roughness: 0.6, metalness: 0.3 }));
+const backMat = shared(new THREE.MeshStandardMaterial({ map: cardBackTexture(), roughness: 0.55, metalness: 0.15 }));
+// 发光边的亮度低于 bloom 阈值：只有边框本身亮，不往卡面上泛光
+const glowMat = shared(glowMaterial(COLORS.playable, EDGE_GLOW));
+const markMat = shared((() => {
   const c = document.createElement('canvas');
   c.width = c.height = 128;
   const g = c.getContext('2d')!;
@@ -31,8 +33,8 @@ const markMat = (() => {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false });
-})();
-const markGeo = new THREE.PlaneGeometry(0.9, 0.9);
+})());
+const markGeo = shared(new THREE.PlaneGeometry(0.9, 0.9));
 
 export class CardView extends THREE.Group {
   readonly instanceId: number;
@@ -52,7 +54,6 @@ export class CardView extends THREE.Group {
     // 卡面材质每张牌一份（变暗、烧红只改自己），贴图按卡牌 id 共用
     this.front = new THREE.Mesh(CARD_FACE, new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.1 }));
     this.front.position.z = CARD_T / 2 + 0.002;
-    this.front.userData.owned = true;
     const back = new THREE.Mesh(CARD_FACE, backMat);
     back.position.z = -CARD_T / 2 - 0.002;
     back.rotation.y = Math.PI;

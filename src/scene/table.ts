@@ -24,7 +24,7 @@ import {
 } from '../presentation/layout';
 import type { ViewState } from '../presentation/viewState';
 import { CardView } from './cardView';
-import { fadeOutAndDispose } from './dispose';
+import { fadeOutAndDispose, releaseGpu } from './dispose';
 import { HeroPowerView, HeroView } from './heroView';
 import { MinionView } from './minionView';
 import type { Stage } from './stage';
@@ -168,13 +168,11 @@ export class TableScene {
     this.root.add(hemi, sun, sun.target);
   }
 
+  // 一局结束：从舞台上拿走，释放这一局自己的几何体、材质、贴图（共用的不动）。
   dispose(): void {
     this.unhook();
     this.root.removeFromParent();
-    this.root.traverse((o) => {
-      const mesh = o as THREE.Mesh;
-      if (mesh.geometry && o.userData.owned) mesh.geometry.dispose();
-    });
+    releaseGpu(this.root);
   }
 
   place(side: Side): Placement {

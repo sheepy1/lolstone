@@ -5,6 +5,7 @@ import { findCard, getCard, type CardDef } from '../engine';
 import { championOf } from '../assets/manifest';
 import { portraitImage } from '../assets/loader';
 import { css, fallbackColor, FONT_CN, FONT_NUM, REGION_COLORS } from './theme';
+import { shared } from './dispose';
 
 function makeCanvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const c = document.createElement('canvas');
@@ -180,7 +181,7 @@ export function cardFaceTexture(cardId: string): THREE.CanvasTexture {
     tex.needsUpdate = true;
   }) : null;
   paintFace(g, def, img);
-  const tex = toTexture(c);
+  const tex = shared(toTexture(c));
   faceCache.set(cardId, tex);
   return tex;
 }
@@ -214,7 +215,7 @@ export function cardBackTexture(): THREE.CanvasTexture {
   g.arc(CW / 2, CH / 2, 28, 0, Math.PI * 2);
   g.fillStyle = '#c8aa6e';
   g.fill();
-  backTex = toTexture(c);
+  backTex = shared(toTexture(c));
   return backTex;
 }
 
@@ -236,7 +237,7 @@ export function portraitTexture(cardId: string, championKey: string | null = cha
       })
     : null;
   drawPortrait(g, def, championKey, 0, 0, 256, img);
-  const tex = toTexture(c);
+  const tex = shared(toTexture(c));
   portraitCache.set(key, tex);
   return tex;
 }

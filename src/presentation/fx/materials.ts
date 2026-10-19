@@ -18,6 +18,9 @@ export function glowMaterial(hex: number, intensity = 4, opacity = 1): THREE.Mes
   });
 }
 
+// 描边、发光边用的亮度：绿色乘 2 后亮度约 1.2，低于 bloom 阈值，边框本身很亮但不往周围泛光
+export const EDGE_GLOW = 2.0;
+
 // 叠加的闪光层：默认透明，动画把 opacity 拉上去再降下来
 export function flashMaterial(): THREE.MeshBasicMaterial {
   return new THREE.MeshBasicMaterial({

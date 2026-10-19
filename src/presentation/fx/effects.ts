@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { FONT_CN, FONT_NUM } from '../../scene/theme';
 import type { Vec3 } from '../layout';
 import { hdr } from './materials';
+import { shared } from '../../scene/dispose';
 
 const MAX_PARTICLES = 2000; // spec 5.10
 let liveParticles = 0;
@@ -81,7 +82,7 @@ export function floatText(layer: THREE.Object3D, at: () => Vec3, str: string, co
   return tl;
 }
 
-const ringGeo = new THREE.RingGeometry(0.82, 1, 48);
+const ringGeo = shared(new THREE.RingGeometry(0.82, 1, 48));
 
 // 贴着台面扩散的光圈。radius 沿用 2D 版的像素半径，换算成世界单位。
 export function ring(layer: THREE.Object3D, at: () => Vec3, color: number, radius = 80, duration = 0.4): gsap.core.Timeline {
@@ -122,7 +123,7 @@ export function ring(layer: THREE.Object3D, at: () => Vec3, color: number, radiu
   return tl;
 }
 
-const ballGeo = new THREE.SphereGeometry(0.16, 16, 12);
+const ballGeo = shared(new THREE.SphereGeometry(0.16, 16, 12));
 
 // 飞弹：一颗发光的球沿弧线从 from 飞到 to。
 export function projectile(layer: THREE.Object3D, from: () => Vec3, to: () => Vec3, color: number, duration = 0.3): gsap.core.Timeline {

@@ -36,7 +36,7 @@ export function placementOf(side: Side, viewer: Side): Placement {
 }
 
 const ROWS = {
-  near: { board: 2.05, hero: 4.85, deck: 3.0, mana: 6.3 },
+  near: { board: 2.05, hero: 4.5, deck: 3.0, mana: 5.9 },
   far: { board: -2.05, hero: -4.95, deck: -3.0, mana: -6.4 },
 } as const;
 
@@ -51,7 +51,8 @@ const flat = { x: -Math.PI / 2, y: 0, z: 0 }; // 平放在台面上，正面朝�
 // 立起来朝向镜头
 const facing = (tilt = 0): Vec3 => ({ x: -CAMERA_PITCH + tilt, y: 0, z: 0 });
 
-// 我方手牌：在台面近处边缘外侧，朝镜头立着，排成扇形；张数多时自动收紧。
+// 我方手牌：在台面近处边缘外侧，朝镜头立着，排成扇形；张数多时自动收紧。不悬停时下沉到画面底边，
+// 只露出上面约七成（费用、原画、名字），不挡我方枢纽、英雄技能和法力条（tests/presentation-layout.test.ts 核对）。
 // 对方手牌：在远处台面边缘，牌背朝上斜放。
 export function handSlot(p: Placement, index: number, count: number): Slot {
   const offset = index - (count - 1) / 2;
@@ -59,14 +60,14 @@ export function handSlot(p: Placement, index: number, count: number): Slot {
     const step = Math.min(1.3, count > 1 ? 8.6 / (count - 1) : 0);
     const sag = offset * offset * 0.045;
     return {
-      pos: v(offset * step, 2.6 - sag + index * 0.004, 7.35 + Math.abs(offset) * 0.02),
+      pos: v(offset * step, 2.0 - sag + index * 0.004, 8.4 + Math.abs(offset) * 0.02),
       rot: { x: -CAMERA_PITCH + 0.12, y: 0, z: -offset * 0.05 },
       scale: 1.3,
     };
   }
   const step = Math.min(0.75, count > 1 ? 6 / (count - 1) : 0);
   return {
-    pos: v(offset * step, 0.25 + index * 0.012, -7.75 - offset * offset * 0.02),
+    pos: v(offset * step, 0.25 + index * 0.012, -7.2 - offset * offset * 0.02),
     rot: { x: -Math.PI / 2 + 0.35, y: 0, z: Math.PI + offset * 0.05 },
     scale: 0.75,
   };
@@ -109,6 +110,16 @@ export function boardInsertIndex(x: number, count: number): number {
 export function boardRowZ(p: Placement): number {
   return ROWS[p].board;
 }
+
+// 水晶枢纽内部的摆放（相对枢纽原点）：头像圆盘嵌在台座正面、朝镜头倾斜，生命数字在圆盘右下。
+// HeroView 按这些值摆放，布局测试也用它们算生命数字在画面上的位置。
+export const NEXUS = {
+  discPos: v(0, 0.85, 0.35),
+  discTilt: -CAMERA_PITCH + 0.25, // 圆盘绕 x 轴的转角
+  discRadius: 0.62,
+  hpOffset: v(0.72, -0.42, 0.12), // 在圆盘坐标系里
+  hpSize: 0.95,
+};
 
 export function heroSlot(p: Placement): Slot {
   return { pos: v(0, 0, ROWS[p].hero), rot: v(0, 0, 0), scale: 1 };

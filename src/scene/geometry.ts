@@ -1,6 +1,7 @@
 // 共用的几何体：同一种物件的所有实例共用一份，不随物件销毁。
 import * as THREE from 'three';
 import { CARD_H, CARD_T, CARD_W, MINION_HEIGHT, MINION_SIZE } from '../presentation/layout';
+import { shared } from './dispose';
 
 export function roundedRect(w: number, h: number, r: number): THREE.Shape {
   const s = new THREE.Shape();
@@ -33,17 +34,17 @@ function normalizeUv(geo: THREE.BufferGeometry, w: number, h: number): THREE.Buf
 const cardShape = roundedRect(CARD_W, CARD_H, 0.12);
 
 // 卡牌：有厚度的圆角薄板，正反两面各一张贴图面片。
-export const CARD_BODY = (() => {
+export const CARD_BODY = shared((() => {
   const g = new THREE.ExtrudeGeometry(cardShape, { depth: CARD_T, bevelEnabled: false, curveSegments: 6 });
   g.translate(0, 0, -CARD_T / 2);
   return g;
-})();
-export const CARD_FACE = normalizeUv(new THREE.ShapeGeometry(cardShape, 6), CARD_W, CARD_H);
+})());
+export const CARD_FACE = shared(normalizeUv(new THREE.ShapeGeometry(cardShape, 6), CARD_W, CARD_H));
 // 发光边：比卡牌大一圈的圆角面片，放在卡牌背后
-export const CARD_GLOW = new THREE.ShapeGeometry(roundedRect(CARD_W + 0.1, CARD_H + 0.1, 0.16), 6);
+export const CARD_GLOW = shared(new THREE.ShapeGeometry(roundedRect(CARD_W + 0.14, CARD_H + 0.14, 0.17), 6));
 
 // 随从底座：带倒角的圆角方块，顶面在 y = MINION_HEIGHT
-export const MINION_BASE = (() => {
+export const MINION_BASE = shared((() => {
   const bevel = 0.05;
   const g = new THREE.ExtrudeGeometry(roundedRect(MINION_SIZE - bevel * 2, MINION_SIZE - bevel * 2, 0.14), {
     depth: MINION_HEIGHT - bevel * 2,
@@ -56,15 +57,15 @@ export const MINION_BASE = (() => {
   g.rotateX(-Math.PI / 2);
   g.translate(0, bevel, 0);
   return g;
-})();
-export const MINION_TOP = new THREE.PlaneGeometry(MINION_SIZE - 0.2, MINION_SIZE - 0.2);
+})());
+export const MINION_TOP = shared(new THREE.PlaneGeometry(MINION_SIZE - 0.2, MINION_SIZE - 0.2));
 // 底座外的一圈描边（嘲讽金边、能攻击的绿边、可选目标的红边）
-export const MINION_RIM = (() => {
+export const MINION_RIM = shared((() => {
   const outer = roundedRect(MINION_SIZE + 0.26, MINION_SIZE + 0.26, 0.22);
   outer.holes.push(roundedRect(MINION_SIZE + 0.02, MINION_SIZE + 0.02, 0.16));
   const g = new THREE.ExtrudeGeometry(outer, { depth: 0.08, bevelEnabled: false, curveSegments: 6 });
   g.rotateX(-Math.PI / 2);
   return g;
-})();
-export const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
-export const UNIT_SPHERE = new THREE.SphereGeometry(1, 24, 16);
+})());
+export const UNIT_BOX = shared(new THREE.BoxGeometry(1, 1, 1));
+export const UNIT_SPHERE = shared(new THREE.SphereGeometry(1, 24, 16));

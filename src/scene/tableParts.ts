@@ -7,6 +7,7 @@ import { flashMaterial, hdr } from '../presentation/fx/materials';
 import { textSprite } from '../presentation/fx/effects';
 import { cardBackTexture, makeLabelCanvas, strokeText } from './canvasArt';
 import { COLORS, FONT_CN } from './theme';
+import { shared } from './dispose';
 
 // 召唤师峡谷俯视图的程序生成占位：草地、两条兵线、中线河道、零星的草丛和石块
 function boardTexture(): THREE.CanvasTexture {
@@ -118,15 +119,15 @@ export class BoardView extends THREE.Group {
   }
 }
 
-const gemGeo = new THREE.OctahedronGeometry(0.2, 0);
-const socketGeo = new THREE.CylinderGeometry(0.22, 0.26, 0.08, 8);
+const gemGeo = shared(new THREE.OctahedronGeometry(0.2, 0));
+const socketGeo = shared(new THREE.CylinderGeometry(0.22, 0.26, 0.08, 8));
 const gemMats = {
-  full: new THREE.MeshStandardMaterial({ color: 0x3a8cff, emissive: COLORS.mana, emissiveIntensity: 3.2, roughness: 0.2, flatShading: true }),
-  temp: new THREE.MeshStandardMaterial({ color: 0x45e0d0, emissive: COLORS.manaTemp, emissiveIntensity: 3.2, roughness: 0.2, flatShading: true }),
-  spent: new THREE.MeshStandardMaterial({ color: 0x1a2a40, emissive: 0x0a1428, emissiveIntensity: 0.3, roughness: 0.4, flatShading: true }),
-  locked: new THREE.MeshStandardMaterial({ color: 0x3a4250, roughness: 0.7, transparent: true, opacity: 0.35, flatShading: true }),
+  full: shared(new THREE.MeshStandardMaterial({ color: 0x3a8cff, emissive: COLORS.mana, emissiveIntensity: 3.2, roughness: 0.2, flatShading: true })),
+  temp: shared(new THREE.MeshStandardMaterial({ color: 0x45e0d0, emissive: COLORS.manaTemp, emissiveIntensity: 3.2, roughness: 0.2, flatShading: true })),
+  spent: shared(new THREE.MeshStandardMaterial({ color: 0x1a2a40, emissive: 0x0a1428, emissiveIntensity: 0.3, roughness: 0.4, flatShading: true })),
+  locked: shared(new THREE.MeshStandardMaterial({ color: 0x3a4250, roughness: 0.7, transparent: true, opacity: 0.35, flatShading: true })),
 };
-const socketMat = new THREE.MeshStandardMaterial({ color: 0x2a2620, roughness: 0.6, metalness: 0.5 });
+const socketMat = shared(new THREE.MeshStandardMaterial({ color: 0x2a2620, roughness: 0.6, metalness: 0.5 }));
 
 // 法力条：10 颗水晶立在台面上。可用的亮（自发光进 bloom），用掉的暗，临时法力另一种颜色，未解锁的熄灭变小。
 export class ManaBarView extends THREE.Group {
@@ -180,9 +181,9 @@ export class ManaBarView extends THREE.Group {
   }
 }
 
-const deckCardGeo = new THREE.BoxGeometry(1.5, 1, 2.1);
-const deckSideMat = new THREE.MeshStandardMaterial({ color: 0xd8ceb0, roughness: 0.8 });
-const deckTopMat = new THREE.MeshStandardMaterial({ map: cardBackTexture(), roughness: 0.55 });
+const deckCardGeo = shared(new THREE.BoxGeometry(1.5, 1, 2.1));
+const deckSideMat = shared(new THREE.MeshStandardMaterial({ color: 0xd8ceb0, roughness: 0.8 }));
+const deckTopMat = shared(new THREE.MeshStandardMaterial({ map: cardBackTexture(), roughness: 0.55 }));
 
 // 牌库：一叠卡背，厚度随剩余张数变。悬停显示张数。
 export class DeckView extends THREE.Group {
@@ -226,8 +227,8 @@ export class DeckView extends THREE.Group {
   }
 }
 
-const buttonGeo = new THREE.CylinderGeometry(1, 1.08, 0.36, 4);
-const buttonTopGeo = new THREE.PlaneGeometry(1.9, 1.0);
+const buttonGeo = shared(new THREE.CylinderGeometry(1, 1.08, 0.36, 4));
+const buttonTopGeo = shared(new THREE.PlaneGeometry(1.9, 1.0));
 
 // 结束回合按钮：海克斯风格的菱形实体按钮，立在台面右侧。我方回合亮起并缓慢脉动，对方回合变暗显示"对方回合"。
 export class EndTurnButton extends THREE.Group {

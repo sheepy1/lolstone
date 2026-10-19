@@ -6,11 +6,12 @@
 import * as THREE from 'three';
 import { getCard, type Keyword } from '../engine';
 import { MINION_HEIGHT, MINION_SIZE } from '../presentation/layout';
-import { flashMaterial, glowMaterial, hdr } from '../presentation/fx/materials';
+import { EDGE_GLOW, flashMaterial, glowMaterial, hdr } from '../presentation/fx/materials';
 import type { ViewMinion } from '../presentation/viewState';
 import { makeLabelCanvas, portraitTexture, strokeText, type Label } from './canvasArt';
 import { MINION_BASE, MINION_RIM, MINION_TOP, UNIT_BOX, UNIT_SPHERE } from './geometry';
 import { COLORS, css, FONT_CN, FONT_NUM } from './theme';
+import { shared } from './dispose';
 
 const ICONS: { k: Keyword; label: string; color: string }[] = [
   { k: 'poisonous', label: '毒', color: '#58c040' },
@@ -20,10 +21,11 @@ const ICONS: { k: Keyword; label: string; color: string }[] = [
   { k: 'rush', label: '突', color: '#e8c860' },
 ];
 
-const tauntMat = glowMaterial(COLORS.taunt, 2.7);
-const attackRimMat = glowMaterial(COLORS.playable, 4.1);
-const targetRimMat = glowMaterial(COLORS.target, 4.4);
-const iceMat = new THREE.MeshStandardMaterial({
+const tauntMat = shared(glowMaterial(COLORS.taunt, 2.7));
+// 描边亮度低于 bloom 阈值：描边本身亮，不往头像上泛光
+const attackRimMat = shared(glowMaterial(COLORS.playable, EDGE_GLOW));
+const targetRimMat = shared(glowMaterial(COLORS.target, EDGE_GLOW * 1.6));
+const iceMat = shared(new THREE.MeshStandardMaterial({
   color: 0xbfe9ff,
   transparent: true,
   opacity: 0.5,
@@ -31,16 +33,16 @@ const iceMat = new THREE.MeshStandardMaterial({
   metalness: 0.1,
   emissive: 0x1a4a6a,
   depthWrite: false,
-});
-const shellMat = new THREE.MeshBasicMaterial({
+}));
+const shellMat = shared(new THREE.MeshBasicMaterial({
   color: hdr(0xfff2b0, 1.4),
   transparent: true,
   opacity: 0.22,
   blending: THREE.AdditiveBlending,
   depthWrite: false,
   toneMapped: false,
-});
-const smokeTex = (() => {
+}));
+const smokeTex = shared((() => {
   const c = document.createElement('canvas');
   c.width = c.height = 128;
   const g = c.getContext('2d')!;
@@ -52,7 +54,7 @@ const smokeTex = (() => {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
-})();
+})());
 
 const HP_W = 384;
 const HP_H = 72;
@@ -60,10 +62,8 @@ const ATK_W = 384;
 const ATK_H = 84;
 
 function hudSprite(label: Label, width: number): THREE.Sprite {
-  label.texture.userData.owned = true;
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: label.texture, transparent: true, toneMapped: false }));
   s.scale.set(width, (width * label.canvas.height) / label.canvas.width, 1);
-  s.userData.owned = true;
   s.renderOrder = 4;
   return s;
 }
@@ -99,11 +99,9 @@ export class MinionView extends THREE.Group {
     const base = new THREE.Mesh(MINION_BASE, this.baseMat);
     base.castShadow = true;
     base.receiveShadow = true;
-    base.userData.owned = true;
     const top = new THREE.Mesh(MINION_TOP, this.topMat);
     top.rotation.x = -Math.PI / 2;
     top.position.y = MINION_HEIGHT + 0.004;
-    top.userData.owned = true;
     this.tauntRim = new THREE.Mesh(MINION_RIM, tauntMat);
     this.tauntRim.position.y = 0.01;
     this.stateRim = new THREE.Mesh(MINION_RIM, attackRimMat);
@@ -118,11 +116,9 @@ export class MinionView extends THREE.Group {
     this.smoke = new THREE.Sprite(new THREE.SpriteMaterial({ map: smokeTex, transparent: true, opacity: 0.55, depthWrite: false }));
     this.smoke.scale.set(2.2, 1.4, 1);
     this.smoke.position.y = 0.6;
-    this.smoke.userData.owned = true;
     this.flash = new THREE.Mesh(UNIT_BOX, flashMaterial());
     this.flash.scale.set(MINION_SIZE + 0.04, MINION_HEIGHT + 0.04, MINION_SIZE + 0.04);
     this.flash.position.y = MINION_HEIGHT / 2;
-    this.flash.userData.owned = true;
     const hpSprite = hudSprite(this.hp, 2.0);
     hpSprite.position.set(0.12, 0.8, -1.0);
     const atkSprite = hudSprite(this.atk, 2.0);
@@ -199,7 +195,7 @@ export class MinionView extends THREE.Group {
     }
     const baseHp = def.health ?? 0;
     const hpColor = m.health < m.maxHealth ? css(COLORS.debuffed) : m.maxHealth > baseHp ? css(COLORS.buffed) : '#ffffff';
-    strokeText(g, String(m.health), 336, HP_H / 2 + 2, 62, hpColor, FONT_NUM, 0.16);
+    strokeText(g, String(Math.max(0, m.health)), 336, HP_H / 2 + 2, 62, hpColor, FONT_NUM, 0.16);
     this.hp.texture.needsUpdate = true;
 
     // 攻击：剑形图标加数字；右边一排 buff 小图标

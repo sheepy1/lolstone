@@ -342,7 +342,8 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
   结算面板也用这个子集（`src/ui/menu.css` 的 @font-face），缺的字会由系统宋体补，字形不统一。
   界面文字由 `src/dev/fontChars.ts` 扫 `src/ui` 和 `src/app` 的源码收集：去掉注释后，字符串和 JSX 文本里的非 ASCII 字符
   （ASCII 本来就全带）。`src/app` 也扫，是因为加载页的进度说明、出错提示这些字符串写在对局层里。
-  卡池或界面加了新字后运行 `pnpm font:subset <NotoSerifSC-Bold.otf 的路径>` 重新生成（要 Python 的 fonttools）；
+  卡池或界面加了新字后运行 `pnpm font:subset assets-src/fonts/NotoSerifSC-Bold.otf` 重新生成（要 Python 的 fonttools）。
+  源字体放在不进 git 的 `assets-src/fonts/`；新的检出里没有的话，从 Google Fonts 下载思源宋体（Noto Serif SC）的 Bold 放进去。
   `tests/presentation-font.test.ts` 在卡池或界面缺字时失败。子集去掉了 OpenType 排版特性：思源的标点挤压会让 troika 把全角冒号挤没。
 - 悬停大卡：悬停场上随从或英雄技能时，场景左侧显示一张放大的卡（`TableScene.showInspect`，和场上同一套光照），
   随从显示当前数值；关键词解释是 DOM，贴在放大卡下面（位置用镜头投影算出）。悬停手牌时手牌自己抬起放大，不另外显示。
@@ -745,6 +746,130 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
   加 `--use-angle=metal` 走 GPU，通过 CDP 设视口、点按钮、`Page.captureScreenshot`。`Runtime.evaluate` 要带
   `replMode: true` 才能在表达式里 `await import('/src/app/store.ts')` 拿到和应用同一份的界面状态。
 
+## M4 开局和回合流程（纵切片，m4-storyboard E01 到 E05、E25 到 E29）
+
+### 文件
+
+- `presentation/fx/flow.ts`：回合流程的画面件。
+  - 横幅 Banner：暗色带子、金线、SDF 大字、光扫，沿镜头的"上"方向滑入滑出。
+  - 先后手徽记 Emblem。
+  - 从牌库飞进手牌的弧线飞行 `flyFromDeck`：飞到 40% 到 70% 之间绕长轴翻面。
+  - 震屏：和战斗事件共用 `fx/screen.ts` 的 `screenShake` / `shakeAt`（见下面"M4 战斗事件"），胜负的 S3 带白闪、跳过频率限制。
+  - 胜负大字 BigWord。
+  - 爆牌的燃烧溶解 `burnAway`。
+  - 时长参数在 `FLOW`。
+- 动画模块：mulliganStart（E01 加发牌）、mulliganDone、gameStart、turnStart（E02）、turnEnd（E26）、draw（E03）、
+  manaChanged（E25）、burn（E04）、fatigue（E05）、aiThinking（E27）、gameOver（E28、E29）。每个模块导出自己的参数对象，
+  /dev/fx 的"回合流程"面板全部可调；game_over 的样例可以选胜、负、平。
+- 先后手在 createGame 时就定了，换牌之前就能演。所以 E01 放在 mulligan_start 这一步，game_start 只把手牌收进扇形。
+
+### 改到的共用文件
+
+- `scene/stage.ts`：
+  - 镜头加看向点 `cameraTarget`，开局推镜头时改它。震屏同时平移位置和看向点，所以仍然只是平移。
+  - 加整个画面的调色 `look`（亮度、饱和度、暗角），胜负用，每帧写进后处理。
+  - 打开 `localClippingEnabled`，爆牌溶解要用。
+- `scene/table.ts`：
+  - `intro`：开局时先不出换牌压暗板。
+  - `frozen`：胜负定格时停掉常驻的小动画。
+  - `spawnAtSlot`：sync 新建的手牌直接放在槽位上，由模块自己做从牌库飞来的那段。
+  - `panAt`：按屏幕横坐标算声像。
+  - 换牌时法力药水单独摆放，加一行说明。
+  - 能出的牌、能攻击的随从的绿边按 1.6 秒周期脉动。
+  - 每局开始把镜头和调色复位。
+- `presentation/layout.ts`：只加了 `mulliganPotionSlot`。
+- `scene/cardView.ts`、`scene/minionView.ts`：只给共用的绿边材质加了 export，脉动要用。
+- `scene/interaction.ts`：拿起、放下、取消、换牌点选、结束回合按下的音效，都带声像。
+- `app/match.ts`：AI 每个动作前的思考时间改成 0.5 到 1.5 秒随机，用自己的随机数，不影响 AI 的选择。
+- `scene/tableParts.ts`：法力条逐格动画，每颗水晶一份材质；临时法力改成紫色。
+
+### 做法和取舍
+
+- 横幅、换牌那行字、"手牌已满"这类东西，在后台播，不进这一步的时间线。进时间线会拖长这一步，压住后面的事件。
+  回合开始这一步只占 0.45 秒，横幅剩下的部分和法力、抽牌重叠播，抽牌正好在滑出开始时起飞。
+- 新牌飞进手牌之前，sync 要先把它放到最终槽位上（`spawnAtSlot`），再记下目标、挪回牌库起飞。
+  如果 sync 用补间把牌滑过去，模块读到的"目标"其实还是牌库的位置，牌就原地不动，直到这一步结束时的兜底同步才归位。
+- 换牌时离镜头比压暗板（18）远的东西会被压暗。法力药水和它的说明都要放在压暗板前面。
+- 压暗画面不能用 postprocessing 的 BrightnessContrastEffect。它是加减偏移，暗处的颜色减成负数，转 sRGB 时变成白色，
+  整个画面发白。现在用自写的 GainEffect：压暗时乘，加亮（白闪）时加。
+- 场景里新加的 SDF 文字写在 src/presentation 和 src/scene 里，字体子集的扫描目录加上这两个（共 632 字，约 120 KB）。
+
+### 自动化录屏的坑（接 M3 那一条）
+
+- 手动推 GSAP 时钟时，`__T` 的初值要等于全局时间线当前的时间（`gsap.globalTimeline._start + time()`），不能用 `ticker.time`。
+  比它大，第一步就跳过一截；比它小，时间线停住不动，直到追上为止。
+- 同一个前缀重录时，先清掉旧的帧。文件名里的时刻不同，按名字排序会把两次录的帧交错在一起，看起来像动画在来回跳。
+- 声音在静音下也能核对：`await import('/src/audio/index.ts')` 拿到 `sfxLog`，每帧读一次，记下音效名和时刻。
+
+## 配图接进卡面和场景（M4，2026-10-20）
+
+`scripts/data/card-art.json` 的配图接进了卡面原画窗口、场上随从头像、英雄技能按钮、关键词小图标。素材仍不进 git，
+先跑 `pnpm fetch:art` 和 `pnpm fetch:icons`；没跑时全部退回纯色加名字，不报错。
+
+### 文件
+
+- `src/assets/cardArt.ts`：按映射表算本地路径（和 fetch-icons.ts 的规则一致：`art/cards/<id>/icon|art.<扩展名>`，art 和 icon
+  同来源时指向 icon 那个文件）、裁切参数、是否标了以后生成大图。映射表直接 import 进前端，改了 crop 不用重新下载。
+- `src/assets/manifest.ts`：开局预载清单加上 `card_art`、`card_icon`、`hero_power`、`keyword` 四类图。卡组里的卡沿着效果里引用的卡
+  一直追（召唤的衍生物、变形成的卡），再加上法力药水、两个英雄技能召唤的衍生物，所以加载页进度条把这些都算进去。
+  关键词图标一共 11 个小图，每局全载。
+- `src/assets/loader.ts`：长边超过 1024 的图（符文之地传说原画 2048×1024）加载完缩到 1024 的 canvas 再存，解码后一张从 8 MB
+  降到 2 MB。按地址取图的 `artImage(url, onReady)`。
+- `src/scene/artDraw.ts`：裁切和小图放大。`cropSource` 和 `scripts/art-review.ts` 对照页的 CSS 同一套算法（cover 铺满，
+  focus 定位，以 focus 为中心放大 zoom 倍），用户在对照页看到的取景就是游戏里的取景。
+- `src/scene/canvasArt.ts`：卡面、头像、英雄技能按钮、关键词图标的贴图。
+- `/dev/art`（`src/dev/art/`）：配图总览，所有卡（含衍生物）和四个英雄技能，每张卡排悬停大卡、手牌、场上随从三处；
+  `?only=generate` 只看小图放大的那 16 张；"保存"把整页存到 `.dev-output/art-gallery-<页>.png`。
+
+### 用哪张图
+
+- 卡面原画窗口：英雄卡用竖版原画（loading.jpg，取上部，focus y 0.2）。M3 时英雄卡的原画窗口其实画的是 120 像素头像，
+  放大三倍偏糊，这次按 spec 5.4"原画用竖版加载图裁切"改了。其余卡用映射表的 art 按 crop 裁；英雄技能（悬停大卡）用技能图标。
+- 场上随从头像：英雄用 Data Dragon 头像；其余用映射表的 icon，没有 icon 的（德玛西亚士兵）从 art 按 crop 裁出方形。
+- 图没加载好或缺失时退一级：原画 → 方图 → 纯色加名字前两个字。加载好后贴图重画、`needsUpdate`。
+- 关键词小图标：嘲讽、潜行、剧毒、吸血、风怒、冲锋、突袭、法术伤害（右下角叠 +N）、沉默。潜行按 spec 5.4 补了图标，
+  圣盾、冻结在 3D 里已经有外壳和冰块，不进这一排。
+
+### 小图放大
+
+映射表里标了 `generate` 的 16 张（13 张峡谷头像 128 像素、虚空蠕虫、法力药水 64 像素物品图标；失去坐骑的克烈是皮肤原画，不糊）
+放进 380 像素宽的窗口要放大三到六倍。放大倍数超过 2 时（`UPSCALE_SOFT`）：
+
+- 在离屏 canvas 上分步放大，每步不超过 2 倍，用 `imageSmoothingQuality = 'high'`，比一步放大三倍的双线性插值少一些方块感；
+- 放大后做一次轻微反锐化（3×3 拉普拉斯，强度 0.35），把发虚的边缘提一点；
+- 窗口四周压一圈暗角，再叠一层很淡的固定颗粒，盖住插值出来的平滑色块。
+
+英雄技能按钮的 64 像素图标放大到 200 也走这条路。这只是让它们不至于太糊，真正的解决是映射表的生成大图清单。
+
+### 悬停大卡去掉清漆
+
+悬停大卡浮在镜头前左上方，正好在方向光的镜面反射方向上，卡面的清漆层（clearcoat 0.75）把整张卡照成一片白，原画几乎看不见
+（原来是纯色块，不太显眼）。试过 clearcoat 0.15 仍然发白，所以悬停大卡关掉清漆（`CardView.setMatte()`，`table.ts` 的
+`showInspect` 建卡时调一次），手牌和其他卡不变。
+
+### 卡面正文折行（2026-10-20）
+
+- troika-three-text 只在空白处折行（`BREAK_AFTER_CHARS` 是空白和几个连字符），中文整句没有空白，`maxWidth` 不起作用，
+  纳什男爵、李青这些长文本排成一整行溢出卡外。现在由 `scene/cardTextLayout.ts` 自己断行，把换行符写进文本：中文逐字可断，
+  连续的半角字符（"+1/+1"、"-2/-2"）不断，逗号句号冒号等不放行首、左括号不放行尾（碰到时把上一个字一起带下去）。
+- 宽度用 canvas 按卡面字体量（同一份 woff 另外注册成 FontFace，`preloadCardFont` 一起等它加载完）；字体没加载好时用
+  近似宽度（中文 1 em、半角 0.55 em），加载好后把之前建的卡重排一次。troika 的 `maxWidth` 比排版宽度宽 0.06，量出来的宽度
+  和 troika 有细微出入时不会再被它折一次。
+- 文本框：随从卡排到 y 592 像素（底部两角攻击、生命圆章的顶边在 594），法术卡排到 648。放不下时字号按 1、0.93、0.87、0.81、
+  0.75 逐级缩。按现在的卡池，最长的泰达米尔、纳什男爵也只要两行、不用缩字号；`tests/presentation-card-text.test.ts` 逐张核对
+  每张卡的正文在框内、字号不低于 75%、行首没有标点、数值没被断开。`/dev/art?only=long` 看正文最长的 16 张。
+
+### 关键词图标放大和悬停说明（2026-10-20）
+
+- 每格 0.25 世界单位见方（原来约 0.13），1080p 下约 22 像素。深色底托、黑边、金边，压在任何头像上都看得清。整排贴着底座顶面的
+  远侧边、一大半探出边外，只压住头像最上面一条，不挡头像主体和近侧的两个徽章。贴图固定 6 格宽，空格子不参与射线检测
+  （`iconPlane.raycast` 只认画了图标的格子），不会把底座背后的空地算成悬停这个随从。
+- 悬停说明：输入（interaction.ts）只认到随从这一级，`scene/keywordHover.ts` 另外对图标那一排做射线检测，按交点 uv 查是哪个
+  关键词，写进界面状态 `hover.keyword`。悬停随从时本来就显示放大卡和关键词面板（`ui/HoverCard.tsx`，说明来自 `KEYWORD_HELP`），
+  指针停在某个图标上时那一条排到最前、高亮，两边是同一份文字。
+- `/dev/art?view=board`（`src/dev/art/board.ts`）：用对局的舞台、镜头、灯光摆一个固定局面，场上随从带全部图标，手牌放正文最长
+  的几张，检查 1080p 下的实际观感；`saveBoard()` 存原尺寸截图。
+
 ## M4 战斗事件（分镜 E11 到 E19、E24，2026-10-20）
 
 攻击、受伤、英雄受伤、治疗、死亡、圣盾、冻结和解冻、潜行、增益、减益、沉默按 docs/m4-storyboard.md 做到成品。
@@ -757,7 +882,7 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
 - 动画模块：`attack.ts`、`damage.ts`（随从和英雄）、`heal.ts`、`death.ts`、`shieldBroken.ts`、`freeze.ts`、`unfreeze.ts`、
   `stealthLost.ts`、`buff.ts`（增益、减益、获得关键词）、`silence.ts`。`combat.ts` 放参数和共用小工具（声像、命中声、
   头像自发光、抖动、飘字位置、`statusEnter`）。
-- 特效：`fx/screen.ts`（震屏 S1 到 S3、边缘泛红、白闪、棋盘闪）、`fx/combatText.ts`（飘字）、`fx/shatter.ts`（随从碎裂）、
+- 特效：`fx/screen.ts`（震屏 S1 到 S3 和 S3 白闪、边缘泛红、棋盘闪）、`fx/combatText.ts`（飘字）、`fx/shatter.ts`（随从碎裂）、
   `fx/nexusCracks.ts`（枢纽裂纹）、`fx/statusFx.ts`（冰层、圣盾外壳、潜行、沉默的进出过程）、`fx/warm.ts`（预编译着色器）。
 - 调试台：`src/dev/combatScenarios.ts`（25 个战斗场景、满场 14 随从）、`src/dev/recorder.ts`（录帧、测帧耗时）。
 
@@ -770,6 +895,10 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
   群体增益用一圈大金环盖住整排，群体冻结闪一次冰色棋盘。时刻放在这一频道最早的那条（波的第一个命中帧）。
 - 震屏频率：S2 以上每回合最多 3 次、1 秒内不重复，超出降一档（`allowShake`，按 `scene.view.turn` 和全局时间线计时）。
   同一时刻只有一个震屏，新的比正在跑的剩余幅度大才替换。
+- 全局只有这一份震屏（2026-10-20 合 main 时统一）：`fx/flow.ts` 原来那份 S1 到 S3 删掉，`gameOver.ts` 改用
+  `shakeAt(scene, 3, { force: true, flash })` 和 `shakeAt(scene, 1)`；`TableScene.shake` 也删了，出随从的高费 S1 改用 `shakeAt`。
+  观感按 flow.ts 那份对齐：幅度按镜头到注视点的距离和视角换算（开局推镜头时会变），每帧一个随机偏移、线性衰减、z 方向减半；
+  S3 白闪是后处理整体亮度加 0.15 再退（`stage.look.brightness`），胜利 60ms、失败 30ms。
 - `AnimContext.step` 是同一步的全部事件：受伤模块据此判断自己是不是攻击撞击的一部分（是的话火花由攻击在撞击点放）。
 
 ### 实现时定下的细节
@@ -808,7 +937,8 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
 - `minionSummoned.ts`：入场后调 `statusEnter`（两行）。
 - `scene/minionView.ts`：`ice`、`shell`、`smoke`、`tauntRim` 改成只读公开；冻结时徽章蒙蓝；潜行透明度用 `STEALTH_OPACITY`。贴图部分没动。
 - `scene/statBadge.ts`：`pop` 按分镜（1.25 倍、180ms、闪色 120ms），加 `setFrost`、`flashShield`。
-- `scene/table.ts`：构造时调 `warmCombatFx`（一行）。
+- `scene/table.ts`：构造时调 `warmCombatFx`（一行）；删掉旧的 `shake()`。
+- `fx/flow.ts`、`animations/gameOver.ts`：震屏改用 `fx/screen.ts`（见上）。
 - `scene/dispose.ts`：`killTree` 不再逐个物件调 `killTweensOf`，改成全部补间扫一遍（见下面"性能"）。
 - `src/dev/vitePlugin.ts`：截图接口收 JPEG，`dir=` 存到子目录（录帧用）。
 

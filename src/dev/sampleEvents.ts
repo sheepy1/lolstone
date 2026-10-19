@@ -5,6 +5,9 @@ import type { PresentationEvent, PresentationEventKind } from '../presentation/e
 import type { ViewMinion, ViewState } from '../presentation/viewState';
 
 let nextId = 50_000;
+
+// 调试台上可选的样例变体：胜负结果
+export const SAMPLE = { winner: '我方胜' as '我方胜' | '我方负' | '平局' };
 const freshId = () => nextId++;
 
 const hero = (side: Side): TargetRef => ({ side, kind: 'hero' });
@@ -28,8 +31,12 @@ export function sampleEvents(kind: PresentationEventKind, v: ViewState, fx: Fx =
   switch (kind) {
     case 'mulligan_start':
       return one({ kind, group: g, first: me, hands: [v.players[0].hand, v.players[1].hand] });
-    case 'mulligan_done':
-      return one({ kind, group: g, side: me, replaced: [], drawn: [] });
+    case 'mulligan_done': {
+      // 换掉我方手里前两张，从牌库补两张新的
+      const replaced = v.players[me].hand.slice(0, 2);
+      const drawn = replaced.map(() => ({ instanceId: freshId(), cardId: minionCard }));
+      return one({ kind, group: g, side: me, replaced, drawn });
+    }
     case 'game_start':
       return one({ kind, group: g, first: me });
     case 'turn_start':
@@ -110,7 +117,7 @@ export function sampleEvents(kind: PresentationEventKind, v: ViewState, fx: Fx =
       return one({ kind, group: g, side: me, before: m, after: { max: Math.min(10, m.max + 1), current: Math.min(10, m.max + 1), temp: 0 }, reason: 'turn_start' });
     }
     case 'game_over':
-      return one({ kind, group: g, winner: me });
+      return one({ kind, group: g, winner: SAMPLE.winner === '平局' ? 'draw' : SAMPLE.winner === '我方胜' ? me : opp });
     case 'ai_thinking':
       return [{ kind, group: g, side: opp, seconds: 0.8 }];
   }

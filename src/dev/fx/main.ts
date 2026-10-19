@@ -26,7 +26,16 @@ import { createGsapPlayer, type GsapPlayer } from '../../presentation/player';
 import { viewFromState, type ViewState } from '../../presentation/viewState';
 import { Stage } from '../../scene/stage';
 import { TableScene } from '../../scene/table';
-import { sampleEvents } from '../sampleEvents';
+import { AI_THINK } from '../../presentation/animations/aiThinking';
+import { BURN } from '../../presentation/animations/burn';
+import { FATIGUE } from '../../presentation/animations/fatigue';
+import { ENDGAME } from '../../presentation/animations/gameOver';
+import { MULLIGAN } from '../../presentation/animations/mulliganDone';
+import { OPENING } from '../../presentation/animations/mulliganStart';
+import { TURN_END } from '../../presentation/animations/turnEnd';
+import { FLOW } from '../../presentation/fx/flow';
+import { MANA_FX } from '../../scene/tableParts';
+import { SAMPLE, sampleEvents } from '../sampleEvents';
 
 gsap.registerPlugin(GSDevTools);
 installDefaultPool();
@@ -274,7 +283,6 @@ slam.add(PLAY_MINION, 'squashX', 1, 1.4, 0.01).name('压扁宽度');
 slam.add(PLAY_MINION, 'settle', 0.1, 0.8, 0.01).name('回弹时长');
 slam.add(PLAY_MINION, 'shockwaveCost', 0, 10, 1).name('冲击波费用');
 slam.add(PLAY_MINION, 'shakeCost', 0, 10, 1).name('震屏费用');
-slam.add(PLAY_MINION, 'shake', 0, 0.3, 0.005).name('震屏幅度');
 const look = gui.addFolder('枢纽方案（切换会重新加载）');
 const nexus = { style: new URLSearchParams(location.search).get('nexus') ?? 'b' };
 look.add(nexus, 'style', ['a', 'b', 'c']).name('方案').onChange((v: string) => {
@@ -282,6 +290,23 @@ look.add(nexus, 'style', ['a', 'b', 'c']).name('方案').onChange((v: string) =>
   q.set('nexus', v);
   location.search = q.toString();
 });
+
+// 回合流程（m4-storyboard E01 到 E05、E25 到 E29）：事件在上面"事件"里选，这里调时长
+const flow = gui.addFolder('回合流程');
+flow.close();
+flow.add(SAMPLE, 'winner', ['我方胜', '我方负', '平局']).name('game_over 结果');
+const addAll = (folder: GUI, obj: Record<string, unknown>, prefix: string) => {
+  for (const [k, v] of Object.entries(obj)) if (typeof v === 'number') folder.add(obj, k, 0, Math.max(2, v * 3), 0.01).name(`${prefix} ${k}`);
+};
+addAll(flow, OPENING, 'E01');
+addAll(flow, MULLIGAN, '换牌');
+addAll(flow, FLOW, 'E02/E03');
+addAll(flow, TURN_END, 'E26');
+addAll(flow, MANA_FX, 'E25');
+addAll(flow, BURN, 'E04');
+addAll(flow, FATIGUE, 'E05');
+addAll(flow, AI_THINK, 'E27');
+addAll(flow, ENDGAME, 'E28/29');
 
 // 方案 b 的小灯。"谁的回合""生命"只改画面，不改局面，"重置棋盘"后恢复
 const lamp = gui.addFolder('枢纽小灯 NEXUS_LAMP');

@@ -11,6 +11,8 @@ export type HoverCard = {
   stats?: { attack: number; health: number; maxHealth: number; keywords: string[]; frozen: boolean; silenced: boolean };
   // 场景里放大卡左下角的页面坐标；关键词解释贴在它下面。null 时贴在画面左侧
   anchor?: { left: number; top: number; width: number } | null;
+  // 指针停在场上随从的哪个关键词图标上（KEYWORD_HELP 的词条名），面板里这一条排最前、高亮
+  keyword?: string | null;
 };
 
 export type UiState = {

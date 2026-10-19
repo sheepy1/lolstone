@@ -8,6 +8,7 @@ import { championOf } from '../../assets/manifest';
 import { getCard, type Side } from '../../engine';
 import { dispose } from '../../scene/dispose';
 import { ring } from '../fx/effects';
+import { shakeAt } from '../fx/screen';
 import { boardSlot } from '../layout';
 import type { ViewState } from '../viewState';
 import { statusEnter } from './combat';
@@ -25,7 +26,6 @@ export const PLAY_MINION = {
   settle: 0.27, // 压扁回弹时长
   shockwaveCost: 5, // 这个费用及以上落地加冲击波
   shakeCost: 6, // 这个费用及以上落地加镜头轻震（S1）
-  shake: 0.04, // 镜头轻震幅度
 };
 
 const dustCount = (cost: number) => (cost <= 3 ? 8 : cost <= 6 ? 14 : 20);
@@ -93,7 +93,7 @@ export const minionSummoned: AnimModule<'minion_summoned'> = (e, { scene, before
   // 冲击波还用贴地的光环：预设里最接近的 spark_heavy 是打击火花（朝镜头的白闪加四散的火星），
   // 放在落点上读起来像"被打了一下"，不像重物落地，白闪还会盖住头像
   if (cost >= P.shockwaveCost) t.add(ring(scene.layers.fx, () => ({ x: slot.x, y: 0.02, z: slot.z }), 0xd8c08a, 170, 0.45), '<');
-  if (cost >= P.shakeCost) t.add(scene.shake(P.shake), '<');
+  if (cost >= P.shakeCost) t.add(shakeAt(scene, 1), '<');
   t.call(() => {
     const champ = championOf(e.cardId);
     if (champ) playVoice(champ, 'choose');

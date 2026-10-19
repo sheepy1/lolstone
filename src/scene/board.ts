@@ -157,9 +157,10 @@ export class BoardView extends THREE.Group {
       plinth.receiveShadow = true;
       this.add(plinth);
     }
-    // 结束回合按钮立在河中的石墩上
+    // 结束回合按钮立在河中的石墩上：石墩是和按钮底座同向的六棱石台，比底座宽一圈，像按钮的基座
     const e = endTurnSlot().pos;
-    const pier = new THREE.Mesh(new THREE.CylinderGeometry(1.55, 1.8, 0.6, 8), stone);
+    const pier = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.75, 0.6, 6), stone);
+    pier.scale.x = 1.25;
     pier.position.set(e.x, -0.28, e.z);
     pier.castShadow = true;
     pier.receiveShadow = true;

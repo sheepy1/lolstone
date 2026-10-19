@@ -9,14 +9,15 @@
 
 ## 当前进度
 
-M1（规则引擎）：引擎、M1 卡池（中立、德玛西亚、弗雷尔卓德、四个英雄技能、全部衍生物）、L0 随机 AI、命令行对局。
+M1（规则引擎）和 M2（四个职业的全部 86 张卡和预组、L1 贪心 AI、AI 互打统计）已完成。
 实现时补的细节见 [NOTES.md](NOTES.md)。
 
 ```bash
 pnpm install
 pnpm test          # 单元测试
 pnpm typecheck     # 类型检查
-pnpm play          # 命令行里和 L0 随机 AI 打一局
+pnpm play          # 命令行里和 L1 贪心 AI 打一局（--ai l0 换成随机 AI）
+pnpm arena         # AI 互打统计，例：pnpm arena --a l1 --b l1 --games 250
 pnpm smoke         # L0 对 L0 自动打 200 局
 ```
 

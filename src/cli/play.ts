@@ -1,10 +1,12 @@
 // 命令行对局。
-//   pnpm play                         人（玩家0）对 L0，输入编号选择动作
+//   pnpm play                         人（玩家0）对 AI（默认 L1），输入编号选择动作
 //   pnpm play --auto --games 200      L0 对 L0 自动对局，冒烟用
-// 选项：--seed N  --class <职业>  --ai-class <职业>  --log（自动对局时打印事件）
+// 选项：--seed N  --class <职业>  --ai-class <职业>  --ai l0|l1（人机对局的 AI，默认 l1）  --log（自动对局时打印事件）
 // 职业：demacia、noxus、ionia、freljord。自动对局按 4×4 个先后手组合轮换。
 import { createInterface } from 'node:readline';
 import { l0ChooseAction } from '../ai/l0';
+import { l1ChooseAction } from '../ai/l1';
+import type { ChooseAction } from '../ai/types';
 import { playL0Game } from '../ai/selfplay';
 import { installDefaultPool, PRESET_DECKS } from '../cards';
 import { listLegalActions } from '../engine/actions';
@@ -18,6 +20,7 @@ import { describeAction, describeEvent, formatState, NameBook } from './format';
 
 const MAX_TURN = 120;
 const CLASSES: HeroClass[] = ['demacia', 'noxus', 'ionia', 'freljord'];
+const AIS: Record<string, ChooseAction> = { l0: l0ChooseAction, l1: l1ChooseAction };
 
 type Args = {
   auto: boolean;
@@ -25,6 +28,7 @@ type Args = {
   seed: number;
   humanClass: HeroClass;
   aiClass: HeroClass;
+  ai: string;
   log: boolean;
 };
 
@@ -44,8 +48,15 @@ function parseArgs(argv: string[]): Args {
     seed: get('--seed') !== undefined ? Number(get('--seed')) : Date.now() % 1_000_000,
     humanClass: cls(get('--class'), 'demacia'),
     aiClass: cls(get('--ai-class'), 'freljord'),
+    ai: aiName(get('--ai')),
     log: argv.includes('--log'),
   };
+}
+
+function aiName(v: string | undefined): string {
+  const name = v ?? 'l1';
+  if (!AIS[name]) throw new Error(`没有叫 ${name} 的 AI，可选 ${Object.keys(AIS).join('、')}`);
+  return name;
 }
 
 function deckOf(cls: HeroClass): string[] {
@@ -140,7 +151,7 @@ async function runHuman(args: Args): Promise<void> {
       if (line) console.log(line);
     }
   };
-  console.log(`种子 ${args.seed}。你是${args.humanClass}，AI（L0 随机）是${args.aiClass}。输入动作编号回车。`);
+  console.log(`种子 ${args.seed}。你是${args.humanClass}，AI（${args.ai.toUpperCase()}）是${args.aiClass}。输入动作编号回车。`);
   const created = createGame({
     seed: args.seed,
     classes: [args.humanClass, args.aiClass],
@@ -154,7 +165,7 @@ async function runHuman(args: Args): Promise<void> {
     const aiToAct = state.phase === 'mulligan' ? !state.players[AI].mulliganDone : state.current === AI;
     if (aiToAct) {
       // AI 只看自己能看到的信息来选动作；动作本身在真实局面上执行
-      const choice = l0ChooseAction(maskHidden(state, AI), AI, aiRng);
+      const choice = AIS[args.ai](maskHidden(state, AI), AI, aiRng);
       if (!choice) throw new Error('AI 没有合法动作');
       aiRng = choice.rng;
       const result = applyAction(state, choice.action);

@@ -6,7 +6,8 @@
 import gsap from 'gsap';
 import * as THREE from 'three';
 import type { EventOf } from '../../engine';
-import { MINION_TOP } from '../../scene/geometry';
+import { MINION_BASE, MINION_TOP } from '../../scene/geometry';
+import type { TableScene } from '../../scene/table';
 import type { MinionView } from '../../scene/minionView';
 import { dimPortrait, statusEnter } from '../animations/combat';
 import { flash } from '../animations/util';
@@ -22,6 +23,7 @@ export const LIVING_SHADOW = {
   blink: 0.1, // 劫闪黑
   gather: 30,
   veil: 0.42, // 影分身头像上那层暗影的不透明度
+  opacity: 0.7, // 失去潜行后影分身的透明度（潜行时按潜行的 0.55）
 };
 
 type Summon = EventOf<'minion_summoned'>;
@@ -98,7 +100,7 @@ export const livingShadow: SignatureModule = (c) => {
     m.body.visible = true;
     gsap.fromTo(m.body.scale, { x: 0.55, y: 0.3, z: 0.55 }, { x: 1, y: 1, z: 1, duration: Z.form, ease: EASE.bounce });
     flash(m.flash, 0x8a4dff, 1, Z.form);
-    shadowLook(m);
+    shadowLook(scene, m);
     const kw = after.players[e.side].board.find((x) => x.instanceId === id)?.keywords ?? [];
     statusEnter(scene, id, kw);
     sfx('combat.summon', to.x);
@@ -107,8 +109,10 @@ export const livingShadow: SignatureModule = (c) => {
   return { tl: t, tail: Z.fade + Z.form * 0.4 };
 };
 
-// 影分身的常驻样子：头像上盖一层半透明的暗紫（跟着随从一起销毁）
-function shadowLook(m: MinionView): void {
+// 影分身的常驻样子：头像上盖一层半透明的暗紫（跟着随从一起销毁）。
+// 透明度：潜行时按潜行的 0.55（E19 对所有潜行随从一样，影分身入场就带潜行，单独调成 0.7 会比别的潜行随从更"现形"）；
+// 失去潜行以后，MinionView 会把它恢复成不透明，这里改回分镜写的 0.7，让它一直看得出是影子
+function shadowLook(scene: TableScene, m: MinionView): void {
   if (m.body.getObjectByName('shadow_veil')) return;
   const veil = new THREE.Mesh(MINION_TOP, new THREE.MeshBasicMaterial({ color: 0x1a0d2e, transparent: true, opacity: LIVING_SHADOW.veil, depthWrite: false }));
   veil.name = 'shadow_veil';
@@ -116,4 +120,22 @@ function shadowLook(m: MinionView): void {
   veil.position.y = MINION_HEIGHT + 0.007;
   veil.renderOrder = 1;
   m.body.add(veil);
+  const mats: THREE.Material[] = [];
+  m.body.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if ((mesh.geometry === MINION_BASE || mesh.geometry === MINION_TOP) && mesh !== veil) mats.push(mesh.material as THREE.Material);
+  });
+  const stop = scene.stage.onFrame(() => {
+    if (scene.minion(m.instanceId) !== m) return stop();
+    const vm = scene.view.players[m.side].board.find((x) => x.instanceId === m.instanceId);
+    if (!vm || vm.keywords.includes('stealth')) return;
+    for (const mat of mats) {
+      if (gsap.isTweening(mat)) continue; // 失去潜行的淡出还在播
+      if (!mat.transparent) {
+        mat.transparent = true;
+        mat.needsUpdate = true;
+      }
+      mat.opacity = LIVING_SHADOW.opacity;
+    }
+  });
 }

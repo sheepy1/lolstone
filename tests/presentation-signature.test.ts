@@ -10,6 +10,8 @@ import type { Anim, AnimContext } from '../src/presentation/animations/types';
 import type { PresentationEvent } from '../src/presentation/events';
 import { SIGNATURES, signatureIdOf, signatureAnims, spellFxId, TRIGGER_FX, type SignatureTable } from '../src/presentation/signature';
 import { claimTurn } from '../src/presentation/signature/kit';
+import { composeStep } from '../src/presentation/compose';
+import { scenario } from './helpers/scenario';
 import type { TableScene } from '../src/scene/table';
 
 const doc = readFileSync(new URL('../docs/m4-signature-fx.md', import.meta.url), 'utf8');
@@ -181,5 +183,70 @@ describe('分量', () => {
     expect(claimTurn(s)).toBe(1);
     (s as unknown as { view: { turn: number } }).view.turn = 4;
     expect(claimTurn(s)).toBe(0);
+  });
+});
+
+describe('易的演出和 E14 同时开始（死亡那一步报 readyAt）', () => {
+  // 按导演的分步把一批真实引擎事件逐步喂给钩子，返回每一步的 [事件种类, 合成后下一组的开始时刻]
+  const table: SignatureTable = { 'masteryi.highlander': () => anim(0.6) };
+  function play(events: readonly GameEvent[]): { kinds: string; ready: number; early: boolean }[] {
+    const scene = fakeScene(5);
+    const before = { players: [{ board: [] }, { board: [] }] };
+    const ctx = (i: number) => ({ scene, viewer: 0, index: i, before }) as unknown as AnimContext;
+    return steps([...events]).map((st) => {
+      const anims = signatureAnims(st, ctx, () => anim(0.7, { tail: 0.27 }), table);
+      const master = composeStep(anims ?? st.map(() => anim(0.7, { tail: 0.27 })));
+      const ready = (master.data as { ready: number }).ready;
+      return { kinds: [...new Set(st.map((e) => e.kind))].join('+'), ready, early: (anims ?? []).some((a) => a.readyAt === 0) };
+    });
+  }
+  const deathStep = (r: ReturnType<typeof play>) => r.find((x) => x.kinds === 'death')!;
+
+  it('易攻击打死随从：死亡那一步从 0 秒就放下一组，下一组正是易的 on_kill', () => {
+    const g = scenario().board(0, ['易']).board(1, [{ card: '近战小兵', health: 1 }]).build();
+    g.attack(g.m(0, '易'), g.m(1, '近战小兵'));
+    const r = play(g.events);
+    expect(r.map((x) => x.kinds)).toEqual(['attack+damage', 'death', 'trigger']);
+    expect(deathStep(r).early).toBe(true);
+    expect(deathStep(r).ready).toBe(0);
+  });
+
+  it('易被攻击、反击打死对方，剧毒打死，也同时开始', () => {
+    const g = scenario().board(0, ['近战小兵']).board(1, [{ card: '易', health: 5 }]).build();
+    g.attack(g.m(0, '近战小兵'), g.m(1, '易'));
+    expect(deathStep(play(g.events)).early).toBe(true);
+    const p = scenario().board(0, [{ card: '易', health: 9, maxHealth: 9, keywords: ['poisonous'] }]).board(1, [{ card: '石甲虫', health: 9 }]).build();
+    p.attack(p.m(0, '易'), p.m(1, '石甲虫'));
+    const r = play(p.events);
+    expect(r.map((x) => x.kinds)).toEqual(['attack+damage', 'death', 'trigger']);
+    expect(deathStep(r).early).toBe(true);
+  });
+
+  it('不提前：易也死了（引擎不发 on_kill）、被打死的有亡语（亡语排在前面）、不是易打死的', () => {
+    const both = scenario().board(0, ['易']).board(1, [{ card: '近战小兵', attack: 5, health: 1 }]).build();
+    both.attack(both.m(0, '易'), both.m(1, '近战小兵'));
+    const rb = play(both.events);
+    expect(rb.map((x) => x.kinds)).toEqual(['attack+damage', 'death']);
+    expect(deathStep(rb).early).toBe(false);
+
+    const rattle = scenario().board(0, [{ card: '易', health: 9, maxHealth: 9 }]).board(1, ['艾尼维亚']).build();
+    rattle.attack(rattle.m(0, '易'), rattle.m(1, '艾尼维亚'));
+    const rr = play(rattle.events);
+    expect(rr[2]!.kinds).toBe('trigger'); // 亡语
+    expect(deathStep(rr).early).toBe(false);
+    expect(deathStep(rr).ready).toBeGreaterThan(0);
+
+    const other = scenario().board(0, ['魔狼']).board(1, [{ card: '近战小兵', health: 1 }]).build();
+    other.attack(other.m(0, '魔狼'), other.m(1, '近战小兵'));
+    expect(deathStep(play(other.events)).early).toBe(false);
+  });
+
+  it('易的伤害和死亡之间隔了别的步，不提前', () => {
+    const g = scenario().board(0, ['易']).board(1, [{ card: '近战小兵', health: 1 }]).build();
+    g.attack(g.m(0, '易'), g.m(1, '近战小兵'));
+    const ev = [...g.events];
+    const i = ev.findIndex((e) => e.kind === 'death');
+    ev.splice(i, 0, { kind: 'mana_changed', group: 99, side: 0, before: { max: 1, current: 1, temp: 0 }, after: { max: 1, current: 1, temp: 0 }, reason: 'gain_mana' });
+    expect(deathStep(play(ev)).early).toBe(false);
   });
 });

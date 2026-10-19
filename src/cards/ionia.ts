@@ -11,12 +11,12 @@ export const IONIA_CARDS: CardDef[] = [
     }],
   },
   {
-    id: 'ionia.kennen', name: '凯南', type: 'minion', class: 'ionia', cost: 2, attack: 2, health: 2,
+    id: 'ionia.kennen', name: '凯南', type: 'minion', class: 'ionia', cost: 2, attack: 2, health: 3,
     text: '法术伤害 +1', champion: 'Kennen',
     effects: [{ trigger: 'static', kind: 'spell_damage', amount: 1 }],
   },
   {
-    id: 'ionia.akali', name: '阿卡丽', type: 'minion', class: 'ionia', cost: 3, attack: 2, health: 2,
+    id: 'ionia.akali', name: '阿卡丽', type: 'minion', class: 'ionia', cost: 3, attack: 2, health: 3,
     keywords: ['stealth'], text: '潜行。连击：获得 +2 攻击力', champion: 'Akali',
     effects: [{ trigger: 'combo', actions: [{ kind: 'buff', target: 'self', attack: 2, duration: 'permanent', fx: 'shadow' }] }],
   },

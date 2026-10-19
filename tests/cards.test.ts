@@ -572,7 +572,7 @@ describe('诺克萨斯', () => {
 
 describe('艾欧尼亚', () => {
   card('凯南', () => {
-    expectStats('凯南', 2, 2, 2);
+    expectStats('凯南', 2, 2, 3);
     const g = scenario().board(0, ['凯南']).board(1, ['雷克塞', '石甲虫']).hand(0, ['灵魄突袭', '大杀四方']).build();
     g.play('灵魄突袭', { target: g.m(1, '雷克塞') });
     expect(g.minion(1, '雷克塞').health).toBe(2);
@@ -587,12 +587,12 @@ describe('艾欧尼亚', () => {
 
   card('阿卡丽', () => {
     // 本回合第一张牌：连击不触发
-    expectStats('阿卡丽', 3, 2, 2, ['stealth']);
+    expectStats('阿卡丽', 3, 2, 3, ['stealth']);
     const g = scenario().hand(0, ['飞斧', '阿卡丽']).build();
     g.play('飞斧', { target: g.hero(1) });
     g.play('阿卡丽');
     const m = g.minion(0, '阿卡丽');
-    expect([m.attack, m.health]).toEqual([4, 2]);
+    expect([m.attack, m.health]).toEqual([4, 3]);
     expect(m.keywords).toEqual(['stealth']);
     expect(g.eventsOf('trigger')[0].timing).toBe('combo');
     // 英雄技能不算使用过牌

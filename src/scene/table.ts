@@ -34,10 +34,11 @@ import { warmCombatFx } from '../presentation/fx/warm';
 import type { ViewState } from '../presentation/viewState';
 import { CardView, glowMat as playableGlow } from './cardView';
 import type { CardStats } from './cardText';
-import { fadeOutAndDispose, releaseGpu } from './dispose';
+import { fadeOutAndDispose, releaseGpu, shared } from './dispose';
 import { HeroPowerView, HeroView } from './heroView';
 import { attackRimMat, MinionView } from './minionView';
 import { useLampReflections } from './nexusLamps';
+import { COLORS } from './theme';
 import type { Stage } from './stage';
 import { BoardView } from './board';
 import { EndTurnButton, useButtonReflections } from './endTurnButton';
@@ -50,7 +51,8 @@ export type LegalHighlights = {
   endTurnReady: boolean; // 除了结束回合没有别的事可做
 };
 
-export type TargetMarks = { targets: TargetRef[] } | null;
+// 选目标时的合法目标。color 是箭头的颜色（增益金、冻结冰蓝、其余红橙），合法目标的细边跟它走
+export type TargetMarks = { targets: TargetRef[]; color?: number } | null;
 
 const LAYOUT_DURATION = 0.3;
 
@@ -81,6 +83,13 @@ function moveTo(obj: THREE.Object3D, s: Slot, duration: number, ease = 'power2.o
 }
 
 const PULSE_BASE: [THREE.MeshBasicMaterial, THREE.Color][] = [playableGlow, attackRimMat].map((m) => [m, m.color.clone()]);
+
+// 选目标时合法目标的细边：全场共用两份材质，一份给所有合法目标（缓慢轻微地脉动），一份给箭头正指着的那个（更亮）。
+// 颜色在 setTargetMarks 时按箭头颜色设，亮度每帧按脉动算
+const TARGET_MARK = { glow: 1.5, focus: 2.6, period: 1.8, pulse: 0.15 };
+const targetMarkMat = shared(new THREE.MeshBasicMaterial({ color: new THREE.Color(), toneMapped: false }));
+const targetFocusMat = shared(new THREE.MeshBasicMaterial({ color: new THREE.Color(), toneMapped: false }));
+const targetMarkBase = new THREE.Color(COLORS.target);
 
 export class TableScene {
   readonly root = new THREE.Group();
@@ -127,6 +136,7 @@ export class TableScene {
   private inspect: CardView | null = null;
   private highlights: LegalHighlights | null = null;
   private targetMarks: TargetMarks = null;
+  private targetFocus: TargetRef | null = null;
   private readonly unhook: () => void;
   // 事件动画用的粒子（presentation/fx/particles）。挂在场景根上，位置都是世界坐标；每帧跟着渲染推进，
   // 乘全局时间线的 timeScale，导演快进、调试台慢放时粒子一起快、一起慢
@@ -193,6 +203,11 @@ export class TableScene {
       // 能出的牌、能攻击的随从：绿色发光边按 1.6 秒一个周期脉动（m4-storyboard 第 2 节）。材质是共用的，全部一起脉动
       const pulse = 0.72 + 0.28 * Math.sin((t / 1.6) * Math.PI * 2);
       for (const [mat, base] of PULSE_BASE) mat.color.copy(base).multiplyScalar(pulse);
+      if (this.targetMarks) {
+        const k = 1 + TARGET_MARK.pulse * Math.sin((t / TARGET_MARK.period) * Math.PI * 2);
+        targetMarkMat.color.copy(targetMarkBase).multiplyScalar(TARGET_MARK.glow * k);
+        targetFocusMat.color.copy(targetMarkBase).multiplyScalar(TARGET_MARK.focus * k);
+      }
       this.board.tick(t);
       for (const h of this.heroes) h.tick(t);
       for (const m of this.mana) m.tick(t);
@@ -523,9 +538,20 @@ export class TableScene {
     this.applyHighlights();
   }
 
-  // 选目标时：合法目标红色高亮，其余变暗。null 表示退出选目标。
+  // 选目标时：合法目标亮一圈细边（颜色跟箭头），其余变暗。null 表示退出选目标。
   setTargetMarks(marks: TargetMarks): void {
     this.targetMarks = marks;
+    this.targetFocus = null;
+    if (marks) targetMarkBase.setHex(marks.color ?? COLORS.target);
+    this.applyHighlights();
+  }
+
+  // 箭头正指着的合法目标：它的细边更亮（准星由箭头自己画）。null 表示没有指着合法目标
+  setTargetFocus(ref: TargetRef | null): void {
+    const same = (a: TargetRef | null, b: TargetRef | null) =>
+      a === b || (!!a && !!b && a.side === b.side && a.kind === b.kind && (a.kind === 'hero' || (b.kind === 'minion' && a.instanceId === b.instanceId)));
+    if (!this.targetMarks || same(ref, this.targetFocus)) return;
+    this.targetFocus = ref;
     this.applyHighlights();
   }
 
@@ -540,18 +566,18 @@ export class TableScene {
       c.setDim(v.phase === 'playing' && (findCard(c.cardId)?.cost ?? 0) > mana);
     }
     const marks = this.targetMarks;
-    const isMarked = (ref: TargetRef) =>
-      !!marks &&
-      marks.targets.some((t) => t.side === ref.side && t.kind === ref.kind && (t.kind === 'hero' || (ref.kind === 'minion' && t.instanceId === ref.instanceId)));
+    const same = (t: TargetRef, ref: TargetRef) => t.side === ref.side && t.kind === ref.kind && (t.kind === 'hero' || (ref.kind === 'minion' && t.instanceId === ref.instanceId));
+    const isMarked = (ref: TargetRef) => !!marks && marks.targets.some((t) => same(t, ref));
+    const markMat = (ref: TargetRef) => (this.targetFocus && same(this.targetFocus, ref) ? targetFocusMat : targetMarkMat);
     for (const m of this.minions.values()) {
       const ref: TargetRef = { side: m.side, kind: 'minion', instanceId: m.instanceId };
-      if (marks) m.setHighlight(isMarked(ref) ? 'target' : 'dim');
+      if (marks) m.setHighlight(isMarked(ref) ? 'target' : 'dim', markMat(ref));
       else m.setHighlight(h && m.side === me && h.attackers.has(m.instanceId) ? 'attack' : 'none');
       m.setSleepy(!marks && !!h && m.side === me && !h.attackers.has(m.instanceId) && v.current === me);
     }
     for (const side of [0, 1] as Side[]) {
       const ref: TargetRef = { side, kind: 'hero' };
-      this.heroes[side].setTargetable(marks ? (isMarked(ref) ? 'target' : 'dim') : 'none');
+      this.heroes[side].setTargetable(marks ? (isMarked(ref) ? 'target' : 'dim') : 'none', markMat(ref));
     }
     this.heroPowers[me].setUsable(!!h && h.heroPower && !marks);
     this.heroPowers[other(me)].setUsable(false);

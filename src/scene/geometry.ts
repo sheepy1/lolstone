@@ -83,5 +83,13 @@ export const MINION_RIM = shared((() => {
   g.rotateX(-Math.PI / 2);
   return g;
 })());
+// 选目标时合法目标的细边：比 MINION_RIM 窄一半、矮一些，贴着底座外沿
+export const MINION_TARGET_RIM = shared((() => {
+  const outer = roundedRect(MINION_SIZE + 0.16, MINION_SIZE + 0.16, 0.2);
+  outer.holes.push(roundedRect(MINION_SIZE + 0.04, MINION_SIZE + 0.04, 0.17));
+  const g = new THREE.ExtrudeGeometry(outer, { depth: 0.05, bevelEnabled: false, curveSegments: 6 });
+  g.rotateX(-Math.PI / 2);
+  return g;
+})());
 export const UNIT_BOX = shared(new THREE.BoxGeometry(1, 1, 1));
 export const UNIT_SPHERE = shared(new THREE.SphereGeometry(1, 24, 16));

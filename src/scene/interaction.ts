@@ -6,7 +6,7 @@ import gsap from 'gsap';
 import * as THREE from 'three';
 import { playSfx } from '../audio';
 import { actionKey, getCard, getHeroClass, type Action, type TargetRef } from '../engine';
-import { ARROW, arrowTone, type Point } from '../presentation/fx/arrow';
+import { ARROW, ARROW_COLORS, arrowTone, type Point } from '../presentation/fx/arrow';
 import { BOARD_ROW_HALF, boardInsertIndex, boardRowZ, boardSlot, CARD_H, CARD_W, castSlot, CAMERA_PITCH, HAND_ZONE_Z, NEXUS } from '../presentation/layout';
 import type { CardView } from './cardView';
 import type { TableScene } from './table';
@@ -514,8 +514,10 @@ export class Interaction {
     this.setHover(null);
     this.mode = { k: 'aim', ...a };
     this.syncCursor();
-    this.scene.arrow.start(a.from, this.aimTone(a.options[0]?.action), { frequency: DRAG.frequency, damping: DRAG.damping });
-    this.scene.setTargetMarks({ targets: a.options.map((o) => o.target) });
+    const tone = this.aimTone(a.options[0]?.action);
+    this.scene.arrow.start(a.from, tone, { frequency: DRAG.frequency, damping: DRAG.damping });
+    // 合法目标的细边和箭头同色（默认红用伤害的红橙）
+    this.scene.setTargetMarks({ targets: a.options.map((o) => o.target), color: ARROW_COLORS[tone === 'default' ? 'damage' : tone] });
   }
 
   // 箭头颜色按这次瞄准的用途：随从攻击是伤害色；出牌、英雄技能看卡牌效果作用在选中目标上的动作
@@ -534,6 +536,7 @@ export class Interaction {
   private aimArrow(m: Aim, table: THREE.Vector3 | null): void {
     const t = this.targetOf(this.pick());
     const opt = t && m.options.find((o) => sameRef(o.target, t));
+    this.scene.setTargetFocus(opt ? opt.target : null);
     if (opt) {
       const r = this.reticleOf(opt.target);
       this.scene.arrow.aimAt(r.at, 'target', r);

@@ -32,7 +32,7 @@ import { cardFontUrl } from '../assets/manifest';
 import { ParticleSystem } from '../presentation/fx/particles';
 import { warmCombatFx } from '../presentation/fx/warm';
 import type { ViewState } from '../presentation/viewState';
-import { CardView, glowMat as playableGlow } from './cardView';
+import { CardView, glowMat as playableGlow, useCardReflections } from './cardView';
 import type { CardStats } from './cardText';
 import { fadeOutAndDispose, releaseGpu, shared } from './dispose';
 import { HeroPowerView, HeroView } from './heroView';
@@ -41,6 +41,9 @@ import { useLampReflections } from './nexusLamps';
 import { COLORS } from './theme';
 import type { Stage } from './stage';
 import { BoardView } from './board';
+import { LegacyBoardView } from './boardLegacy';
+import { useBoardReflections } from './boardProps';
+import { ART_STYLE } from './artStyle';
 import { EndTurnButton, useButtonReflections } from './endTurnButton';
 import { DeckView, ManaBarView, ThinkingView } from './tableParts';
 
@@ -104,7 +107,8 @@ export class TableScene {
     top: new THREE.Group(),
   };
   readonly arrow = new TargetArrow();
-  readonly board = new BoardView();
+  // 棋盘：默认是 M4 美术的新版，?art=old 时是 M3 的骨架版（/dev/fx 的美术面板做新旧对比）
+  readonly board: BoardView | LegacyBoardView = ART_STYLE === 'old' ? new LegacyBoardView() : new BoardView();
   readonly heroes: [HeroView, HeroView];
   readonly heroPowers: [HeroPowerView, HeroPowerView];
   readonly decks: [DeckView, DeckView] = [new DeckView(0), new DeckView(1)];
@@ -167,6 +171,9 @@ export class TableScene {
     const v = view.viewer;
     useLampReflections(stage.reflections);
     useButtonReflections(stage.reflections);
+    useBoardReflections(stage.reflections);
+    useCardReflections(stage.reflections);
+    if (this.board instanceof BoardView) this.board.useReflections(stage.reflections);
     this.heroes = [new HeroView(view.players[0].heroClass, v !== 0, 0), new HeroView(view.players[1].heroClass, v !== 1, 1)];
     this.heroPowers = [new HeroPowerView(view.players[0].heroClass, 0), new HeroPowerView(view.players[1].heroClass, 1)];
     this.addLights();

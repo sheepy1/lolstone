@@ -19,7 +19,7 @@
 import { readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { latestVersion } from './lib/ddragon.ts';
-import { loadCardArtMap, resolveSource } from './lib/art-sources.ts';
+import { generateQueue, loadCardArtMap, resolveSource } from './lib/art-sources.ts';
 import type { ArtSource, Crop } from './lib/art-sources.ts';
 import { isUsable, newTally, parseCli, printTally, readManifest, runPool, saveFile, toAbs, writeManifest } from './lib/files.ts';
 import { describeError, fetchBytes } from './lib/http.ts';
@@ -45,7 +45,10 @@ type IconsManifest = {
   /** 下载图标时用的 Data Dragon 版本。 */
   ddragonVersion: string;
   lorVersion: string;
-  cards: Record<string, { icon: IconFile | null; art: IconFile | null; crop: Crop; generate?: string }>;
+  cards: Record<
+    string,
+    { icon: IconFile | null; art: IconFile | null; crop: Crop; generate?: string; generatePriority?: number }
+  >;
   heroPowers: Record<string, { icon: IconFile | null }>;
   keywords: Record<string, { icon: IconFile | null }>;
   failed: { group: Group; id: string; slot: Slot; url: string; error: string }[];
@@ -126,7 +129,12 @@ async function main(): Promise<void> {
     failed,
   };
   for (const [id, card] of Object.entries(map.cards)) {
-    manifest.cards[id] = { icon: null, art: null, crop: card.art.crop, ...(card.generate ? { generate: card.generate } : {}) };
+    manifest.cards[id] = {
+      icon: null,
+      art: null,
+      crop: card.art.crop,
+      ...(card.generate ? { generate: card.generate, generatePriority: card.generatePriority } : {}),
+    };
   }
   for (const id of Object.keys(map.heroPowers)) manifest.heroPowers[id] = { icon: null };
   for (const id of Object.keys(map.keywords)) manifest.keywords[id] = { icon: null };
@@ -142,10 +150,10 @@ async function main(): Promise<void> {
   printTally(`卡牌配图、英雄技能和关键词图标（public/${MANIFEST}）`, tally, failed.length);
   for (const f of failed) console.log(`  - ${f.group} ${f.id} ${f.slot}：${f.error}`);
   if (removed.length > 0) console.log(`  清理   ${removed.length} 个映射表不再用的旧文件：${removed.join('、')}`);
-  const toGenerate = Object.entries(map.cards).filter(([, c]) => c.generate);
+  const toGenerate = generateQueue(map);
   if (toGenerate.length > 0) {
-    console.log(`\n官方图不理想、建议生成的 ${toGenerate.length} 张（现在先用映射表里的替代图）：`);
-    for (const [id, c] of toGenerate) console.log(`  - ${id} ${c.name}：${c.generate}`);
+    console.log(`\n以后要生成大图的 ${toGenerate.length} 张，按先后排（现在先用映射表里的替代图）：`);
+    for (const [id, c] of toGenerate) console.log(`  ${c.generatePriority ?? '-'}. ${id} ${c.name}：${c.generate}`);
   }
   if (failed.length > 0) process.exitCode = 1;
 }

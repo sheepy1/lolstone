@@ -43,8 +43,10 @@ export type CardArt = {
   /** 卡面原画窗口用的图。 */
   art: ArtSource & { crop: Crop };
   reason: string;
-  /** 官方没有合适的图，理想做法是生成。值是生成要求。 */
+  /** 官方没有合适的图（或只有小图），以后要生成大图。值是生成要求。 */
   generate?: string;
+  /** 生成的先后，1 最先。 */
+  generatePriority?: number;
   alts: Alt[];
 };
 
@@ -84,3 +86,9 @@ export function resolveSource(src: ArtSource, ddVersion: string, lorVersion: str
   }
 }
 
+/** 带 generate 的卡，按 generatePriority 从小到大排，没写先后的排最后。 */
+export function generateQueue(map: CardArtMap): [string, CardArt][] {
+  return Object.entries(map.cards)
+    .filter(([, c]) => c.generate)
+    .sort(([, a], [, b]) => (a.generatePriority ?? Infinity) - (b.generatePriority ?? Infinity));
+}

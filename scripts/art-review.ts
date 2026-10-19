@@ -7,7 +7,7 @@
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { loadCardArtMap, resolveSource } from './lib/art-sources.ts';
+import { generateQueue, loadCardArtMap, resolveSource } from './lib/art-sources.ts';
 import type { Alt, ArtSource, Crop } from './lib/art-sources.ts';
 import { PUBLIC_DIR, readManifest } from './lib/files.ts';
 
@@ -107,7 +107,7 @@ async function main(): Promise<void> {
     const tags = [
       `<span class="tag">${esc(SOURCE_LABEL[c.art.type])}</span>`,
       lowRes ? '<span class="tag warn">小图放大</span>' : '',
-      c.generate ? '<span class="tag gen">建议生成</span>' : '',
+      c.generate ? `<span class="tag gen">以后生成大图 #${c.generatePriority ?? '-'}</span>` : '',
     ].join('');
     return `<article class="card" id="${esc(id)}">
   <header><h3>${esc(c.name)}</h3><code>${esc(id)}</code></header>
@@ -144,7 +144,7 @@ async function main(): Promise<void> {
   const keywords = Object.entries(map.keywords)
     .map(([id, e]) => iconHtml(id, e, manifest.keywords[id]?.icon ?? null))
     .join('');
-  const generate = ids.filter((id) => map.cards[id]!.generate);
+  const generate = generateQueue(map);
 
   const html = `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -176,13 +176,13 @@ async function main(): Promise<void> {
   .alt { width:64px; height:64px; object-fit:cover; border-radius:4px; display:block; }
   .alt.wide { width:96px; height:56px; }
   .small .reason { font-size:13px; }
-  ul.gen { color:var(--gen); }
+  ol.gen { color:var(--gen); }
 </style></head><body>
 <h1>MeLoL 卡牌配图对照</h1>
 <p class="intro">没有英雄原画的 ${ids.length} 张卡、4 个英雄技能、${Object.keys(map.keywords).length} 个关键词。金框是卡面原画窗口（宽高比 1 : 0.86，和现在 canvasArt.ts 的卡面一致）按映射表的焦点裁切的效果；右边的方图给场上随从头像和小图标用。虚线下面是备选，直接引用远程地址。
 映射表：scripts/data/card-art.json。Data Dragon ${esc(manifest.ddragonVersion)}，符文之地传说 ${esc(manifest.lorVersion)}。</p>
-<p class="intro">建议生成（官方图不理想，现在先用替代图）：</p>
-<ul class="gen">${generate.map((id) => `<li>${esc(map.cards[id]!.name)}（${esc(id)}）：${esc(map.cards[id]!.generate!)}</li>`).join('')}</ul>
+<p class="intro">以后要生成大图的卡，按先后排（现在先用替代图）：</p>
+<ol class="gen">${generate.map(([id, c]) => `<li>${esc(c.name)}（${esc(id)}）：${esc(c.generate!)}</li>`).join('')}</ol>
 ${sections}
 <section><h2>英雄技能</h2><div class="grid">${heroPowers}</div></section>
 <section><h2>关键词</h2><div class="grid">${keywords}</div></section>

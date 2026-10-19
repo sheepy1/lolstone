@@ -436,3 +436,67 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
   处理后真峰值最高 -1.4 dBTP。
 - `fetch-voice.ts` 按文件大小判断是否已下载，语音处理过之后大小变了，重跑 `fetch:voice` 会把原件重新下回来覆盖成品。
   `normalize-audio.ts` 按内容认得出来，重跑一次就行。
+
+## 粒子系统（M4，分镜表 1.5）
+
+代码在 `src/presentation/fx/particles/`，演示页 `src/dev/particles/`，测试 `tests/particles.test.ts`。还没接进事件动画，
+M4 各事件模块直接调用。
+
+### 用法
+
+```ts
+const fx = new ParticleSystem({ camera: stage.camera });
+stage.scene.add(fx.object);              // 挂在场景根上（位置都是世界坐标，父节点必须是单位变换）
+const stop = driveWithGsap(fx);          // 跟 GSAP 的时钟走，乘全局时间线的 timeScale：导演快进、调试台慢放都会带上粒子
+await fx.emit('spark_heavy', { at, count: 14 });                     // 句柄可以 await，最后一个粒子消失时完成
+fx.emit('fire_bolt', { at: castPos, to: target, color: FX_PALETTE.ice }); // 冰箭；飞行 0.25 秒，duration 可改
+fx.emit('slash_trail', { at, follow: () => attacker.position });      // 跟着冲锋的随从
+tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 包成时间线；时间线被杀掉时粒子一起清掉
+// 一局结束：stop(); fx.dispose();
+```
+
+- 预设 18 个：分镜表 1.5 列的 16 个名字（spark_light / spark_heavy 算两个）加 burn_ash、nexus_burst。参数只有
+  分镜约定的 count、dir（up / out / in / toward）、color、scale，外加 to（目标）、duration（飞行时长）、follow、timeScale。
+- `at` 是物件脚下台面上的点（y = 0），贴地的效果按随从底座 1.5 宽设计，发射半径在底座外面；打在随从身上的火花、
+  碎冰传 y ≈ 0.3 到 0.4。
+- count 改的是"主体"那几层，闪光、冲击环这类单个的层不跟着变。每层数量默认有 ±10% 随机（spec 5.5），
+  `countJitter: 0` 关掉。
+- 句柄：`kill()` 立刻清掉，`stop()` 停止发射、已有的放完，`timeScale(v)` 单独调快慢，`origin` 可以直接交给 GSAP 补间。
+
+### 实现要点
+
+- 一个 2000 格的池（结构化 Float32Array），池满时新粒子不生成，计入 `dropped`；每帧只读写这些数组，不分配对象。
+- 三批绘制：alpha（普通透明，按远到近排序）、add（加法，不进泛光）、bloom（加法，进泛光）。最多 4 次绘制调用。
+- 进泛光：stage.ts 的选择性泛光按深度对上被选中物件的像素，而泛光的深度通道用 MeshDepthMaterial 重画选中的物件。
+  所以朝向、拉伸都在 CPU 上算进实例矩阵（深度通道只认实例矩阵），bloom 批另有一个同实例数据的网格只写亮核的深度、
+  放在 BLOOM_LAYER 上。只有小而亮的粒子（火花、光点）进泛光：大闪光、烟进了泛光会把底下的台面一起晕开。
+- 贴图是程序生成的 8 格图集（DataTexture，不依赖 DOM，测试里也能建）。颜色在线性空间、可以大于 1；
+  渐变的亮度别给太高，ACES 会把 3 以上的都压成白色，看不出主色。
+- 软粒子：默认按离台面的高度淡出（0.08 单位）；`setSoftDepth(深度贴图, 镜头, 宽, 高)` 换成按场景深度淡出，
+  需要调用方自己准备深度贴图（演示页里有一个预渲染的例子，开销是多画一遍场景）。
+- 朝镜头的烟团中心要抬到 0.3 倍大小以上，否则下半截插进台面被深度裁掉，看起来像没发出来。
+- 显存：几何体、材质、图集都归系统，`dispose()` 一起释放。不要交给 `scene/dispose.ts` 的 `releaseGpu`，
+  它不认 ShaderMaterial 里的贴图。
+
+### 演示页和自动化
+
+- `pnpm dev` 后打开 `/src/dev/particles/`。lil-gui 里选预设、位置、改参数，空格触发，S 慢放 0.1 倍，"逐个演示全部"，
+  "最重的 5 个同时"，"打满 2000"。左上角是帧率、粒子数、丢弃数、update 和 render 耗时。
+- 控制台 `pfx`：`pfx.shots(前缀)` 18 个预设各截一张；`pfx.capture(名字, [毫秒…], 前缀)` 按固定步长推进、截指定时刻的帧
+  （不依赖页面在前台）；`pfx.bench('idle' | 'heavy5' | 'fill', 秒)` 测帧率（要页面在前台，rAF 才跑）。
+  截图存到 `.dev-output/`。
+- 坑：`vite.config.ts` 的 `watch.ignored: ['**/.claude/**']` 在 worktree 里也会匹配到 worktree 自己的路径，
+  开发服务器看不到任何文件改动，改完代码要重启服务器才生效。
+
+### 性能（2026-10-19，Apple M4 Pro，不是 spec 的 M1 基准机；Chrome 内置浏览器，120Hz 屏）
+
+单帧同步耗时 = 粒子 update + 渲染 + 读回一个像素等 GPU 做完，每种场景测 3 秒：
+
+| 场景 | 画布 | 帧率 | update | 单帧同步耗时 | 粒子峰值 |
+| --- | --- | --- | --- | --- | --- |
+| 空场景 | 1920×1080 | 120（屏幕上限） | 0 | 3.57ms | 0 |
+| 最重的 5 个同时（victory_confetti、nexus_burst、fire_bolt、burn_ash、holy_pillar） | 1920×1080 | 120 | 0.09ms | 3.71ms | 390 |
+| 打满 2000 | 1920×1080 | 120 | 0.29ms | 3.90ms | 2000 |
+
+粒子带来的额外耗时：5 个最重的同时约 0.15ms，打满 2000 约 0.35ms。设备像素比 2（3840×2160）时单帧 9 到 12ms，
+两次测量里空场景和打满的先后关系相反，差异落在测量噪声里；在 M1 上要在接进对局后再测一次。

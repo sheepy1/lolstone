@@ -38,6 +38,10 @@ export const cardPlayed: AnimModule<'card_played'> = (e, { scene, before, after,
     c.setDim(false);
     holder.card = c;
     gsap.killTweensOf([c.position, c.rotation, c.scale]);
+    // 对手思考时抬起的就是这张（E27 的衔接）：从抬起的状态直接飞出，抬起的偏移在飞行中收回
+    gsap.killTweensOf([c.body.position, c.body.rotation]);
+    gsap.to(c.body.position, { x: 0, y: 0, z: 0, duration: fly, ease: 'power2.out' });
+    gsap.to(c.body.rotation, { x: 0, y: 0, z: 0, duration: fly, ease: 'power2.out' });
     if (minionOfMine) {
       // 飞到落点上方，转平、略缩小，悬着等砸落
       const slot = boardSlot(p, e.position!, before.players[e.side].board.length + 1);

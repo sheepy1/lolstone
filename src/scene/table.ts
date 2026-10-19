@@ -481,7 +481,11 @@ export class TableScene {
       c.setCard(card.cardId);
       c.setMarked(mulligan && this.mulliganMarks.has(card.instanceId));
       let slot: Slot;
-      if (mulligan) slot = card.cardId === MANA_POTION_ID ? mulliganPotionSlot(rows.length) : mulliganSlot(rows.indexOf(card), rows.length);
+      if (mulligan) {
+        slot = card.cardId === MANA_POTION_ID ? mulliganPotionSlot(rows.length) : mulliganSlot(rows.indexOf(card), rows.length);
+        // 换牌时悬停的那张略微抬起、放大
+        if (card.instanceId === this.hoveredHand) slot = { ...slot, pos: { ...slot.pos, y: slot.pos.y + 0.25, z: slot.pos.z + 0.2 }, scale: slot.scale * 1.08 };
+      }
       else if (p === 'near' && hoveredIndex >= 0) {
         slot = i === hoveredIndex ? handHoverSlot(i, visible.length) : handSlot(p, i, visible.length);
         if (i !== hoveredIndex) slot = { ...slot, pos: { ...slot.pos, x: slot.pos.x + handNeighborShift(i, hoveredIndex) } };

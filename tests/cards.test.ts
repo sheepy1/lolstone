@@ -227,16 +227,16 @@ describe('德玛西亚', () => {
     expect(g3.minion(1, '菲奥娜').health).toBe(1);
   });
 
-  card('索娜', () => {
-    expectStats('索娜', 4, 2, 5);
-    const g = scenario().board(0, ['索娜', '近战小兵']).build();
+  card('娑娜', () => {
+    expectStats('娑娜', 4, 2, 5);
+    const g = scenario().board(0, ['娑娜', '近战小兵']).build();
     g.endTurn();
     const m = g.minion(0, '近战小兵');
     expect([m.attack, m.health]).toEqual([2, 3]);
-    expect(g.minion(0, '索娜').attack).toBe(2);
-    const alone = scenario().board(0, ['索娜']).build();
+    expect(g.minion(0, '娑娜').attack).toBe(2);
+    const alone = scenario().board(0, ['娑娜']).build();
     alone.endTurn();
-    expect(alone.minion(0, '索娜').attack).toBe(2);
+    expect(alone.minion(0, '娑娜').attack).toBe(2);
   });
 
   card('嘉文四世', () => {

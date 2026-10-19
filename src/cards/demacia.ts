@@ -45,7 +45,7 @@ export const DEMACIA_CARDS: CardDef[] = [
     text: '决斗：本随从攻击时不受反击伤害', champion: 'Fiora', script: 'fiora_duel',
   },
   {
-    id: 'demacia.sona', name: '索娜', type: 'minion', class: 'demacia', cost: 4, attack: 2, health: 5,
+    id: 'demacia.sona', name: '娑娜', type: 'minion', class: 'demacia', cost: 4, attack: 2, health: 5,
     text: '在你的回合结束时，使随机一个其他友方随从获得 +1/+1', champion: 'Sona',
     effects: [{
       trigger: 'turn_end',

@@ -9,6 +9,7 @@
 - [M4 分镜表](docs/m4-storyboard.md)：视听约定、交互手感参数、每个事件的分镜。
 - [新玩家前几分钟验收](docs/m4-first-minutes.md)：M4 纵切片的验收清单。
 - [招牌卡专属特效](docs/m4-signature-fx.md)：11 张卡的 fxId 和分镜。
+- [联机对战规格](docs/online.md)：服务端权威的架构、客户端接缝、协议、服务端、里程碑 M6。
 
 ## 当前进度
 

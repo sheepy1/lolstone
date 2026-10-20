@@ -1,9 +1,11 @@
 // 界面状态：React 文字界面和对局控制之间共享的一小块状态，用 useSyncExternalStore 订阅。
 import { useSyncExternalStore } from 'react';
 import type { HeroClass, Side } from '../engine';
+import type { EndReason } from '../logic/state';
 import type { Difficulty } from '../ui/menuData';
 
-export type Screen = 'boot' | 'menu' | 'loading' | 'match' | 'decks';
+// waiting 是联机的等待页（显示邀请码，等对手进来）
+export type Screen = 'boot' | 'menu' | 'waiting' | 'loading' | 'match' | 'decks';
 
 // 叠在页面上的面板，后打开的在上面：对局菜单（pause）里可以再打开设置。对局中有任何面板打开时游戏暂停。
 export type Panel = 'pause' | 'settings';
@@ -18,6 +20,28 @@ export type HoverCard = {
   keyword?: string | null;
 };
 
+// 联机的界面状态（docs/online.md 3.4）。UiState.online 为 null 时没有联机入口，主菜单和单机一样
+export type OnlineUi = {
+  nickname: string;
+  open: boolean; // 主菜单的联机面板开着
+  busy: boolean; // 正在建房、进房、续局，按钮先禁用
+  notice: string | null; // 联机面板里的提示（邀请码不对、卡组不合规）
+  // 没打完的局：主菜单打开时提示续上还是离开。started 为 false 时还在等人，code 是它的邀请码
+  pending: { started: boolean; code: string | null } | null;
+  // 等待页：code 为 null 时还在连接平台；joined 是对手已经进来、正在开局
+  room: { code: string | null; joined: boolean } | null;
+  match: OnlineMatchUi | null; // 联机对局中（加载页、对局、结算面板）
+};
+
+export type OnlineMatchUi = {
+  myClass: HeroClass;
+  opponent: string; // 对手的昵称
+  opponentClass: HeroClass;
+  phase: 'mulligan' | 'playing' | 'over';
+  deadline: number | null; // 当前计时的到期时刻（本地时钟）
+  graceUntil: number | null; // 对手断线判负的到期时刻（本地时钟），对手在线为 null
+};
+
 export type UiState = {
   screen: Screen;
   loading: { progress: number; label: string };
@@ -25,13 +49,15 @@ export type UiState = {
   menu: { humanClass: HeroClass; aiClass: HeroClass; difficulty: Difficulty; humanDeck: string | null };
   // 换牌页：显示局面在换牌阶段、轮到玩家提交时打开
   mulligan: { open: boolean; marked: number };
-  result: { winner: Side | 'draw'; won: boolean; turns: number } | null;
+  // reason 是结束原因：联机的结算面板显示它（对手认输、对手超时、对手离开），单机不显示
+  result: { winner: Side | 'draw'; won: boolean; turns: number; reason: EndReason } | null;
   hover: HoverCard | null;
   log: string[];
   logOpen: boolean;
   status: { busy: boolean; myTurn: boolean; speed: number; replay: boolean };
   panels: Panel[];
   error: string | null;
+  online: OnlineUi | null;
 };
 
 let state: UiState = {
@@ -46,6 +72,7 @@ let state: UiState = {
   status: { busy: false, myTurn: false, speed: 1, replay: false },
   panels: [],
   error: null,
+  online: null,
 };
 
 const listeners = new Set<() => void>();

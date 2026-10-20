@@ -1,17 +1,20 @@
 // 应用外壳：文字界面拿到的 app。主菜单只需要它和 React 界面，对局控制（GameApp：Three.js 舞台、导演、动画、特效）
 // 在单独的 chunk 里，首屏不下载。主菜单显示后在后台加载并起好舞台（prefetch），平时点开局时已经就绪，和拆分前一样；
 // 还没加载完就点了开局，加载页先出来，这一局的美术和它同时下载，都到了再开局。回放和自动驾驶在启动时直接 load。
+// 联机的流程（online.ts）和平台接口也按需加载：地址里有联机参数时才载，没有时主菜单不显示联机入口。
 import { loadManifest } from '../assets/loader';
 import { matchManifest } from '../assets/manifest';
 import type { HeroClass } from '../engine';
 import { matchDecks } from '../ui/decks';
 import type { Difficulty } from '../ui/menuData';
 import type { GameApp } from './game';
-import { popPanel, pushPanel, setUi, type Panel } from './store';
+import type { OnlineClient } from './online';
+import { getUi, popPanel, pushPanel, setUi, type Panel } from './store';
 
 export class AppShell {
   private game: GameApp | null = null;
   private loading: Promise<GameApp> | null = null;
+  private online: OnlineClient | null = null;
 
   constructor(private readonly host: HTMLElement) {}
 
@@ -38,7 +41,24 @@ export class AppShell {
     else setTimeout(run, 200);
   }
 
+  // 载入联机的流程，接上平台，问有没有没打完的局。没有可用的平台时返回 null（主菜单不显示联机入口）
+  async loadOnline(params: URLSearchParams): Promise<OnlineClient | null> {
+    const { OnlineClient, initialOnlineUi, openLink } = await import('./online');
+    const link = await openLink(params);
+    if (!link) return null;
+    this.online = new OnlineClient(this, link);
+    setUi({ online: initialOnlineUi() });
+    await this.online.init();
+    return this.online;
+  }
+
+  // 主菜单联机面板、等待页、结算面板用的联机操作。只有 loadOnline 成功后界面上才有这些入口
+  get onlineClient(): OnlineClient | null {
+    return this.online;
+  }
+
   async startMatch(humanClass: HeroClass, aiClass: HeroClass, seed?: number, difficulty?: Difficulty, humanDeck?: string | null): Promise<void> {
+    setUi((s) => (s.online ? { online: { ...s.online, match: null } } : {}));
     if (!this.game) {
       // 对局控制还没加载完：加载页先出来，这一局的美术和它同时下载（加载器按地址去重，GameApp.startMatch 接着用），
       // 不等它下载完才开始，进度条按美术走，和 GameApp.startMatch 的前 90% 一致
@@ -75,11 +95,17 @@ export class AppShell {
     this.game?.concede();
   }
 
+  // 联机对局里回主菜单等于认输（online.md 3.4）
   backToMenu(): void {
-    this.game?.backToMenu();
+    if (this.online?.inMatch && getUi().online?.match) this.online.leaveMatch();
+    else this.game?.backToMenu();
   }
 
   confirmMulligan(): void {
     this.game?.confirmMulligan();
+  }
+
+  endTurnAnchor(): { x: number; y: number; width: number } | null {
+    return this.game?.endTurnAnchor() ?? null;
   }
 }

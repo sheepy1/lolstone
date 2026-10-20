@@ -1,11 +1,12 @@
 # LoLstone 联机对战规格
 
-版本 v0.4.3 · 2026-10-20
+版本 v0.4.4 · 2026-10-20
 
 配合 [spec.md](spec.md) 使用。规则、事件、局面模型、表现层以 spec 为准，这里只讲联机：为什么选服务端权威、客户端接缝、逻辑模块的契约、托管、单机的去向、持久化、里程碑、测试。
 
 修订记录：
 
+- v0.4.4：M6b 客户端部分按实现回写。3.3 开头说明 RemoteMatch 对着 src/net/link.ts 的 MatchLink 接口写，平台的适配在接口后面；5.1 模块清单加 src/net 的两个文件；5.2 Table 加 forfeit（假平台模拟断线判负用）。
 - v0.4.3：按 M6b 逻辑模块的实现回写。2.3 平台的那次实测换成打包后的模块在隔离环境里自己跑的数；4.1 MatchState 的动作日志不记时间（隔离环境没有时钟）、计时到点替玩家做的也记进去，bots 的形状，bot 座位 config 的形状，setup 先查座位 config 的形状，结束原因加 invalid_deck；5.1 模块清单按实际的文件；5.2 Table 调的是 src/logic/match.ts，计时到点 timeout() 接上；5.7 的量按新的实测。
 - v0.4.2：计时规则平台定稿：onTimeout 那一轮某一步带回新 deadline 就停；Step.deadline 是 number、null 或不带，分别是替换、清掉、保留。4.1 相应改。
 - v0.4.1：4.1 注明 onTimeout 那一轮"带回新 deadline 就停"的规则平台还没定稿；5.4 加开局后离开不放座位。
@@ -165,7 +166,7 @@ type MatchSeat = {
 
 ### 3.3 RemoteMatch 的行为
 
-RemoteMatch 包一个平台 SDK 的对局对象（逻辑模式）。建房、进房、发动作、收批次、重连都是 SDK 的方法，RemoteMatch 不碰 WebSocket，也不管 version 和座位凭据，那两样 SDK 自己带。
+RemoteMatch 对着 `src/net/link.ts` 的 MatchLink 接口写，平台的适配在接口后面。接口的消息形状照 4.3，名字和平台无关；开发和测试用进程内的假实现 `src/net/fakeLink.ts`（地址带 `?online=fake` 时主菜单的联机走它）。接口后面的适配包平台 SDK 的对局对象（逻辑模式）：建房、进房、发动作、收批次、重连都是 SDK 的方法，RemoteMatch 不碰 WebSocket，也不管 version 和座位凭据，那两样 SDK 自己带。
 
 - legalActions：导演在播、不轮到我、或者有一个动作已发出还没收到回包，都返回 null。一次只允许一个在途动作，避免同一个 version 发两次。
 - submit：先在快照上 checkAction，不合法直接返回原因、不发送；合法就调 SDK 的 submit(action)，把自己标成"在途"，不改本地任何东西。收到 batch 或 SDK 报动作被拒后解除在途。
@@ -264,7 +265,9 @@ src/cards/poolHash.ts    卡池哈希，页面和逻辑模块各算一次（5.4�
 src/server/table.ts      Table：浏览器里的权威对局编排（单机）；调的是 src/logic/match.ts，和平台走同一段代码
 src/app/seat.ts          MatchSeat
 src/app/localMatch.ts    LocalMatch
-src/app/remoteMatch.ts   RemoteMatch：包平台 SDK
+src/app/remoteMatch.ts   RemoteMatch：对着 MatchLink 接口接平台的对局
+src/net/link.ts          MatchLink：客户端和托管平台之间的接口（4.3 的批次、座位广播、结束广播、拒绝码），平台无关；平台的适配写在它后面
+src/net/fakeLink.ts      进程内的假平台：后面接一个 Table，按协议模拟房间、批次、计时、bot、断线判负和恢复，只给测试和开发用，按需加载不进首包
 scripts/build-logic.ts   把 src/logic 打成一个不带依赖的 ES 文件 dist-logic/logic.js，交给平台
 ```
 
@@ -287,6 +290,7 @@ class Table {
   deadline: number | null;          // 当前计时的到期时刻
   submit(seat: Side, version: number, action: unknown): { ok: true } | { ok: false; reason: string };
   timeout(): void;                  // 计时到点，调 onTimeout
+  forfeit(seat: Side, reason: ForfeitReason): SubmitResult; // 平台判负，调 forfeit；单机不用，假平台模拟断线判负时用
   snapshotFor(seat: Side): Snapshot;
 }
 ```

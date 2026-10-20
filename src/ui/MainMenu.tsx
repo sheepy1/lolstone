@@ -1,4 +1,5 @@
-// 主菜单（spec 5.1）：选我方职业（第一版用预组卡组）、AI 职业和难度，开始。
+// 主菜单（spec 5.1）：选我方职业（第一版用预组卡组）、AI 职业和难度，开始。有联机入口时右上角多一个"联机"
+// （docs/online.md 3.4），打开联机面板（OnlinePanel），职业和卡组用这里选的。
 // 整页能用键盘操作：Tab 在三组选项和开始按钮之间切换，方向键在组内选择，Enter 随时开始对局。
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { PRESET_DECKS } from '../cards';
@@ -26,6 +27,7 @@ const hover = () => playSfx('ui.hover');
 
 export function MainMenu({ app }: { app: AppShell }) {
   const menu = useUi((s) => s.menu);
+  const online = useUi((s) => s.online !== null);
   const classes = allHeroClasses().filter((c) => PRESET_DECKS[c.id]);
   const started = useRef(false);
   const firstCard = useRef<HTMLDivElement>(null);
@@ -56,7 +58,7 @@ export function MainMenu({ app }: { app: AppShell }) {
   const onKeyDown = (e: KeyboardEvent) => {
     unlockAudio();
     // 设置按钮和回放链接上的 Enter 照常点它们自己
-    if (e.key === 'Enter' && !(e.target as HTMLElement).closest('.mm-settings, .mm-decks, .mm-replay')) {
+    if (e.key === 'Enter' && !(e.target as HTMLElement).closest('.mm-settings, .mm-decks, .mm-online, .mm-replay')) {
       e.preventDefault();
       start();
     }
@@ -86,6 +88,18 @@ export function MainMenu({ app }: { app: AppShell }) {
           <div className="hx-subtitle">峡 谷 战 局</div>
         </header>
 
+        {online && (
+          <button
+            className="hx-btn mm-online"
+            onPointerEnter={hover}
+            onClick={() => {
+              playSfx('ui.click');
+              setUi((s) => (s.online ? { online: { ...s.online, open: true, notice: null } } : {}));
+            }}
+          >
+            联机
+          </button>
+        )}
         <button
           className="hx-btn mm-decks"
           onPointerEnter={hover}

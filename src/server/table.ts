@@ -6,9 +6,10 @@
 // 动作校验、行动方核对、遮蔽、结果都调 src/logic 里和平台同一段代码，Table 自己不做。
 import type { AiChoice } from '../ai/types';
 import { createGame, maskHidden, nextFloat, seedRng, type GameEvent, type GameState, type HeroClass, type RngState, type Side } from '../engine';
-import { applyMatch, maskMatch, maskMatchEvents, matchResult, timeoutMatch, type MatchStep } from '../logic/match';
+import { applyMatch, forfeitMatch, maskMatch, maskMatchEvents, matchResult, timeoutMatch, type MatchStep } from '../logic/match';
 import type { MatchResult, MatchState, Snapshot } from '../logic/state';
 import { MULLIGAN_MS } from '../logic/timeouts';
+import type { ForfeitReason } from '../logic/types';
 import type { PresentationEvent } from '../presentation/events';
 
 export type { EndReason, MatchResult, MatchState, Snapshot } from '../logic/state';
@@ -109,6 +110,15 @@ export class Table {
       if (typeof r.deadline === 'number') break;
     }
     this.driveAi();
+  }
+
+  // 平台发起的判负（online.md 4.1 的 forfeit）：断线宽限到或运营踢人，对方获胜。单机不用，测试和开发用的假平台
+  // （src/net/fakeLink.ts）模拟断线判负时调它
+  forfeit(seat: Side, reason: ForfeitReason): SubmitResult {
+    const r = forfeitMatch(this.state, seat, reason);
+    if (!r.ok) return r;
+    this.commit(r);
+    return { ok: true };
   }
 
   snapshotFor(seat: Side): Snapshot {

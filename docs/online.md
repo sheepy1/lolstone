@@ -1,11 +1,12 @@
 # LoLstone 联机对战规格
 
-版本 v0.1 · 2026-10-20
+版本 v0.2 · 2026-10-20
 
 配合 [spec.md](spec.md) 使用。规则、事件、局面模型、表现层以 spec 为准，这里只讲联机：为什么选服务端权威、客户端接缝、协议、服务端、单机的去向、持久化、里程碑、测试。
 
 修订记录：
 
+- v0.2：按托管平台的约束对齐（2026-10-20 的架构评审）。4.1 加生产形态和缓存头；5.1 加静态托管模块和启动方式；5.4 把"玩家是谁"收成一个接口；5.6 加 CPU 预算；新增 5.7 托管环境的约束；第 7 节改成对局不跨服务端重启、回放记录下发客户端；第 8 节 M6c 和"以后"相应改；第 10 节第 2、5 条改、加第 10 条；第 11 节去掉"托管在哪"、加外部数据库和 CPU 预算。
 - v0.1：初稿。方案在 2026-10-20 的设计会话里定下；2.3 的三项验证是同一天用脚本在 main（2eff29c）上跑出来的。
 
 ## 1. 目标与范围
@@ -152,6 +153,9 @@ type MatchSeat = {
 - 服务端每 15 秒 ping，连续两次没有 pong 就当断线。客户端同样判断。
 - 单条消息最大 16 KB。最大的客户端消息是卡组（30 个卡牌 id），远小于这个数；超过直接断开。
 - 开发时 Vite 的 `server.proxy` 把 `/ws` 转到服务端（默认 8787 端口），页面和服务端同源，不用处理跨域。
+- 生产时页面和服务端在同一个 Node 进程、同一个 host：服务端托 `dist/` 的静态产物，在 `/ws` 收 WebSocket，和开发形态一致。自己的路由只用 `/ws` 和自己的前缀，不碰托管平台保留的路径前缀。
+- 静态产物的缓存头由服务端给：`/assets/` 下带内容哈希的文件 `public, max-age=31536000, immutable`，HTML 和其他文件 `no-cache`。托管平台前面有 CDN，按响应头缓存（5.7）。
+- 链路上 WebSocket 的空闲上限按 10 分钟算，15 秒一次 ping 远在上限以内。
 
 ### 4.2 客户端发给服务端
 
@@ -200,11 +204,11 @@ src/server/table.ts     权威对局 Table：局面、version、动作日志、�
 src/server/rooms.ts     房间：邀请码、两个座位、到齐开局
 src/server/ws.ts        WebSocket 接入：连接和座位的绑定、消息校验、心跳、限速
 src/server/aiSeat.ts    AI 座位：ChooseAction 接 Table；L2 在 worker_threads 里跑
-src/server/store.ts     动作日志的存取：先内存，后 JSONL
-src/server/main.ts      入口，pnpm serve
+src/server/static.ts    生产时托 dist：静态文件、缓存头、index.html
+src/server/main.ts      入口。开发时只起 WebSocket（页面由 Vite 起），生产时同时托静态
 ```
 
-用 tsx 跑，和命令行对局一样，不需要打包。`.claude/launch.json` 加一条 lolstone-server。
+开发时 `pnpm serve` 用 tsx 直接跑，`.claude/launch.json` 加一条 lolstone-server。生产时托管平台的 Node 应用会去掉 devDependencies，所以服务端用 tsc 编译到 `dist-server/`，`scripts.start` 是 `node dist-server/main.js`，监听平台给的 `PORT` 和 0.0.0.0；`ws` 和静态文件服务放 dependencies，vite 和 tsx 留在 devDependencies。
 
 ### 5.2 Table
 
@@ -257,7 +261,7 @@ concede 和 forfeit 不走引擎：把 state 换成 `{ ...state, phase: 'over', 
 
 ### 5.4 房间与身份
 
-- 身份：客户端第一次打开时生成随机 playerId，和昵称一起存在 localStorage 的 lolstone.player。服务端不核实身份，playerId 只用来配对重连和写日志。
+- 身份："玩家是谁"收在服务端的一个接口后面：输入是连接上带的凭据，输出是稳定的主体 id 和昵称；房间、座位、Table 只认这个输出。第一版的实现是客户端自报：第一次打开时生成随机 playerId，和昵称一起存在 localStorage 的 lolstone.player，服务端不核实，playerId 只用来配对重连和写日志。托管平台给出匿名观众身份之后（应用 host 上的 HttpOnly cookie，服务端用平台的 SDK 验），换成那个实现，主体 id 来自平台、客户端不再自报；再往后是平台账号。换实现时座位 token、房间和 Table 都不动。
 - 座位 token：match_start 时服务端给每个座位发一个随机 128 位的 token，客户端存在 localStorage 的 lolstone.seat（连同 matchId）。重连只认 token，不认 playerId。对局结束后清掉。
 - 邀请码：6 位，字母数字去掉 0、O、1、I，在未开局的房间里唯一。
 - 开局：双方到齐，服务端先用 `src/cards` 的 validateDeck 校验两套卡组（进房时就校验，不合规当场回 error），再 createGame，seed 是服务端生成的随机 32 位整数。建房的人是 0 号位，先后手由 seed 决定（spec 2.2），和座位号无关。
@@ -279,6 +283,20 @@ concede 和 forfeit 不走引擎：把 state 换成 `{ ...state, phase: 'over', 
 
 - Table 的座位可以是 AI：`{ kind: 'ai', choose, rng }`。每批 batch 之后，轮到 AI 座位就按 Match 今天的 AI_PACE 节奏调 choose，拿到动作走同一个 submit。L0、L1 同步跑；L2 要在 worker_threads 里跑，`src/ai/l2Worker.ts` 现在只认浏览器的 Worker，没有 Worker 时退回同步，在服务端会卡住事件循环，要加一个 Node 适配。
 - 用处：开发时一个人就能测服务端；以后可以加"在线练习"模式。掉线是否由 AI 接管而不是判负，列在待定。
+- CPU 预算：托管的应用只有 0.25 到 2 核，L2 一步搜索在桌面机上接近 1 秒，在 pod 里会慢几倍。服务端 AI 座位先只用 L0、L1，L2 等实测再定。
+
+### 5.7 托管环境的约束
+
+服务端跑在静态站点托管平台的 Node 应用里。下面这些是设计的前提，不是待定：
+
+| 约束 | 对设计的影响 |
+| --- | --- |
+| 单副本，发布和节点滚动时进程会重启 | 进程内的房间和 Table 随之消失，进行中的对局作废（第 7 节） |
+| 没有持久化磁盘，不托管数据库 | 不写文件。要跨重启保留的东西只能放外部数据库，第一版不要 |
+| 没有连接时闲置 15 分钟缩到 0，唤醒要 4 到 5 秒；有 WebSocket 连着就不睡 | 对局进行中不会睡；房间里没人时睡掉等于关房。睡着时第一个请求要等几秒，等待页要有提示 |
+| 出网只放行 80、443 和常见数据库端口 | 服务端不需要出网 |
+| 前面有 CDN，按响应头缓存；带 Set-Cookie 的响应一律不缓存 | 缓存头由服务端给（4.1）；WebSocket 不经缓存 |
+| 应用 host 上有平台保留的路径前缀 | 自己的路由不用那个前缀 |
 
 ## 6. 单机的去向
 
@@ -289,8 +307,8 @@ concede 和 forfeit 不走引擎：把 state 换成 `{ ...state, phase: 'over', 
 ## 7. 持久化与回放
 
 - 一局的记录：`{ id, seed, classes, decks, nicknames, startedAt, actions: { side, action, at }[], result }`。引擎确定性（spec 2.11），createGame 加逐条 applyAction 就能重建任意时刻的局面，所以不存局面、不存事件，只存动作。
-- 存法：先全放内存。M6c 改成每局一个 JSONL 文件，每执行一个动作追加一行；服务端重启时读文件重建还没打完的局，重新起计时，等客户端 resume。
-- 回放：这份记录重放一遍、把每批事件记下来，就是 `src/presentation/fixture.ts` 的 ReplayFixture，页面带 `?replay` 的回放路径不用改就能看联机的对局。
+- 存法：只在内存里。托管环境没有磁盘和数据库（5.7），服务端重启时进行中的对局作废：重启后客户端 resume 得到 match_not_found，界面提示"对局已失效"并回主菜单，不记胜负。要跨重启保留只能接外部数据库，列在待定。
+- 回放：对局结束时服务端把这份记录随最后一批 batch 发给双方，客户端存进 localStorage 或让玩家下载；重放一遍、把每批事件记下来，就是 `src/presentation/fixture.ts` 的 ReplayFixture，页面带 `?replay` 的回放路径不用改。服务端自己不留。
 
 ## 8. 里程碑
 
@@ -298,8 +316,8 @@ concede 和 forfeit 不走引擎：把 state 换成 `{ ...state, phase: 'over', 
 | --- | --- | --- |
 | M6a 接缝 | Match 拆成 Table 和 LocalMatch，抽出 MatchSeat；checkAction 加字段整数检查；不联网 | 单机行为不变：现有测试全过，浏览器自动对局 5 局 0 报错，/dev/fx 和 ?replay 照常；Table 用两个假座位的单测过（9.1） |
 | M6b 联机可玩 | 服务端（ws 接入、房间、Table、计时、认输、断线判负、重连）、协议、RemoteMatch、主菜单联机入口、等待页、倒计时、结算原因、Vite 代理 | 两个浏览器标签页通过邀请码打完一局；一个标签页刷新后能接着打；一方关掉标签页 60 秒后另一方获胜；9.2 到 9.5 的测试过 |
-| M6c 打磨 | 对手抬牌提示、烧绳音效和画面、动作日志 JSONL、服务端重启恢复、服务端 AI 座位、匹配队列 | 服务端重启后进行中的对局能接着打；一个人开两个标签页对 AI 座位打完一局；9.6 过 |
-| 以后 | 账号、天梯、观战、分享回放、Durable Objects 托管 | 另写 |
+| M6c 打磨 | 对手抬牌提示、烧绳音效和画面、回放记录下发客户端、身份接口换成平台的匿名主体（平台就绪后）、服务端 AI 座位、匹配队列 | 对局结束后能在 ?replay 看回放；服务端重启后客户端收到"对局已失效"的提示、不卡死；一个人开两个标签页对 AI 座位打完一局；9.6 过 |
+| 以后 | 账号、天梯、观战、分享回放、外部数据库 | 另写 |
 
 ## 9. 测试
 
@@ -315,20 +333,21 @@ concede 和 forfeit 不走引擎：把 state 换成 `{ ...state, phase: 'over', 
 都可以改，改了说一声是哪条。
 
 1. 服务端权威，不做 P2P 和宿主模式。理由见 2.1。
-2. Node 加 ws 单进程起步。Table 不碰 I/O，以后换 Cloudflare Durable Objects 一个对象一局，只换接入层。
+2. 单进程 Node，同时托静态产物和 WebSocket，部署成托管平台的 Node 应用；不另起 VPS，不做 Durable Objects。Table 不碰 I/O。
 3. 每批都带整个遮过的快照，客户端不从事件重建引擎状态。依据是 2.3 的数据量。
 4. 客户端在快照上算合法操作，不向服务端要列表。依据是 2.3 的第一项验证。
-5. 不做账号。邀请码房间，座位 token 重连。
+5. 第一版不做账号。"玩家是谁"收在一个接口后面：先客户端自报，再换平台的匿名主体，再换平台账号。邀请码房间，座位 token 重连。
 6. 回合 75 秒、换牌 60 秒、断线宽限 60 秒。回合时长取炉石的。
 7. 认输、超时、弃局都是服务端合成的 game_over 事件，表现层不区分来源，结算面板显示原因。
 8. ai_thinking 只在有 AI 座位的对局里出现。真人对手的节奏就是真实等待。
 9. 对手在线状态不进导演队列。
+10. 进行中的对局不跨服务端重启，重启就作废。依据是 5.7。
 
 ## 11. 待定
 
 - 认输要不要收进引擎 Action，让它也进动作日志。现在是服务端命令，日志里单独记 result 的 reason。
 - 对手提示的粒度：只抬牌，还是连目标箭头也同步。
-- 托管在哪：一台 VPS 还是 Durable Objects；域名和 TLS。
+- 要不要接外部数据库，让对局和回放记录跨服务端重启。
+- 服务端 AI 座位的 L2 在托管的 CPU 预算下能不能用。
 - 掉线后允许 AI 接管，还是一律判负。
 - 匹配队列和天梯分。
-- 要不要在 hello 之外做更强的身份，比如一次性口令。

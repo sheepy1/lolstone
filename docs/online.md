@@ -1,11 +1,12 @@
 # LoLstone 联机对战规格
 
-版本 v0.3.2 · 2026-10-20
+版本 v0.4 · 2026-10-20
 
 配合 [spec.md](spec.md) 使用。规则、事件、局面模型、表现层以 spec 为准，这里只讲联机：为什么选服务端权威、客户端接缝、逻辑模块的契约、托管、单机的去向、持久化、里程碑、测试。
 
 修订记录：
 
+- v0.4：按平台定稿的协议对齐（逻辑模块的类型定义、声明的 schema、本地 runner，2026-10-20）。4.1 签名按平台的 Logic 接口：setup 返回 Step、onTimeout 按座位依次调、不带 deadline 的步保留计时器、bot 返回 null 表示没事做、result 只放公开字段；4.2 座位 config 去掉昵称；4.3 批次、座位广播、结束广播、拒绝码、重连按协议重写；4.4 version 的计法；3.3 加续局和座位广播；5.1 声明写在构建设置里、模块文件上限；5.3 断线从平台发现断开起算；5.4 一个主体同时只在一局里由平台保证；5.6 bot 的节奏由平台定；5.7 加批次 60 KiB、模块 2 MB、纯 JSON；2.3 加平台的实测；第 8 节本地 runner 的形态；9.6 观众参数。
 - v0.3.2：5.2 的 Table 按 M6a 的实现回写：AI 座位是 { kind: 'ai', choose, rng }，choose 能接 Worker 里的 L2 和测试里的假 AI；真人座位只有 deliver，昵称在座位配置里；apply、mask、result 在 M6a 里叫 applyMatchAction、maskMatch、matchResult，M6b 从 src/logic 原样导出。
 - v0.3.1：平台规格定了三件待定的事和座位配置的形状。4.1 加 forfeit 和 setup 的入参形状；4.3 加座位间的瞬时消息；5.3 断线判负和双方都断线定稿；第 7 节回放改成用平台导出的整局记录；3.3、3.4、第 8 节的对手抬牌提示不再待定；第 8 节加平台的本地 runner，9.6 用它；第 10 节第 7 条；第 11 节去掉已定的三条。
 - v0.3：联机的权威进程不自己写，改成把引擎打成"逻辑模块"交给托管平台替每一局跑（2026-10-20 的架构评审定的）。2.1 加两种落地方式的比较和选逻辑托管的理由，2.3 加一次 apply 的耗时，2.4 总图重画；3.3 RemoteMatch 改成接平台 SDK；第 4 节从 WebSocket 协议改成逻辑模块的契约；第 5 节从自建服务端改成逻辑模块与托管，去掉 ws 接入、房间、静态托管、动作日志存取，5.6 改成 bot 座位，5.7 改成 runner 的限制；第 7 节改成平台保存记录、对局跨 runner 重启；第 8 节 M6b、M6c 和"以后"；第 9 节第 1、5、6 条；第 10 节第 2、5、7、8、10 条改、加第 11 条；第 11 节相应增删。
@@ -98,7 +99,7 @@
 | 一批里最多的事件数 | 22 |
 | 一局的动作数 | 54 到 120 |
 
-runner 的限制是一次 apply 50 ms、局面 1 MB（5.7），慢 50 倍也在里面。
+runner 的限制是一次 apply 50 ms、局面 1 MB（5.7），慢 50 倍也在里面。平台用同一份导出拼了临时入口，打成 94 KB 的单文件，在只有 ES 内置对象加 structuredClone 的隔离环境里两个 L0 机器人打完一局：91 步、7 次计时到点，apply 最长 0.32 ms，发给一个座位的一条批次最大 5.4 KB。
 
 ### 2.4 总图
 
@@ -158,14 +159,15 @@ RemoteMatch 包一个平台 SDK 的对局对象（逻辑模式）。建房、进
 - 收到 batch：更新 visible、version、deadline，把 events 交给导演，调 onBatch。导演的队列和今天一样串行播放，对手的动作一批批到，自然就是对手的节奏，不需要 ai_thinking。要验证一条路径：今天 AI 对局里 card_played 之前总有 ai_thinking 先把牌抬起来，联机里没有，card_played 的动画要能从没抬起的状态直接飞出。
 - 动作被拒：解除在途，控制台记警告。输入来自 listLegalActions，正常情况下不会被拒；会被拒的只有和计时器撞车（4.4）。
 - concede：发逻辑模块的认输动作 `{ kind: 'concede' }`（4.2），等带 game_over 的 batch，表现层照常播失败演出。对局菜单里"回主菜单"在联机里等于认输，确认文案要说明。
-- 断线：SDK 自己重连并补发漏掉的批次（4.3），RemoteMatch 照常交给导演播。页面刷新后 RemoteMatch 调 SDK 的 resume()，平台按主体和对局 id 认座位，不需要自己的座位 token；收到的是当前快照时用 `viewFromState(snapshot, side)` 建场景，不回放历史。
-- 对手在线状态和抬牌：SDK 的在场事件更新界面横幅，对手发来的 holding 瞬时消息（4.3）更新场景里抬起的牌（3.4）。都不进导演队列，因为是瞬时状态，会反复变化。
+- 断线：SDK 自己重连并补发漏掉的批次（4.3；runner 每个座位留最近 128 条，不够就给当前快照），RemoteMatch 照常交给导演播。页面刷新后 RemoteMatch 调 SDK 的 resume()，平台按主体和对局 id 认座位，不需要自己的座位 token；收到的是当前快照时用 `viewFromState(snapshot, side)` 建场景，不回放历史。
+- 对手在线状态和抬牌：平台的座位广播（4.3）更新界面横幅和对手昵称；对手发来的 holding 瞬时消息更新场景里抬起的牌（3.4）。都不进导演队列，因为是瞬时状态，会反复变化。
+- 续局：一个主体同时只占一个未结束对局的座位（5.4）。主菜单打开时问 SDK 有没有没打完的局，有就提示"续上还是离开"，离开了才能建房或进房。
 
 ### 3.4 界面
 
 | 页面 | 改动 |
 | --- | --- |
-| 主菜单 | 加"联机"入口：昵称、建房、进房。建房从平台拿到邀请码；进房输邀请码。职业和卡组的选择和单机一样（预组或自组） |
+| 主菜单 | 加"联机"入口：昵称、建房、进房。昵称交给平台的进局请求，对手从座位广播里看到；建房从平台拿到邀请码；进房输邀请码。职业和卡组的选择和单机一样（预组或自组） |
 | 等待页（新） | 显示邀请码，可复制；对手进来后双方自动进加载页。runner 睡着时第一次请求要等几秒，页面上要有"正在连接"的提示 |
 | 加载页 | 右侧对手显示昵称和职业，不显示难度（今天是"对手 · 难度"，`src/ui/LoadingScreen.tsx`） |
 | 换牌 | 不变。对手提交了没有，只影响等待提示 |
@@ -177,24 +179,24 @@ RemoteMatch 包一个平台 SDK 的对局对象（逻辑模式）。建房、进
 
 ## 4. 逻辑模块的契约
 
-逻辑模块是一个 ES 模块（5.1），导出下面几个纯函数。平台的 runner 替每一局调它们：开局调 setup，玩家每发一个动作调一次 apply，每次局面变化后对每个座位各调一次 mask 和 maskEvents 再下发，计时到点调 onTimeout，断线宽限到或运营踢人时调 forfeit，轮到 bot 座位时按节奏调 bot。签名以平台 SDK 发布的类型为准，这里写的是 lolstone 怎么填。
+逻辑模块是一个 ES 模块（5.1），导出一个满足平台 Logic<State, Event> 接口的对象 `logic`，方法如下。平台的 runner 替每一局调它们：开局调 setup，玩家每发一个动作调一次 apply，每一步成功后对每个座位各调一次 mask 和 maskEvents 再下发，计时到点按座位号依次调 onTimeout，断线宽限到或运营踢人时调 forfeit，每一步之后问每个 bot 座位。每个方法都是纯函数：同样的输入同样的输出，不改入参，对任何输入都不抛。一步的返回值叫 Step：`{ ok: true, state, events, deadline? }` 或 `{ ok: false, reason }`。签名以平台发布的类型定义为准，这里写的是 lolstone 怎么填。
 
 ### 4.1 导出的函数
 
 | 函数 | 做什么 | 对应的引擎调用 |
 | --- | --- | --- |
-| setup({ seed, seats, options }) | 开局。seed 由平台给；seats 是每个座位的 `{ kind: 'human' \| 'bot', config }`，config 是建局或进局时客户端交的 JSON（每个不超过 4 KiB），lolstone 放 { heroClass, deck, nickname, poolHash }；options 不用。先 validateDeck 校验两套卡组、核对两边的 poolHash，再 createGame。返回初始的 MatchState 和开局那批事件（mulligan_start），以及换牌的 deadline | createGame |
-| apply(state, seat, action) | 执行一个座位的动作，按 4.2 的顺序校验。返回 `{ ok: true, state, events, deadline? }` 或 `{ ok: false, reason }`。对任何输入都返回，不抛；抛错按模块缺陷算，连续 10 次平台会关局 | checkAction、applyAction |
+| setup({ seed, seats, options }) | 开局。seed 由平台给；seats 是每个座位的 `{ kind: 'human' \| 'bot', config }`，config 是建局或进局时客户端交的 JSON（每个不超过 4 KiB），lolstone 放 { heroClass, deck, poolHash }，bot 座位的 config 放等级；options 不用。先核对两边的 poolHash，不一致返回 ok:false、reason 'version_mismatch'，对局不开始；再 validateDeck 校验两套卡组，不合规返回一个已经结束的局面，不合规那方判负、reason invalid_deck；都过了 createGame。返回的 Step 带初始的 MatchState、开局那批事件（mulligan_start）和换牌的 60 秒 deadline | createGame |
+| apply(state, seat, action) | 执行一个座位的动作，按 4.2 的顺序校验。返回 Step；不带 deadline 时平台保留正在走的计时器。拒绝的 reason 原样回给发动作的人（最长 256 字）。对任何输入都返回，不抛；抛错按模块缺陷算，连续 10 次平台会关局 | checkAction、applyAction |
 | mask(state, seat) | 这个座位能看到的局面（4.5） | maskHidden，再把 rng 置零 |
 | maskEvents(events, seat) | 这个座位能看到的事件 | maskEvents |
-| onTimeout(state) | 计时到点。换牌阶段替还没提交的座位提交"一张都不换"；对局阶段替当前方执行 end_turn。返回和 apply 一样的 state、events、deadline | applyAction |
+| onTimeout(state, seat) | 计时到点。平台按座位号依次调，每次传上一次之后的局面：ok:false 跳过，ok:true 生效，某一步带回新的 deadline 这一轮就停。换牌阶段：这个 seat 还没提交就替它提交"一张都不换"，已提交返回 ok:false；对局阶段：game.current 等于 seat 才替它执行 end_turn，否则 ok:false | applyAction |
 | forfeit(state, seat, reason) | 平台发起的判负：断线宽限到（abandon）或运营踢人（kicked）。不走引擎，把 game 换成 phase over、对方获胜，reason 照填，合成一条只有 game_over 的事件 | 无 |
-| result(state) | 对局结束了返回 `{ winner, reason }`，没结束返回 null。reason 是 game、concede、timeout、abandon、kicked | state.phase、state.winner |
-| bot(state, seat) | 可选。机器人座位的下一步动作，只用 L0、L1（5.6） | l0ChooseAction、l1ChooseAction |
+| result(state) | 对局结束了返回 `{ winner, reason }`，没结束返回 null。reason 是 game、concede、timeout、abandon、kicked。返回值会原样广播给所有座位，只放这两样 | state.phase、state.winner |
+| bot(state, seat) | 可选。bot 座位的下一步动作，现在没事做返回 null。每一步之后平台都问一次，出手前等声明里的 botDelayMs（默认 1 秒），再按那个座位走 apply。只用 L0、L1（5.6），等级从 setup 时该座位的 config 来 | l0ChooseAction、l1ChooseAction |
 
-MatchState 是引擎的 GameState 外面包一层：`{ game: GameState, log: { seat, action, at }[], reason: Reason | null, botLevel: ('l0' | 'l1')[] }`。log 是动作日志（一局最多 120 条），reason 是结束原因，mask 原样保留这两样以外的字段里不含隐藏信息的部分，客户端从快照里读结果。
+MatchState 是引擎的 GameState 外面包一层（M6a 已定义在 `src/server/table.ts`，M6b 挪到 `src/logic`）：`{ game: GameState, log: { seat, action, at }[], reason: Reason | null, bots }`。log 是动作日志（一局最多 120 条），reason 是结束原因，bots 记每个 bot 座位的等级。State 和事件都必须是纯 JSON（没有 undefined、函数、Map、Set）：平台每一步之后把它序列化存起来，runner 重启后装回。mask 只留遮过的 game 和 reason，log 和 bots 不下发，客户端从快照里读结果。
 
-deadline 是"距现在多少毫秒"，由逻辑模块按 5.3 的表算，平台存成到期时刻、到点调 onTimeout，并把剩余时间作为 deadlineIn 发给客户端。只有一个 deadline：换牌阶段是开局起 60 秒，双方共用；对局阶段是当前回合的 75 秒。
+deadline 是"距现在多少毫秒"，由逻辑模块按 5.3 的表算，平台存成到期时刻、到点调 onTimeout，并把剩余时间作为 deadlineIn 发给客户端。只有一个 deadline：换牌阶段是开局起 60 秒，双方共用；对局阶段是当前回合的 75 秒。Step 不带 deadline 时平台保留正在走的计时器，所以先提交换牌的一方那一步不带 deadline，共用的 60 秒照走；进入对局阶段和每次换人时带上 75 秒的新计时。
 
 ### 4.2 客户端发的动作
 
@@ -214,18 +216,18 @@ version 由平台管（4.4），apply 看不到它。
 
 | 消息 | 字段 | 什么时候收 |
 | --- | --- | --- |
-| 开局 | side、opponent{nickname, heroClass}、version、snapshot、events、deadlineIn | 双方到齐，runner 跑完 setup。events 是开局那批 |
-| batch | version、events、snapshot、deadlineIn | 每执行一个动作（包括 onTimeout 替执行的）一条，每个座位各自遮过。对局结束时 snapshot 的 phase 是 over、reason 已填 |
-| 动作被拒 | reason | 发出的动作没执行 |
-| 重连 | 漏掉的每一批 batch，或者当前 snapshot | 带着已收到的 version 重连时补批次（平台整局都留着）；页面刷新后没有本地状态时给当前快照 |
-| 瞬时消息 | type、data、from | 对局通道上座位之间互发，不经 runner、不存、不保证送达（SDK 的 send 和 on('message')）。第一版只有 holding：正在拖哪张手牌的 instanceId，null 是放下（M6c） |
-| 对手在场 | connected、graceIn | 对手上线、断线。graceIn 是断线判负前剩的毫秒数 |
+| 批次 | version、seat、cause、events、snapshot、deadlineIn、requestId | 每一步之后每个座位各收一条，各自遮过；遮完 events 是空的也发，所以每个座位收到的 version 连续。cause 是这一步怎么来的：setup（开局，events 是开局那批）、action、timeout、bot、forfeit、resume（恢复时补的当前快照，不是新的一步）。requestId 只在这一步是自己的动作时有。对局结束时 snapshot 的 reason 已填 |
+| 座位广播 | version、started、seats[{ seat, kind, player, nickname, connected, graceIn, out }] | 开局、座位的连接状态变化、有人被判负或踢出时广播。开局那条和 cause 为 setup 的批次一起到；对手的昵称和在场状态从这里来；graceIn 是断线判负前剩的毫秒数；out 是已被判负或踢出。座位的 config 永远不在这里 |
+| 结束广播 | version、reason、result | reason 是 result（某一步之后 result 非空，前面总有一条带最终快照的批次）、forfeit（模块没有 forfeit 时平台替判）、abandoned（空局）、module_error、setup_rejected（setup 返回 ok:false，detail 带原因）。result 就是 result() 的返回值 |
+| 动作被拒 | requestId、code、reason、version | stale（和计时到点撞车）和 invalid（apply 返回的原因原样，含 'not your turn'）：解除在途、控制台记警告。rate_limited、too_large、bad_envelope、not_seated、not_started、ended、module_error、unavailable：客户端或 SDK 的缺陷，或平台暂时不可用，控制台报错 |
+| 瞬时消息 | type、data、from | 对局通道上座位之间互发，不经 runner、不存、不保证送达（SDK 的 send 和 on('message')）；类型名不能以 $ 开头，收件人用座位广播里的玩家 id。第一版只有 holding：正在拖哪张手牌的 instanceId，null 是放下（M6c） |
+| 重连 | 漏掉的每一条批次，或者一条 cause 为 resume 的当前快照 | SDK 每次订上通道都带已收到的 version 发恢复请求；runner 每个座位留最近 128 条批次，还在就按顺序补发；不在了（runner 重启过、刷新页面没有本地状态、间隔太久）就给当前快照 |
 
 具体的消息名和字段名以平台 SDK 为准，RemoteMatch 在这一层做翻译。
 
 ### 4.4 version 与并发
 
-- version 是这一局已执行的动作数，由平台维护：setup 之后为 0，每次 apply 或 onTimeout 成功加一，每条 batch 带新的 version。
+- version 是这一局已执行的步数，由平台维护：setup 之后为 0，每次 apply 成功（玩家的或 bot 的）、onTimeout 成功、forfeit 各加一，被拒的不加，每条批次带新的 version。SDK 看到跳号就自己发恢复请求。
 - SDK 发动作时带上客户端正在操作的 version。平台收到时 version 不等于当前的，直接拒 'stale'，不调 apply。回合制下只有当前方能动，撞车只有一种情况：回合计时器到点替玩家结束回合的同时，玩家的动作在路上。有了 version 这个动作被拒，玩家看到的是回合已经结束，不会在下一回合的局面上执行上一回合的动作。
 - 客户端一次只有一个在途动作（3.3）。
 - 同一局的动作在 runner 里串行执行，apply 是同步的，不会交错。
@@ -239,7 +241,7 @@ snapshot 是 `maskHidden(game, seat)` 再把 `rng` 置成 `{ s: 0 }`，外面带
 ### 5.1 模块
 
 ```
-src/logic/index.ts       逻辑模块入口：setup、apply、mask、maskEvents、onTimeout、result、bot。只引 engine、cards、ai 的 l0 和 l1
+src/logic/index.ts       逻辑模块入口：导出满足平台 Logic 接口的 logic 对象（setup、apply、mask、maskEvents、onTimeout、forfeit、result、bot）。只引 engine、cards、ai 的 l0 和 l1
 src/logic/validate.ts    动作字段校验（4.2 第 2 步）
 src/logic/timeouts.ts    deadline 怎么算、onTimeout 替谁做什么（5.3）
 src/server/table.ts      Table：浏览器里的权威对局编排（单机）和测试里的假 runner；调的是同一份 src/logic
@@ -250,9 +252,9 @@ scripts/build-logic.ts   把 src/logic 打成一个不带依赖的 ES 文件 dis
 ```
 
 - 逻辑模块跑在只有 ES 内置对象加平台注入的 structuredClone 的隔离环境里，没有 Node 和 Web API。`src/engine`、`src/cards`、`src/ai` 的 l0 和 l1 只用 ES 内置对象，模块之间只有相对引用、没有第三方包（2026-10-20 查过）；唯一碰到的全局是 `src/engine/invariants.ts` 读 `process.env`，有 `typeof process` 保护，在隔离环境里就是关闭不变量检查。
-- 模块级初始化只有装卡池（installCardPool），加载时跑一次。平台构建时会在隔离环境里加载一遍确认能跑，本地用 9.5 的测试先过一遍。
+- 模块级初始化只有装卡池（installCardPool），加载时跑一次。平台构建时拒绝引用了 Node 或 Web 全局对象的模块，并在隔离环境里加载一遍确认能跑；本地用 9.5 的测试先过一遍。打包后的文件上限 2 MB，现在 94 KB。
 - 页面和逻辑模块从同一个提交构建、一起发布，卡池哈希（poolHash）两边一致；客户端缓存了旧页面时 setup 会发现不一致（4.1）。
-- 平台的声明文件里写：座位 2 个、断线宽限 60 秒、空局关闭 10 分钟、要哪些 bot 等级、对局结束后导出整局记录（第 7 节）。
+- 声明写在托管平台的构建设置里（平台也接受仓库里的声明文件，lolstone 不用，仓库里不留平台的东西）：入口 dist-logic/logic.js、座位 2 到 2、断线宽限 60 秒、空局关闭 10 分钟、bot 出手前等 1 秒（默认）、对局结束后导出整局记录（第 7 节）。本机开发命令读同一份声明，文件名由命令行参数给；这个文件和本机快照目录都用 .git/info/exclude 排除，不进 .gitignore。
 
 ### 5.2 Table
 
@@ -278,9 +280,9 @@ submit 做的事就是平台的 runner 做的事：version 不等于自己的拒
 
 | 事项 | 数值 | 到点做什么 | 谁做 |
 | --- | --- | --- | --- |
-| 换牌 | 60 秒，从 setup 起算，双方共用一个 deadline | onTimeout 替还没提交的一方提交"一张都不换" | 逻辑模块算 deadline，平台到点调 |
-| 回合 | 75 秒，从开始这一回合的那次 apply 起算 | onTimeout 替当前方执行 end_turn | 同上 |
-| 断线宽限 | 60 秒，从连接断开起算 | 平台调 forfeit(state, seat, 'abandon')，对手获胜 | 平台计时（声明文件里写），逻辑模块合成结果 |
+| 换牌 | 60 秒，从 setup 起算，双方共用一个 deadline | 平台按座位号依次调 onTimeout，每个还没提交的座位各替它提交"一张都不换" | 逻辑模块算 deadline，平台到点调 |
+| 回合 | 75 秒，从开始这一回合的那次 apply 起算 | onTimeout 只在 seat 是当前方时替它执行 end_turn | 同上 |
+| 断线宽限 | 60 秒，从平台发现断开起算：标签页正常关闭立刻发现，断网要等心跳超时，晚 33 到 60 秒 | 平台调 forfeit(state, seat, 'abandon')，对手获胜 | 平台计时（声明里写），逻辑模块合成结果 |
 | 双方都断线 | 10 分钟 | 平台把对局关成作废，没有结果，不进逻辑模块 | 平台 |
 | 等待页没人进 | 10 分钟 | 房间释放 | 平台 |
 
@@ -291,10 +293,10 @@ submit 做的事就是平台的 runner 做的事：version 不等于自己的拒
 
 ### 5.4 房间与身份
 
-- 身份：平台 SDK 给的匿名主体，同一个浏览器在同一个 host 上稳定，清 cookie 才变；以后换平台账号。昵称自己填，存 localStorage 的 lolstone.player。"玩家是谁"客户端不自报，逻辑模块也不管，apply 的 seat 参数永远来自平台。
-- 房间、邀请码、座位、重连都是平台的。客户端建房时把 heroClass 和 deck 作为座位配置交给平台，双方到齐平台调 setup。
-- 开局：setup 先用 `src/cards` 的 validateDeck 校验两套卡组，不合规的那一方直接判负，reason 是 invalid_deck；客户端在建房、进房前用同一个 validateDeck 先查一遍，正常不会走到这一步。poolHash 两边不一致时对局不开始，reason 是 version_mismatch，客户端提示刷新。seed 由平台给。建房的人是 0 号位，先后手由 seed 决定（spec 2.2），和座位号无关。
-- 一个主体同时只能在一局里，平台保证。
+- 身份：平台 SDK 给的匿名主体，同一个浏览器在同一个 host 上稳定，清 cookie 才变；以后换平台账号。昵称自己填，存 localStorage 的 lolstone.player，进局时交给平台的进局请求，对手从座位广播里看到，不放进座位 config。"玩家是谁"客户端不自报，逻辑模块也不管，apply 的 seat 参数永远来自平台。
+- 房间、邀请码、座位、重连都是平台的。客户端建房或进房时把 { heroClass, deck, poolHash } 作为座位 config 交给平台（只在平台和 runner 里，不发给任何客户端），人类座位都到齐且都在线时平台调 setup。建房的人是 0 号位，人类座位按进局先后排，bot 座位排在最后。
+- 开局：setup 先用 `src/cards` 的 validateDeck 校验两套卡组，不合规的那一方直接判负，reason 是 invalid_deck；客户端在建房、进房前用同一个 validateDeck 先查一遍，正常不会走到这一步。poolHash 两边不一致时 setup 返回 ok:false、reason version_mismatch，对局不开始，客户端收到 setup_rejected 的结束广播后提示刷新。seed 由平台给。先后手由 seed 决定（spec 2.2），和座位号无关。
+- 一个主体同时只占一个未结束对局的座位，平台保证：再建房或进房被拒（already_in_match），要先离开上一局。客户端不用自己防重，只在主菜单提示续局（3.3）。
 
 ### 5.5 安全校验
 
@@ -310,7 +312,7 @@ submit 做的事就是平台的 runner 做的事：version 不等于自己的拒
 
 ### 5.6 bot 座位
 
-- 建局时可以指定某个座位是 bot。轮到它时平台按节奏调 `bot(state, seat)` 拿动作，走同一个 apply。一次调用限 50 ms，L0、L1 可以（L1 一步在桌面机上远小于 1 ms），L2 的搜索跑不了，只留在单机。
+- 建局时可以指定某些座位是 bot，等级放在那个座位的 config 里。每一步之后平台问每个 bot 座位 `bot(state, seat)`，没事做返回 null；有动作就等声明里的 botDelayMs（默认 1 秒）再走同一个 apply，一次只处理一个 bot 动作；被 apply 拒了这一步之后不再问它。一次调用限 50 ms，L0、L1 可以（L1 一步在桌面机上远小于 1 ms），L2 的搜索跑不了，只留在单机。
 - bot 的对局里没有 ai_thinking：bot 只返回动作，抬牌的演出是今天单机 Match 插进去的。联机里 bot 和真人对手一样，card_played 从没抬起的状态直接飞出（3.3）。单机的 AI 节奏不变。
 - 用处：一个人在线练习。掉线是否由 bot 接管而不是判负，列在待定。
 
@@ -321,13 +323,16 @@ submit 做的事就是平台的 runner 做的事：version 不等于自己的拒
 | 限制 | lolstone |
 | --- | --- |
 | 隔离环境只有 ES 内置对象加注入的 structuredClone，没有 Node 和 Web API；模块级初始化加载时跑一次 | 引擎、卡牌、L0 和 L1 只用 ES 内置对象（5.1）；初始化只有装卡池 |
-| 一次 apply、onTimeout、bot 各 50 ms | apply 最大 0.75 ms（2.3）；L1 一步远小于 1 ms |
+| 一次 apply、onTimeout、forfeit、bot 各 50 ms，setup、mask、maskEvents、result 同样 | apply 最大 0.75 ms（2.3）；L1 一步远小于 1 ms |
 | 局面 1 MB | 5 KB |
 | 2 到 8 个座位 | 2 |
 | 每座位每秒 10 个动作，单个动作 4 KiB | 一局 54 到 120 个动作，真人几秒一个；最大的动作是换牌的 replace 列表 |
 | apply 抛错按模块缺陷算，同一局连续 10 次关局 | apply 对任何输入都返回拒绝、不抛（4.2） |
 | 真实局面只在 runner 内存和平台的库里 | 对局结束后平台导出整局记录（seed 加动作），回放用它（第 7 节） |
 | runner 空闲会睡，第一次请求要等几秒 | 等待页有"正在连接"提示（3.4） |
+| 发给一个座位的一条批次（遮过的快照加这批事件）60 KiB，超了先丢事件只发快照 | 最大 5.4 KB（2.3） |
+| 打包后的模块文件 2 MB | 94 KB |
+| State 和事件必须是纯 JSON，平台每一步之后序列化存起来 | 引擎局面本来就是纯 JSON（spec 6.3） |
 
 ## 6. 单机的去向
 
@@ -338,7 +343,7 @@ submit 做的事就是平台的 runner 做的事：version 不等于自己的拒
 ## 7. 持久化与回放
 
 - 真实局面和动作日志由平台保存，用来在 runner 重启后恢复进行中的对局；不给任何人看（5.5 第 7 条）。逻辑模块不为重启做任何事：平台把存的 MatchState 装回 runner，接着调 apply 就行，这是引擎局面是纯 JSON 带来的。
-- 整局记录：声明文件里打开"对局结束后导出"，这一局的座位在结束后能从平台拿 `{ seed, options, seats, actions: [{ seat, action, at }], result }`，真实局面不给。引擎确定性（spec 2.11），seed、两套卡组加逐条动作就能重建任意时刻的局面，所以这就是完整的回放记录；MatchState 里的 log 是同一份东西，留着给假 runner 的测试用。
+- 整局记录：声明里打开"对局结束后导出"，这一局的座位在结束后能从平台拿 `{ seed, options, seats, actions: [{ seat, action, at }], result }`，真实局面不给。引擎确定性（spec 2.11），seed、两套卡组加逐条动作就能重建任意时刻的局面，所以这就是完整的回放记录；MatchState 里的 log 是同一份东西，留着给假 runner 的测试用。
 - 回放：客户端拿到记录后 createGame 加逐条 applyAction 重放一遍，把每批事件按自己的座位 maskEvents 记下来，就是 `src/presentation/fixture.ts` 的 ReplayFixture，页面带 `?replay` 的回放路径不用改；存进 localStorage 或让玩家下载。记录里的 seed 能重建对手的手牌，对局打完了看没关系。不用客户端攒事件。
 
 ## 8. 里程碑
@@ -350,7 +355,7 @@ submit 做的事就是平台的 runner 做的事：version 不等于自己的拒
 | M6c 打磨 | 烧绳音效和画面、整局记录导出和回放下载、bot 座位的在线练习入口、对手抬牌提示（瞬时消息）、匹配队列 | 对局结束后能在 ?replay 看回放；一个人对 bot 座位打完一局；9.6 过 |
 | 以后 | 账号、天梯、观战、分享回放 | 另写 |
 
-M6b 的逻辑模块和假 runner 测试不依赖平台，可以先做。接 SDK 要等平台发布逻辑模块的类型定义和声明文件的 schema，按它打包；平台还会先给一个本地 runner（本机开发命令里跑逻辑模块，标签页之间用 BroadcastChannel 传），不等云端就能在本机打完一局。平台验收要等第一期的逻辑模式上线，lolstone 是它的验收用例。
+M6b 的逻辑模块和假 runner 测试不依赖平台，可以先做；逻辑模块的类型定义和声明的 schema 平台已经定稿（2026-10-20），按它打包。平台会先给一个本地 runner：本机开发命令在 Vite 前面起代理，同一个进程里跑逻辑模块，限额和云端一样，带一个说长连接协议的本机服务，客户端连本机和连云端是同一份代码，不等云端就能在本机打完一局；本机的开发页能看真实局面和每个座位的快照，还能模拟 runner 重启。平台验收要等第一期的逻辑模式上线，lolstone 是它的验收用例。
 
 ## 9. 测试
 
@@ -359,7 +364,7 @@ M6b 的逻辑模块和假 runner 测试不依赖平台，可以先做。接 SDK 
 3. 遮蔽：扩 `tests/presentation-mask.test.ts`，断言 mask 的 rng.s 为 0、对手手牌和双方牌库都是占位牌、对手的 mulliganReplace 不出现、MatchState 的 log 不出现在快照里。
 4. 动作模糊测试：handIndex 为字符串、负数、小数、NaN，多余字段，replace 里混字符串，不是对象的动作，都被 apply 拒绝且局面不变，并且 apply 不抛。
 5. 隔离环境加载：用 `node:vm` 造一个只有 ES 内置对象加 structuredClone 的上下文，加载打包后的 dist-logic/logic.js，用假 runner 按脚本打完一局；中途把 MatchState 序列化再装回去，接着打，结果和不中断的一致（模拟 runner 重启）。
-6. 浏览器冒烟：两个标签页带 `?autoplay` 用平台的本地 runner 打完一局，控制台 0 报错；平台上线后在云端再跑一次同样的流程。
+6. 浏览器冒烟：两个标签页带 `?autoplay`，再各带本地 runner 要求的不同观众参数（同一个浏览器的标签页共享 cookie，会被当成同一个人），用本地 runner 打完一局，控制台 0 报错；平台上线后用两个浏览器在云端再跑一次。
 
 ## 10. 已经定下的选择
 

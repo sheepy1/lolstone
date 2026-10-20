@@ -1,0 +1,1050 @@
+{
+  "generatedAt": "2026-10-19T12:48:41.818Z",
+  "source": "communitydragon",
+  "ddragonVersion": "16.20.1",
+  "cdragonVersion": "16.20.8248524+branch.releases-16-20.content.release",
+  "champions": [
+    {
+      "key": "Teemo",
+      "dir": "teemo",
+      "id": 17,
+      "name": "提莫",
+      "choose": {
+        "path": "audio/voice/teemo/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/17.ogg",
+        "bytes": 23500,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/teemo/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/17.ogg",
+        "bytes": 45057,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Lulu",
+      "dir": "lulu",
+      "id": 117,
+      "name": "璐璐",
+      "choose": {
+        "path": "audio/voice/lulu/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/117.ogg",
+        "bytes": 24063,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/lulu/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/117.ogg",
+        "bytes": 27328,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Khazix",
+      "dir": "khazix",
+      "id": 121,
+      "name": "卡兹克",
+      "choose": {
+        "path": "audio/voice/khazix/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/121.ogg",
+        "bytes": 59283,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/khazix/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/121.ogg",
+        "bytes": 54177,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "RekSai",
+      "dir": "reksai",
+      "id": 421,
+      "name": "雷克塞",
+      "choose": {
+        "path": "audio/voice/reksai/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/421.ogg",
+        "bytes": 42027,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/reksai/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/421.ogg",
+        "bytes": 27368,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Velkoz",
+      "dir": "velkoz",
+      "id": 161,
+      "name": "维克兹",
+      "choose": {
+        "path": "audio/voice/velkoz/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/161.ogg",
+        "bytes": 64573,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/velkoz/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/161.ogg",
+        "bytes": 51043,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Chogath",
+      "dir": "chogath",
+      "id": 31,
+      "name": "科加斯",
+      "choose": {
+        "path": "audio/voice/chogath/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/31.ogg",
+        "bytes": 83642,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/chogath/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/31.ogg",
+        "bytes": 54247,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Lucian",
+      "dir": "lucian",
+      "id": 236,
+      "name": "卢锡安",
+      "choose": {
+        "path": "audio/voice/lucian/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/236.ogg",
+        "bytes": 51352,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/lucian/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/236.ogg",
+        "bytes": 18249,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Vayne",
+      "dir": "vayne",
+      "id": 67,
+      "name": "薇恩",
+      "choose": {
+        "path": "audio/voice/vayne/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/67.ogg",
+        "bytes": 57487,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/vayne/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/67.ogg",
+        "bytes": 30865,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Poppy",
+      "dir": "poppy",
+      "id": 78,
+      "name": "波比",
+      "choose": {
+        "path": "audio/voice/poppy/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/78.ogg",
+        "bytes": 42124,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/poppy/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/78.ogg",
+        "bytes": 50397,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "XinZhao",
+      "dir": "xinzhao",
+      "id": 5,
+      "name": "赵信",
+      "choose": {
+        "path": "audio/voice/xinzhao/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/5.ogg",
+        "bytes": 40355,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/xinzhao/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/5.ogg",
+        "bytes": 39818,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Quinn",
+      "dir": "quinn",
+      "id": 133,
+      "name": "奎因",
+      "choose": {
+        "path": "audio/voice/quinn/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/133.ogg",
+        "bytes": 34229,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/quinn/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/133.ogg",
+        "bytes": 40913,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Lux",
+      "dir": "lux",
+      "id": 99,
+      "name": "拉克丝",
+      "choose": {
+        "path": "audio/voice/lux/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/99.ogg",
+        "bytes": 14955,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/lux/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/99.ogg",
+        "bytes": 24030,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Fiora",
+      "dir": "fiora",
+      "id": 114,
+      "name": "菲奥娜",
+      "choose": {
+        "path": "audio/voice/fiora/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/114.ogg",
+        "bytes": 36770,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/fiora/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/114.ogg",
+        "bytes": 18746,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Sona",
+      "dir": "sona",
+      "id": 37,
+      "name": "娑娜",
+      "choose": {
+        "path": "audio/voice/sona/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/37.ogg",
+        "bytes": 59647,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/sona/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/37.ogg",
+        "bytes": 46494,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "JarvanIV",
+      "dir": "jarvaniv",
+      "id": 59,
+      "name": "嘉文四世",
+      "choose": {
+        "path": "audio/voice/jarvaniv/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/59.ogg",
+        "bytes": 52164,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/jarvaniv/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/59.ogg",
+        "bytes": 41238,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Galio",
+      "dir": "galio",
+      "id": 3,
+      "name": "加里奥",
+      "choose": {
+        "path": "audio/voice/galio/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/3.ogg",
+        "bytes": 35253,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/galio/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/3.ogg",
+        "bytes": 21355,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Kayle",
+      "dir": "kayle",
+      "id": 10,
+      "name": "凯尔",
+      "choose": {
+        "path": "audio/voice/kayle/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/10.ogg",
+        "bytes": 30355,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/kayle/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/10.ogg",
+        "bytes": 26943,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Annie",
+      "dir": "annie",
+      "id": 1,
+      "name": "安妮",
+      "choose": {
+        "path": "audio/voice/annie/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/1.ogg",
+        "bytes": 51176,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/annie/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/1.ogg",
+        "bytes": 31547,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Kled",
+      "dir": "kled",
+      "id": 240,
+      "name": "克烈",
+      "choose": {
+        "path": "audio/voice/kled/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/240.ogg",
+        "bytes": 61832,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/kled/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/240.ogg",
+        "bytes": 48741,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Talon",
+      "dir": "talon",
+      "id": 91,
+      "name": "泰隆",
+      "choose": {
+        "path": "audio/voice/talon/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/91.ogg",
+        "bytes": 38987,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/talon/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/91.ogg",
+        "bytes": 23234,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Draven",
+      "dir": "draven",
+      "id": 119,
+      "name": "德莱文",
+      "choose": {
+        "path": "audio/voice/draven/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/119.ogg",
+        "bytes": 44307,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/draven/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/119.ogg",
+        "bytes": 30381,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Katarina",
+      "dir": "katarina",
+      "id": 55,
+      "name": "卡特琳娜",
+      "choose": {
+        "path": "audio/voice/katarina/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/55.ogg",
+        "bytes": 32271,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/katarina/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/55.ogg",
+        "bytes": 32370,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Vladimir",
+      "dir": "vladimir",
+      "id": 8,
+      "name": "弗拉基米尔",
+      "choose": {
+        "path": "audio/voice/vladimir/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/8.ogg",
+        "bytes": 34542,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/vladimir/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/8.ogg",
+        "bytes": 53253,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Samira",
+      "dir": "samira",
+      "id": 360,
+      "name": "莎弥拉",
+      "choose": {
+        "path": "audio/voice/samira/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/360.ogg",
+        "bytes": 26431,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/samira/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/360.ogg",
+        "bytes": 21560,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Sion",
+      "dir": "sion",
+      "id": 14,
+      "name": "赛恩",
+      "choose": {
+        "path": "audio/voice/sion/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/14.ogg",
+        "bytes": 39599,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/sion/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/14.ogg",
+        "bytes": 38221,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Swain",
+      "dir": "swain",
+      "id": 50,
+      "name": "斯维因",
+      "choose": {
+        "path": "audio/voice/swain/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/50.ogg",
+        "bytes": 41090,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/swain/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/50.ogg",
+        "bytes": 51345,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Kennen",
+      "dir": "kennen",
+      "id": 85,
+      "name": "凯南",
+      "choose": {
+        "path": "audio/voice/kennen/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/85.ogg",
+        "bytes": 30899,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/kennen/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/85.ogg",
+        "bytes": 20234,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Akali",
+      "dir": "akali",
+      "id": 84,
+      "name": "阿卡丽",
+      "choose": {
+        "path": "audio/voice/akali/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/84.ogg",
+        "bytes": 42649,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/akali/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/84.ogg",
+        "bytes": 36666,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Karma",
+      "dir": "karma",
+      "id": 43,
+      "name": "卡尔玛",
+      "choose": {
+        "path": "audio/voice/karma/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/43.ogg",
+        "bytes": 31627,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/karma/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/43.ogg",
+        "bytes": 25790,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Zed",
+      "dir": "zed",
+      "id": 238,
+      "name": "劫",
+      "choose": {
+        "path": "audio/voice/zed/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/238.ogg",
+        "bytes": 47547,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/zed/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/238.ogg",
+        "bytes": 34493,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Yasuo",
+      "dir": "yasuo",
+      "id": 157,
+      "name": "亚索",
+      "choose": {
+        "path": "audio/voice/yasuo/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/157.ogg",
+        "bytes": 54999,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/yasuo/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/157.ogg",
+        "bytes": 35475,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "LeeSin",
+      "dir": "leesin",
+      "id": 64,
+      "name": "李青",
+      "choose": {
+        "path": "audio/voice/leesin/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/64.ogg",
+        "bytes": 34222,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/leesin/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/64.ogg",
+        "bytes": 20728,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Shen",
+      "dir": "shen",
+      "id": 98,
+      "name": "慎",
+      "choose": {
+        "path": "audio/voice/shen/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/98.ogg",
+        "bytes": 30012,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/shen/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/98.ogg",
+        "bytes": 12728,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Irelia",
+      "dir": "irelia",
+      "id": 39,
+      "name": "艾瑞莉娅",
+      "choose": {
+        "path": "audio/voice/irelia/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/39.ogg",
+        "bytes": 23385,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/irelia/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/39.ogg",
+        "bytes": 13668,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "MasterYi",
+      "dir": "masteryi",
+      "id": 11,
+      "name": "易",
+      "choose": {
+        "path": "audio/voice/masteryi/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/11.ogg",
+        "bytes": 31483,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/masteryi/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/11.ogg",
+        "bytes": 44523,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Yone",
+      "dir": "yone",
+      "id": 777,
+      "name": "永恩",
+      "choose": {
+        "path": "audio/voice/yone/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/777.ogg",
+        "bytes": 37928,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/yone/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/777.ogg",
+        "bytes": 38536,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Syndra",
+      "dir": "syndra",
+      "id": 134,
+      "name": "辛德拉",
+      "choose": {
+        "path": "audio/voice/syndra/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/134.ogg",
+        "bytes": 45849,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/syndra/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/134.ogg",
+        "bytes": 56837,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Olaf",
+      "dir": "olaf",
+      "id": 2,
+      "name": "奥拉夫",
+      "choose": {
+        "path": "audio/voice/olaf/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/2.ogg",
+        "bytes": 33086,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/olaf/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/2.ogg",
+        "bytes": 62804,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Udyr",
+      "dir": "udyr",
+      "id": 77,
+      "name": "乌迪尔",
+      "choose": {
+        "path": "audio/voice/udyr/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/77.ogg",
+        "bytes": 32163,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/udyr/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/77.ogg",
+        "bytes": 18898,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Braum",
+      "dir": "braum",
+      "id": 201,
+      "name": "布隆",
+      "choose": {
+        "path": "audio/voice/braum/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/201.ogg",
+        "bytes": 33892,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/braum/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/201.ogg",
+        "bytes": 31292,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Sejuani",
+      "dir": "sejuani",
+      "id": 113,
+      "name": "瑟庄妮",
+      "choose": {
+        "path": "audio/voice/sejuani/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/113.ogg",
+        "bytes": 42083,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/sejuani/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/113.ogg",
+        "bytes": 31400,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Anivia",
+      "dir": "anivia",
+      "id": 34,
+      "name": "艾尼维亚",
+      "choose": {
+        "path": "audio/voice/anivia/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/34.ogg",
+        "bytes": 31019,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/anivia/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/34.ogg",
+        "bytes": 22595,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Nunu",
+      "dir": "nunu",
+      "id": 20,
+      "name": "努努和威朗普",
+      "choose": {
+        "path": "audio/voice/nunu/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/20.ogg",
+        "bytes": 66065,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/nunu/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/20.ogg",
+        "bytes": 35330,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Tryndamere",
+      "dir": "tryndamere",
+      "id": 23,
+      "name": "泰达米尔",
+      "choose": {
+        "path": "audio/voice/tryndamere/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/23.ogg",
+        "bytes": 41382,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/tryndamere/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/23.ogg",
+        "bytes": 24632,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Trundle",
+      "dir": "trundle",
+      "id": 48,
+      "name": "特朗德尔",
+      "choose": {
+        "path": "audio/voice/trundle/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/48.ogg",
+        "bytes": 31240,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/trundle/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/48.ogg",
+        "bytes": 21888,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Ornn",
+      "dir": "ornn",
+      "id": 516,
+      "name": "奥恩",
+      "choose": {
+        "path": "audio/voice/ornn/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/516.ogg",
+        "bytes": 36333,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/ornn/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/516.ogg",
+        "bytes": 35003,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Lissandra",
+      "dir": "lissandra",
+      "id": 127,
+      "name": "丽桑卓",
+      "choose": {
+        "path": "audio/voice/lissandra/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/127.ogg",
+        "bytes": 78771,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/lissandra/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/127.ogg",
+        "bytes": 49556,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Volibear",
+      "dir": "volibear",
+      "id": 106,
+      "name": "沃利贝尔",
+      "choose": {
+        "path": "audio/voice/volibear/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/106.ogg",
+        "bytes": 82071,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/volibear/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/106.ogg",
+        "bytes": 56866,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Garen",
+      "dir": "garen",
+      "id": 86,
+      "name": "盖伦",
+      "choose": {
+        "path": "audio/voice/garen/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/86.ogg",
+        "bytes": 17807,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/garen/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/86.ogg",
+        "bytes": 35195,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Darius",
+      "dir": "darius",
+      "id": 122,
+      "name": "德莱厄斯",
+      "choose": {
+        "path": "audio/voice/darius/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/122.ogg",
+        "bytes": 48724,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/darius/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/122.ogg",
+        "bytes": 40026,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Ahri",
+      "dir": "ahri",
+      "id": 103,
+      "name": "阿狸",
+      "choose": {
+        "path": "audio/voice/ahri/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/103.ogg",
+        "bytes": 29782,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/ahri/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/103.ogg",
+        "bytes": 24702,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    },
+    {
+      "key": "Ashe",
+      "dir": "ashe",
+      "id": 22,
+      "name": "艾希",
+      "choose": {
+        "path": "audio/voice/ashe/choose.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-choose-vo/22.ogg",
+        "bytes": 44537,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      },
+      "ban": {
+        "path": "audio/voice/ashe/ban.ogg",
+        "url": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/champion-ban-vo/22.ogg",
+        "bytes": 42867,
+        "lang": "zh",
+        "version": "16.20.8248524+branch.releases-16-20.content.release"
+      }
+    }
+  ],
+  "englishFallback": [],
+  "failed": []
+}

@@ -1,0 +1,3676 @@
+{
+  "generatedAt": "2026-10-19T15:55:35.634Z",
+  "sampleRate": 48000,
+  "truePeakMax": -1,
+  "profiles": {
+    "sfx": {
+      "measure": "momentaryMax",
+      "target": -18,
+      "channels": 1,
+      "highpass": 40,
+      "trimSilence": true,
+      "maxLimitingDb": 6,
+      "vorbisQ": 4,
+      "mp3Q": 4
+    },
+    "voice": {
+      "measure": "integrated",
+      "target": -18,
+      "channels": 1,
+      "highpass": 60,
+      "trimSilence": false,
+      "maxLimitingDb": 3,
+      "vorbisQ": 4,
+      "mp3Q": 4
+    },
+    "stinger": {
+      "measure": "integrated",
+      "target": -18,
+      "channels": 2,
+      "highpass": 30,
+      "trimSilence": false,
+      "maxLimitingDb": 3,
+      "vorbisQ": 5,
+      "mp3Q": 3
+    },
+    "music": {
+      "measure": "integrated",
+      "target": -20,
+      "channels": 2,
+      "highpass": 30,
+      "trimSilence": false,
+      "maxLimitingDb": 3,
+      "vorbisQ": 5,
+      "mp3Q": 3
+    },
+    "ambience": {
+      "measure": "integrated",
+      "target": -30,
+      "channels": 2,
+      "highpass": 30,
+      "trimSilence": false,
+      "maxLimitingDb": 3,
+      "vorbisQ": 4,
+      "mp3Q": 4
+    }
+  },
+  "sounds": [
+    {
+      "id": "ui.hover",
+      "group": "ui",
+      "label": "悬停",
+      "spec": "5.7 界面：悬停",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 2,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/ui.hover.ogg",
+        "mp3": "audio/sfx/ui.hover.mp3",
+        "duration": 0.11,
+        "gainDb": 5.3,
+        "peakLimited": true,
+        "limitingDb": 6,
+        "before": {
+          "integrated": -26.8,
+          "momentaryMax": -26.8,
+          "truePeak": -1.8
+        },
+        "after": {
+          "integrated": -26,
+          "momentaryMax": -26,
+          "truePeak": -2.5
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-ui-audio",
+            "member": "Audio/rollover4.ogg",
+            "trim": null,
+            "title": "UI Audio",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/ui-audio",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ui.click",
+      "group": "ui",
+      "label": "点击",
+      "spec": "5.7 界面：点击",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/ui.click.ogg",
+        "mp3": "audio/sfx/ui.click.mp3",
+        "duration": 0.08,
+        "gainDb": 3.8,
+        "peakLimited": true,
+        "limitingDb": 6,
+        "before": {
+          "integrated": -27.7,
+          "momentaryMax": -27.7,
+          "truePeak": -0.3
+        },
+        "after": {
+          "integrated": -27.6,
+          "momentaryMax": -27.6,
+          "truePeak": -2.5
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-ui-audio",
+            "member": "Audio/click1.ogg",
+            "trim": null,
+            "title": "UI Audio",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/ui-audio",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ui.button",
+      "group": "ui",
+      "label": "按钮按下",
+      "spec": "5.7 界面：按钮按下",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 3,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/ui.button.ogg",
+        "mp3": "audio/sfx/ui.button.mp3",
+        "duration": 0.21,
+        "gainDb": -0.6,
+        "peakLimited": true,
+        "limitingDb": 6,
+        "before": {
+          "integrated": -19.9,
+          "momentaryMax": -19.9,
+          "truePeak": 4.1
+        },
+        "after": {
+          "integrated": -26.3,
+          "momentaryMax": -26.3,
+          "truePeak": -2.3
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-ui-audio",
+            "member": "Audio/switch3.ogg",
+            "trim": null,
+            "title": "UI Audio",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/ui-audio",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ui.pickup",
+      "group": "ui",
+      "label": "拖起手牌",
+      "spec": "5.7 界面：拖起",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 2,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/ui.pickup.ogg",
+        "mp3": "audio/sfx/ui.pickup.mp3",
+        "duration": 0.46,
+        "gainDb": 2.2,
+        "peakLimited": true,
+        "limitingDb": 6,
+        "before": {
+          "integrated": -22.8,
+          "momentaryMax": -22.6,
+          "truePeak": 1.3
+        },
+        "after": {
+          "integrated": -25.4,
+          "momentaryMax": -25,
+          "truePeak": -3.2
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-casino-audio",
+            "member": "Audio/card-slide-4.ogg",
+            "trim": null,
+            "title": "Casino Audio",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/casino-audio",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ui.drop",
+      "group": "ui",
+      "label": "放下手牌",
+      "spec": "5.7 界面：放下",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/ui.drop.ogg",
+        "mp3": "audio/sfx/ui.drop.mp3",
+        "duration": 0.69,
+        "gainDb": 1.6,
+        "peakLimited": true,
+        "limitingDb": 6,
+        "before": {
+          "integrated": -22.4,
+          "momentaryMax": -22.4,
+          "truePeak": 1.9
+        },
+        "after": {
+          "integrated": -25,
+          "momentaryMax": -25,
+          "truePeak": -3.3
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-casino-audio",
+            "member": "Audio/card-place-1.ogg",
+            "trim": null,
+            "title": "Casino Audio",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/casino-audio",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ui.cancel",
+      "group": "ui",
+      "label": "取消",
+      "spec": "5.7 界面：取消",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/ui.cancel.ogg",
+        "mp3": "audio/sfx/ui.cancel.mp3",
+        "duration": 0.06,
+        "gainDb": 4.7,
+        "peakLimited": true,
+        "limitingDb": 6,
+        "before": {
+          "integrated": -28.3,
+          "momentaryMax": -28.3,
+          "truePeak": -1.2
+        },
+        "after": {
+          "integrated": -28.2,
+          "momentaryMax": -28.2,
+          "truePeak": -2.8
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-interface-sounds",
+            "member": "Audio/back_001.ogg",
+            "trim": null,
+            "title": "Interface Sounds",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/interface-sounds",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "card.draw",
+      "group": "card",
+      "label": "抽牌（翻牌声）",
+      "spec": "5.6 抽牌；5.7 卡牌：抽牌",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 3,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/card.draw.ogg",
+        "mp3": "audio/sfx/card.draw.mp3",
+        "duration": 0.17,
+        "gainDb": 9.2,
+        "peakLimited": true,
+        "limitingDb": 6,
+        "before": {
+          "integrated": -29.9,
+          "momentaryMax": -29.9,
+          "truePeak": -5.7
+        },
+        "after": {
+          "integrated": -27.6,
+          "momentaryMax": -24.8,
+          "truePeak": -2.5
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-card-game-sounds",
+            "member": "cockatrice/draw.wav",
+            "trim": null,
+            "title": "Card Game sounds",
+            "author": "HaelDB",
+            "page": "https://opengameart.org/content/card-game-sounds",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "card.play",
+      "group": "card",
+      "label": "出牌",
+      "spec": "5.6 对手出牌；5.7 卡牌：出牌",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 3,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/card.play.ogg",
+        "mp3": "audio/sfx/card.play.mp3",
+        "duration": 0.15,
+        "gainDb": 19.1,
+        "peakLimited": true,
+        "limitingDb": 6,
+        "before": {
+          "integrated": -42.5,
+          "momentaryMax": -42.5,
+          "truePeak": -15.6
+        },
+        "after": {
+          "integrated": -28,
+          "momentaryMax": -28,
+          "truePeak": -2.2
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-card-game-sounds",
+            "member": "cockatrice/playcard.wav",
+            "trim": null,
+            "title": "Card Game sounds",
+            "author": "HaelDB",
+            "page": "https://opengameart.org/content/card-game-sounds",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "card.land",
+      "group": "card",
+      "label": "随从砸落",
+      "spec": "5.6 出随从：砸落声；5.7 卡牌：出牌落地",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 2,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/card.land.ogg",
+        "mp3": "audio/sfx/card.land.mp3",
+        "duration": 0.53,
+        "gainDb": -2.2,
+        "peakLimited": false,
+        "limitingDb": 3.6,
+        "before": {
+          "integrated": -17.7,
+          "momentaryMax": -15.8,
+          "truePeak": 3.3
+        },
+        "after": {
+          "integrated": -21,
+          "momentaryMax": -19.1,
+          "truePeak": -2.2
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-100-cc0-sfx",
+            "member": "slam_02.ogg",
+            "trim": null,
+            "title": "100 CC0 SFX",
+            "author": "rubberduck",
+            "page": "https://opengameart.org/content/100-cc0-sfx",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "card.burn",
+      "group": "card",
+      "label": "爆牌（燃烧）",
+      "spec": "5.6 爆牌；5.7 卡牌：爆牌",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/card.burn.ogg",
+        "mp3": "audio/sfx/card.burn.mp3",
+        "duration": 0.45,
+        "gainDb": -5.7,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -13.7,
+          "momentaryMax": -12.3,
+          "truePeak": 1.6
+        },
+        "after": {
+          "integrated": -19.5,
+          "momentaryMax": -18.1,
+          "truePeak": -4.1
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-catching-fire",
+            "member": "flame_0.ogg",
+            "trim": null,
+            "title": "Catching fire",
+            "author": "themightyglider",
+            "page": "https://opengameart.org/content/catching-fire",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "card.buff",
+      "group": "card",
+      "label": "增益",
+      "spec": "5.6 增益；5.7 卡牌：增益",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/card.buff.ogg",
+        "mp3": "audio/sfx/card.buff.mp3",
+        "duration": 1.56,
+        "gainDb": 0,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -21.7,
+          "momentaryMax": -18,
+          "truePeak": -5.2
+        },
+        "after": {
+          "integrated": -21.8,
+          "momentaryMax": -18.1,
+          "truePeak": -5.2
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-wobbleboxx",
+            "member": "Upper01.aif",
+            "trim": [
+              0,
+              1.6
+            ],
+            "title": "Level up, power up, Coin get (13 Sounds)",
+            "author": "wobbleboxx",
+            "page": "https://opengameart.org/content/level-up-power-up-coin-get-13-sounds",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "card.debuff",
+      "group": "card",
+      "label": "减益、沉默（消音声）",
+      "spec": "5.6 减益 / 沉默；5.7 卡牌：减益",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/card.debuff.ogg",
+        "mp3": "audio/sfx/card.debuff.mp3",
+        "duration": 0.6,
+        "gainDb": -6.7,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -13.6,
+          "momentaryMax": -11.3,
+          "truePeak": -2.1
+        },
+        "after": {
+          "integrated": -20.4,
+          "momentaryMax": -18,
+          "truePeak": -8.8
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-digital-audio",
+            "member": "Audio/lowDown.ogg",
+            "trim": null,
+            "title": "Digital Audio",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/digital-audio",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "card.bounce",
+      "group": "card",
+      "label": "回手",
+      "spec": "5.6 回手；5.7 卡牌：回手",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/card.bounce.ogg",
+        "mp3": "audio/sfx/card.bounce.mp3",
+        "duration": 0.67,
+        "gainDb": 3,
+        "peakLimited": true,
+        "limitingDb": 6,
+        "before": {
+          "integrated": -25.7,
+          "momentaryMax": -25.7,
+          "truePeak": 0.5
+        },
+        "after": {
+          "integrated": -27.1,
+          "momentaryMax": -27.1,
+          "truePeak": -3
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-casino-audio",
+            "member": "Audio/card-slide-8.ogg",
+            "trim": null,
+            "title": "Casino Audio",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/casino-audio",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "card.transform",
+      "group": "card",
+      "label": "变形",
+      "spec": "5.6 变形；5.7 卡牌：变形",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/card.transform.ogg",
+        "mp3": "audio/sfx/card.transform.mp3",
+        "duration": 1.49,
+        "gainDb": -5,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -15.5,
+          "momentaryMax": -13,
+          "truePeak": 0.1
+        },
+        "after": {
+          "integrated": -20.6,
+          "momentaryMax": -18,
+          "truePeak": -5.1
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-teleport-spell",
+            "member": "teleport.wav",
+            "trim": null,
+            "title": "Teleport Spell",
+            "author": "Ogrebane",
+            "page": "https://opengameart.org/content/teleport-spell",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "spell.fire",
+      "group": "spell",
+      "label": "法术：火",
+      "spec": "5.6 出法术：火焰飞弹；5.7 法术施放：火",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 2,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/spell.fire.ogg",
+        "mp3": "audio/sfx/spell.fire.mp3",
+        "duration": 1.13,
+        "gainDb": 12,
+        "peakLimited": false,
+        "limitingDb": 2.6,
+        "before": {
+          "integrated": -31.7,
+          "momentaryMax": -30,
+          "truePeak": -11.9
+        },
+        "after": {
+          "integrated": -20.2,
+          "momentaryMax": -18.5,
+          "truePeak": -2.5
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-80-cc0-rpg-sfx",
+            "member": "spell_fire_04.ogg",
+            "trim": null,
+            "title": "80 CC0 RPG SFX",
+            "author": "rubberduck",
+            "page": "https://opengameart.org/content/80-cc0-rpg-sfx",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "spell.frost",
+      "group": "spell",
+      "label": "法术：冰",
+      "spec": "5.6 出法术：冰霜扩散；5.7 法术施放：冰",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 2,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/spell.frost.ogg",
+        "mp3": "audio/sfx/spell.frost.mp3",
+        "duration": 1.95,
+        "gainDb": -5.7,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -14.6,
+          "momentaryMax": -12.3,
+          "truePeak": 2.4
+        },
+        "after": {
+          "integrated": -20.4,
+          "momentaryMax": -18.4,
+          "truePeak": -3.3
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-freeze-spell",
+            "member": "freeze.wav",
+            "trim": null,
+            "title": "Freeze Spell",
+            "author": "artisticdude",
+            "page": "https://opengameart.org/content/freeze-spell-0",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "spell.holy",
+      "group": "spell",
+      "label": "法术：光",
+      "spec": "5.6 出法术：光柱；5.7 法术施放：光",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 2,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/spell.holy.ogg",
+        "mp3": "audio/sfx/spell.holy.mp3",
+        "duration": 1.69,
+        "gainDb": 4.8,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -25.4,
+          "momentaryMax": -22.8,
+          "truePeak": -12.5
+        },
+        "after": {
+          "integrated": -20.6,
+          "momentaryMax": -18.1,
+          "truePeak": -7.9
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-magic-spell-4",
+            "member": "magical_4.ogg",
+            "trim": null,
+            "title": "Magic Spell SFX：magical_4",
+            "author": "JaggedStone",
+            "page": "https://opengameart.org/content/magic-spell-sfx",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "spell.shadow",
+      "group": "spell",
+      "label": "法术：影",
+      "spec": "5.6 出法术：暗影聚拢；5.7 法术施放：影",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 3,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/spell.shadow.ogg",
+        "mp3": "audio/sfx/spell.shadow.mp3",
+        "duration": 2.18,
+        "gainDb": -5.6,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -16.1,
+          "momentaryMax": -12.4,
+          "truePeak": 0.4
+        },
+        "after": {
+          "integrated": -21.9,
+          "momentaryMax": -18.2,
+          "truePeak": -5
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-energy-drain",
+            "member": "qubodup-PowerDrain/ogg/qubodup-PowerDrain.ogg",
+            "trim": [
+              0,
+              2.2
+            ],
+            "title": "Energy Drain",
+            "author": "qubodup",
+            "page": "https://opengameart.org/content/energy-drain",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "spell.physical",
+      "group": "spell",
+      "label": "法术：物理",
+      "spec": "5.6 出法术：物理挥砍；5.7 法术施放：物理",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 3,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/spell.physical.ogg",
+        "mp3": "audio/sfx/spell.physical.mp3",
+        "duration": 0.29,
+        "gainDb": -1.8,
+        "peakLimited": false,
+        "limitingDb": 3.5,
+        "before": {
+          "integrated": -17.3,
+          "momentaryMax": -16.2,
+          "truePeak": 2.8
+        },
+        "after": {
+          "integrated": -20.4,
+          "momentaryMax": -19,
+          "truePeak": -2.6
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-80-cc0-rpg-sfx",
+            "member": "blade_02.ogg",
+            "trim": null,
+            "title": "80 CC0 RPG SFX",
+            "author": "rubberduck",
+            "page": "https://opengameart.org/content/80-cc0-rpg-sfx",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "spell.big",
+      "group": "spell",
+      "label": "群体法术（大法术音）",
+      "spec": "5.6 群体法术",
+      "profile": "sfx",
+      "inSfxTable": false,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/spell.big.ogg",
+        "mp3": "audio/sfx/spell.big.mp3",
+        "duration": 2.72,
+        "gainDb": -13.6,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -8.1,
+          "momentaryMax": -4.4,
+          "truePeak": 2.9
+        },
+        "after": {
+          "integrated": -22.1,
+          "momentaryMax": -18.5,
+          "truePeak": -10.5
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-dark-magic",
+            "member": "dark_magic/fout-03.flac",
+            "trim": null,
+            "title": "3 dark magic spells",
+            "author": "qubodup",
+            "page": "https://opengameart.org/content/3-dark-magic-spells",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "combat.swing",
+      "group": "combat",
+      "label": "挥击（动作层）",
+      "spec": "5.6 攻击：挥击声；5.7 战斗：挥击",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/combat.swing.ogg",
+        "mp3": "audio/sfx/combat.swing.mp3",
+        "duration": 0.11,
+        "gainDb": -0.1,
+        "peakLimited": false,
+        "limitingDb": 5.5,
+        "before": {
+          "integrated": -17.9,
+          "momentaryMax": -17.9,
+          "truePeak": 3.1
+        },
+        "after": {
+          "integrated": -21.5,
+          "momentaryMax": -21.5,
+          "truePeak": -2.5
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-swishes",
+            "member": "swishes/swish-1.wav",
+            "trim": null,
+            "title": "Swishes Sound Pack",
+            "author": "artisticdude",
+            "page": "https://opengameart.org/content/swishes-sound-pack",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "combat.hit_light",
+      "group": "combat",
+      "label": "命中轻（材质层）",
+      "spec": "5.6 攻击、受伤：命中声；5.7 战斗：命中轻",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/combat.hit_light.ogg",
+        "mp3": "audio/sfx/combat.hit_light.mp3",
+        "duration": 0.29,
+        "gainDb": -1.2,
+        "peakLimited": false,
+        "limitingDb": 2.4,
+        "before": {
+          "integrated": -16.8,
+          "momentaryMax": -16.8,
+          "truePeak": 1.1
+        },
+        "after": {
+          "integrated": -19.9,
+          "momentaryMax": -19.9,
+          "truePeak": -2.5
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-impact-sounds",
+            "member": "Audio/impactPunch_medium_000.ogg",
+            "trim": null,
+            "title": "Impact Sounds",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/impact-sounds",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "combat.hit_heavy",
+      "group": "combat",
+      "label": "命中重（材质层）",
+      "spec": "5.6 攻击：按伤害大小选轻重；5.7 战斗：命中重",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/combat.hit_heavy.ogg",
+        "mp3": "audio/sfx/combat.hit_heavy.mp3",
+        "duration": 0.59,
+        "gainDb": -2.4,
+        "peakLimited": false,
+        "limitingDb": 4.2,
+        "before": {
+          "integrated": -18.1,
+          "momentaryMax": -15.6,
+          "truePeak": 4.1
+        },
+        "after": {
+          "integrated": -21.9,
+          "momentaryMax": -19.6,
+          "truePeak": -2.4
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-impact-sounds",
+            "member": "Audio/impactPunch_heavy_000.ogg",
+            "trim": null,
+            "title": "Impact Sounds",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/impact-sounds",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "combat.hero_hit",
+      "group": "combat",
+      "label": "英雄受伤（枢纽重击）",
+      "spec": "5.6 英雄受伤：重击声；5.7 战斗：英雄受伤",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/combat.hero_hit.ogg",
+        "mp3": "audio/sfx/combat.hero_hit.mp3",
+        "duration": 0.61,
+        "gainDb": 2.8,
+        "peakLimited": false,
+        "limitingDb": 5.1,
+        "before": {
+          "integrated": -25.3,
+          "momentaryMax": -20.8,
+          "truePeak": -0.2
+        },
+        "after": {
+          "integrated": -26.1,
+          "momentaryMax": -20.7,
+          "truePeak": -2.6
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-impact-sounds",
+            "member": "Audio/impactMining_002.ogg",
+            "trim": null,
+            "title": "Impact Sounds",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/impact-sounds",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "combat.death",
+      "group": "combat",
+      "label": "随从死亡（碎裂）",
+      "spec": "5.6 随从死亡：碎裂声；5.7 战斗：死亡碎裂",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/combat.death.ogg",
+        "mp3": "audio/sfx/combat.death.mp3",
+        "duration": 0.49,
+        "gainDb": 3.5,
+        "peakLimited": true,
+        "limitingDb": 6,
+        "before": {
+          "integrated": -28.4,
+          "momentaryMax": -24.8,
+          "truePeak": 0
+        },
+        "after": {
+          "integrated": -27.8,
+          "momentaryMax": -25.2,
+          "truePeak": -2.5
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-75-cc0-breaking",
+            "member": "bfh1_rock_breaking_01.ogg",
+            "trim": null,
+            "title": "75 CC0 breaking / falling / hit sfx",
+            "author": "rubberduck",
+            "page": "https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "combat.shield_break",
+      "group": "combat",
+      "label": "破盾",
+      "spec": "5.6 圣盾被打破；5.7 战斗：破盾",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 3,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/combat.shield_break.ogg",
+        "mp3": "audio/sfx/combat.shield_break.mp3",
+        "duration": 0.37,
+        "gainDb": 0.1,
+        "peakLimited": true,
+        "limitingDb": 6,
+        "before": {
+          "integrated": -18.7,
+          "momentaryMax": -18.5,
+          "truePeak": 3.4
+        },
+        "after": {
+          "integrated": -23.1,
+          "momentaryMax": -22.6,
+          "truePeak": -2.3
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-100-cc0-sfx",
+            "member": "glass_03.ogg",
+            "trim": null,
+            "title": "100 CC0 SFX",
+            "author": "rubberduck",
+            "page": "https://opengameart.org/content/100-cc0-sfx",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "combat.freeze",
+      "group": "combat",
+      "label": "结冰",
+      "spec": "5.6 冻结；5.7 战斗：结冰",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/combat.freeze.ogg",
+        "mp3": "audio/sfx/combat.freeze.mp3",
+        "duration": 1.11,
+        "gainDb": -5.7,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -16.9,
+          "momentaryMax": -12.3,
+          "truePeak": 1.2
+        },
+        "after": {
+          "integrated": -22.2,
+          "momentaryMax": -18.6,
+          "truePeak": -3.8
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-ice-shatter",
+            "member": "IceShatters/LedasLuzta33.ogg",
+            "trim": null,
+            "title": "Ice breaking/shattering",
+            "author": "IgnasD",
+            "page": "https://opengameart.org/content/ice-breakingshattering",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "combat.unfreeze",
+      "group": "combat",
+      "label": "碎冰（解冻）",
+      "spec": "5.6 冻结：解冻时碎开；5.7 战斗：碎冰",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 2,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/combat.unfreeze.ogg",
+        "mp3": "audio/sfx/combat.unfreeze.mp3",
+        "duration": 0.37,
+        "gainDb": 3.3,
+        "peakLimited": false,
+        "limitingDb": 5.9,
+        "before": {
+          "integrated": -23.4,
+          "momentaryMax": -21.3,
+          "truePeak": 0.1
+        },
+        "after": {
+          "integrated": -24.1,
+          "momentaryMax": -22.3,
+          "truePeak": -2.5
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-ice-shatter",
+            "member": "IceShatters/LedasLuzta2.ogg",
+            "trim": null,
+            "title": "Ice breaking/shattering",
+            "author": "IgnasD",
+            "page": "https://opengameart.org/content/ice-breakingshattering",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "combat.stealth",
+      "group": "combat",
+      "label": "潜行（烟雾）",
+      "spec": "5.6 潜行：烟雾声",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/combat.stealth.ogg",
+        "mp3": "audio/sfx/combat.stealth.mp3",
+        "duration": 0.83,
+        "gainDb": 4.3,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -25.9,
+          "momentaryMax": -22.3,
+          "truePeak": -11
+        },
+        "after": {
+          "integrated": -22.2,
+          "momentaryMax": -18.6,
+          "truePeak": -7.7
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-steam-hisses",
+            "member": "steam hisses - Marker #1.wav",
+            "trim": null,
+            "title": "Steam release sounds",
+            "author": "bart",
+            "page": "https://opengameart.org/content/steam-release-sounds",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "combat.heal",
+      "group": "combat",
+      "label": "治疗",
+      "spec": "5.6 治疗：治疗声",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 2,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/combat.heal.ogg",
+        "mp3": "audio/sfx/combat.heal.mp3",
+        "duration": 0.93,
+        "gainDb": -0.1,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -20.5,
+          "momentaryMax": -17.9,
+          "truePeak": -7
+        },
+        "after": {
+          "integrated": -20.7,
+          "momentaryMax": -18,
+          "truePeak": -7.1
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-cure-magic",
+            "member": "Cure4.wav",
+            "trim": null,
+            "title": "Cure Magic",
+            "author": "Someoneman",
+            "page": "https://opengameart.org/content/cure-magic",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "combat.summon",
+      "group": "combat",
+      "label": "召唤衍生物（光点凝聚）",
+      "spec": "5.6 召唤衍生物：召唤声",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 2,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/combat.summon.ogg",
+        "mp3": "audio/sfx/combat.summon.mp3",
+        "duration": 1.11,
+        "gainDb": 14.1,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -34.5,
+          "momentaryMax": -32.1,
+          "truePeak": -21.7
+        },
+        "after": {
+          "integrated": -20.4,
+          "momentaryMax": -17.9,
+          "truePeak": -7.7
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-magic-spell-6",
+            "member": "magical_6_0.ogg",
+            "trim": null,
+            "title": "Magic Spell SFX：magical_6",
+            "author": "JaggedStone",
+            "page": "https://opengameart.org/content/magic-spell-sfx",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hero_power.demacia",
+      "group": "hero_power",
+      "label": "德玛西亚：召集（士兵从光中落地）",
+      "spec": "5.6 英雄技能；5.7 职业：德玛西亚",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 2,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/hero_power.demacia.ogg",
+        "mp3": "audio/sfx/hero_power.demacia.mp3",
+        "duration": 1.03,
+        "gainDb": -13.2,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -7.3,
+          "momentaryMax": -4.8,
+          "truePeak": 9.9
+        },
+        "after": {
+          "integrated": -20.7,
+          "momentaryMax": -18.2,
+          "truePeak": -3.6
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-sword-clash",
+            "member": "sword_clash.1.ogg",
+            "trim": null,
+            "title": "20 Sword Sound Effects (Attacks and Clashes)：碰撞",
+            "author": "StarNinjas",
+            "page": "https://opengameart.org/content/20-sword-sound-effects-attacks-and-clashes",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hero_power.noxus",
+      "group": "hero_power",
+      "label": "诺克萨斯：断头台（斧刃飞向枢纽）",
+      "spec": "5.6 英雄技能；5.7 职业：诺克萨斯",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/hero_power.noxus.ogg",
+        "mp3": "audio/sfx/hero_power.noxus.mp3",
+        "duration": 0.96,
+        "gainDb": -5.6,
+        "peakLimited": false,
+        "limitingDb": 2.9,
+        "before": {
+          "integrated": -14.7,
+          "momentaryMax": -12.4,
+          "truePeak": 6
+        },
+        "after": {
+          "integrated": -21.5,
+          "momentaryMax": -19.2,
+          "truePeak": -2.8
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-sword",
+            "member": "sword - StarNinjas/sword.8.ogg",
+            "trim": null,
+            "title": "20 Sword Sound Effects (Attacks and Clashes)：挥砍",
+            "author": "StarNinjas",
+            "page": "https://opengameart.org/content/20-sword-sound-effects-attacks-and-clashes",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hero_power.ionia",
+      "group": "hero_power",
+      "label": "艾欧尼亚：灵魄（灵魄飞弹）",
+      "spec": "5.6 英雄技能；5.7 职业：艾欧尼亚",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 3,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/hero_power.ionia.ogg",
+        "mp3": "audio/sfx/hero_power.ionia.mp3",
+        "duration": 0.55,
+        "gainDb": -5.2,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -15.9,
+          "momentaryMax": -12.8,
+          "truePeak": 2.4
+        },
+        "after": {
+          "integrated": -21.4,
+          "momentaryMax": -18.3,
+          "truePeak": -3
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-80-cc0-rpg-sfx",
+            "member": "spell_01.ogg",
+            "trim": null,
+            "title": "80 CC0 RPG SFX",
+            "author": "rubberduck",
+            "page": "https://opengameart.org/content/80-cc0-rpg-sfx",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hero_power.freljord",
+      "group": "hero_power",
+      "label": "弗雷尔卓德：寒冰箭",
+      "spec": "5.6 英雄技能；5.7 职业：弗雷尔卓德",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 3,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/hero_power.freljord.ogg",
+        "mp3": "audio/sfx/hero_power.freljord.mp3",
+        "duration": 0.35,
+        "gainDb": 0.3,
+        "peakLimited": false,
+        "limitingDb": 5.4,
+        "before": {
+          "integrated": -20.7,
+          "momentaryMax": -18.3,
+          "truePeak": 2.6
+        },
+        "after": {
+          "integrated": -22.8,
+          "momentaryMax": -20.9,
+          "truePeak": -2.5
+        },
+        "note": "箭的破风声叠碎冰",
+        "sources": [
+          {
+            "id": "oga-swishes",
+            "member": "swishes/swish-12.wav",
+            "trim": null,
+            "title": "Swishes Sound Pack",
+            "author": "artisticdude",
+            "page": "https://opengameart.org/content/swishes-sound-pack",
+            "license": "CC0-1.0"
+          },
+          {
+            "id": "oga-ice-shatter",
+            "member": "IceShatters/LedasLuzta2.ogg",
+            "trim": null,
+            "title": "Ice breaking/shattering",
+            "author": "IgnasD",
+            "page": "https://opengameart.org/content/ice-breakingshattering",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "flow.game_start",
+      "group": "flow",
+      "label": "开局（开场音）",
+      "spec": "5.6 开局：开场音",
+      "profile": "sfx",
+      "inSfxTable": false,
+      "loop": false,
+      "selected": 2,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/flow.game_start.ogg",
+        "mp3": "audio/sfx/flow.game_start.mp3",
+        "duration": 1.14,
+        "gainDb": -3.9,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -16,
+          "momentaryMax": -14.1,
+          "truePeak": -1.3
+        },
+        "after": {
+          "integrated": -20,
+          "momentaryMax": -18.1,
+          "truePeak": -5.4
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-music-jingles",
+            "member": "Audio/Hit jingles/jingles_HIT15.ogg",
+            "trim": null,
+            "title": "Music Jingles",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/music-jingles",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "flow.nexus_light",
+      "group": "flow",
+      "label": "水晶枢纽点亮",
+      "spec": "5.6 开局：枢纽点亮声",
+      "profile": "sfx",
+      "inSfxTable": false,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/flow.nexus_light.ogg",
+        "mp3": "audio/sfx/flow.nexus_light.mp3",
+        "duration": 0.7,
+        "gainDb": 5,
+        "peakLimited": false,
+        "limitingDb": 3.9,
+        "before": {
+          "integrated": -25.6,
+          "momentaryMax": -23,
+          "truePeak": -3.6
+        },
+        "after": {
+          "integrated": -22.3,
+          "momentaryMax": -19.6,
+          "truePeak": -2.6
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-wobbleboxx",
+            "member": "Rise01.aif",
+            "trim": null,
+            "title": "Level up, power up, Coin get (13 Sounds)",
+            "author": "wobbleboxx",
+            "page": "https://opengameart.org/content/level-up-power-up-coin-get-13-sounds",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "flow.turn_start",
+      "group": "flow",
+      "label": "回合开始",
+      "spec": "5.6 回合开始：回合提示音；5.7 流程：回合开始",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/flow.turn_start.ogg",
+        "mp3": "audio/sfx/flow.turn_start.mp3",
+        "duration": 1.24,
+        "gainDb": -5.1,
+        "peakLimited": false,
+        "limitingDb": 1.1,
+        "before": {
+          "integrated": -19.2,
+          "momentaryMax": -12.9,
+          "truePeak": 3.7
+        },
+        "after": {
+          "integrated": -24.5,
+          "momentaryMax": -18.3,
+          "truePeak": -2.9
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-100-cc0-sfx",
+            "member": "bell_01.ogg",
+            "trim": null,
+            "title": "100 CC0 SFX",
+            "author": "rubberduck",
+            "page": "https://opengameart.org/content/100-cc0-sfx",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "flow.turn_end",
+      "group": "flow",
+      "label": "结束回合（按钮声）",
+      "spec": "5.6 结束回合：按钮声；5.7 流程：回合结束",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/flow.turn_end.ogg",
+        "mp3": "audio/sfx/flow.turn_end.mp3",
+        "duration": 0.14,
+        "gainDb": 1.3,
+        "peakLimited": true,
+        "limitingDb": 6,
+        "before": {
+          "integrated": -21.8,
+          "momentaryMax": -20.2,
+          "truePeak": 2.2
+        },
+        "after": {
+          "integrated": -25.7,
+          "momentaryMax": -24.2,
+          "truePeak": -2.7
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-interface-sounds",
+            "member": "Audio/switch_002.ogg",
+            "trim": null,
+            "title": "Interface Sounds",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/interface-sounds",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "flow.fatigue",
+      "group": "flow",
+      "label": "疲劳（低沉钟声）",
+      "spec": "5.6 疲劳：低沉钟声；5.7 流程：疲劳",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 3,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/flow.fatigue.ogg",
+        "mp3": "audio/sfx/flow.fatigue.mp3",
+        "duration": 1.28,
+        "gainDb": 0.8,
+        "peakLimited": false,
+        "limitingDb": 2.2,
+        "before": {
+          "integrated": -25.1,
+          "momentaryMax": -18.8,
+          "truePeak": -1.1
+        },
+        "after": {
+          "integrated": -24.7,
+          "momentaryMax": -18.7,
+          "truePeak": -2.4
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-impact-sounds",
+            "member": "Audio/impactBell_heavy_000.ogg",
+            "trim": null,
+            "title": "Impact Sounds",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/impact-sounds",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "flow.mana",
+      "group": "flow",
+      "label": "法力变化",
+      "spec": "5.6 法力变化：法力声",
+      "profile": "sfx",
+      "inSfxTable": true,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/flow.mana.ogg",
+        "mp3": "audio/sfx/flow.mana.mp3",
+        "duration": 0.26,
+        "gainDb": 1.5,
+        "peakLimited": false,
+        "limitingDb": 2.7,
+        "before": {
+          "integrated": -19.5,
+          "momentaryMax": -19.5,
+          "truePeak": -1.3
+        },
+        "after": {
+          "integrated": -19.6,
+          "momentaryMax": -19.6,
+          "truePeak": -2.4
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "kenney-interface-sounds",
+            "member": "Audio/glass_001.ogg",
+            "trim": null,
+            "title": "Interface Sounds",
+            "author": "Kenney",
+            "page": "https://kenney.nl/assets/interface-sounds",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "flow.nexus_explode",
+      "group": "flow",
+      "label": "水晶枢纽爆炸",
+      "spec": "5.6 胜利、失败：枢纽爆炸（画面列有，声音列只写了音乐，这里补一个爆炸声）",
+      "profile": "sfx",
+      "inSfxTable": false,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/sfx/flow.nexus_explode.ogg",
+        "mp3": "audio/sfx/flow.nexus_explode.mp3",
+        "duration": 0.84,
+        "gainDb": -3.2,
+        "peakLimited": false,
+        "limitingDb": 1.5,
+        "before": {
+          "integrated": -18.8,
+          "momentaryMax": -14.8,
+          "truePeak": 2.2
+        },
+        "after": {
+          "integrated": -22.4,
+          "momentaryMax": -18.6,
+          "truePeak": -2.8
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-25-cc0-bang",
+            "member": "bang_01.ogg",
+            "trim": null,
+            "title": "25 CC0 bang / firework SFX",
+            "author": "rubberduck",
+            "page": "https://opengameart.org/content/25-cc0-bang-firework-sfx",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "menu",
+      "group": "music",
+      "label": "主菜单音乐",
+      "spec": "5.7 音乐：主菜单一首循环",
+      "profile": "music",
+      "inSfxTable": false,
+      "loop": true,
+      "selected": 3,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/music/menu.ogg",
+        "mp3": "audio/music/menu.mp3",
+        "duration": 88.27,
+        "gainDb": -5.5,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -14.5,
+          "momentaryMax": -8.3,
+          "truePeak": 0.1
+        },
+        "after": {
+          "integrated": -20,
+          "momentaryMax": -13.7,
+          "truePeak": -5.3
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-prepare-swords",
+            "member": "prepare_your_swords_0.ogg",
+            "trim": null,
+            "title": "\"Prepare your swords\"",
+            "author": "bojidar-bg",
+            "page": "https://opengameart.org/content/prepare-your-swords",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "match",
+      "group": "music",
+      "label": "对局音乐",
+      "spec": "5.7 音乐：对局一首循环，音量偏低",
+      "profile": "music",
+      "inSfxTable": false,
+      "loop": true,
+      "selected": 2,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/music/match.ogg",
+        "mp3": "audio/music/match.mp3",
+        "duration": 49.95,
+        "gainDb": -2.6,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -17.4,
+          "momentaryMax": -14,
+          "truePeak": -2.2
+        },
+        "after": {
+          "integrated": -20.1,
+          "momentaryMax": -16.6,
+          "truePeak": -4.8
+        },
+        "note": "作者给的循环版",
+        "sources": [
+          {
+            "id": "oga-old-tower-inn",
+            "member": "Loop_The_Old_Tower_Inn.wav",
+            "trim": null,
+            "title": "Medieval: The Old Tower Inn（循环版）",
+            "author": "RandomMind",
+            "page": "https://opengameart.org/content/medieval-the-old-tower-inn",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "victory",
+      "group": "music",
+      "label": "胜利收尾",
+      "spec": "5.6 胜利：胜利音乐；5.7 音乐：胜利短收尾。sfx.ts 的 flow.victory 和 music.ts 的 victory 指同一段，接的时候二选一",
+      "profile": "stinger",
+      "inSfxTable": false,
+      "loop": false,
+      "selected": 1,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/music/victory.ogg",
+        "mp3": "audio/music/victory.mp3",
+        "duration": 11.84,
+        "gainDb": -7,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -11,
+          "momentaryMax": -9.1,
+          "truePeak": 0
+        },
+        "after": {
+          "integrated": -18,
+          "momentaryMax": -16.1,
+          "truePeak": -7
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-victory-fanfare",
+            "member": "Heavy_ConceptB.wav",
+            "trim": null,
+            "title": "Victory Fanfare Short",
+            "author": "cynicmusic",
+            "page": "https://opengameart.org/content/victory-fanfare-short",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "defeat",
+      "group": "music",
+      "label": "失败收尾",
+      "spec": "5.6 失败：失败音乐；5.7 音乐：失败短收尾。sfx.ts 的 flow.defeat 和 music.ts 的 defeat 指同一段，接的时候二选一",
+      "profile": "stinger",
+      "inSfxTable": false,
+      "loop": false,
+      "selected": 2,
+      "candidates": 2,
+      "file": {
+        "ogg": "audio/music/defeat.ogg",
+        "mp3": "audio/music/defeat.mp3",
+        "duration": 8.31,
+        "gainDb": 6.9,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -24.9,
+          "momentaryMax": -22.1,
+          "truePeak": -12.1
+        },
+        "after": {
+          "integrated": -18.1,
+          "momentaryMax": -15.2,
+          "truePeak": -5.4
+        },
+        "note": null,
+        "sources": [
+          {
+            "id": "oga-icy-game-over",
+            "member": "Icy Game Over.mp3",
+            "trim": null,
+            "title": "Icy Game Over",
+            "author": "Sudocolon",
+            "page": "https://opengameart.org/content/icy-game-over",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ambience",
+      "group": "ambience",
+      "label": "峡谷环境音",
+      "spec": "5.7 环境音：峡谷的风、水声、鸟叫，很轻",
+      "profile": "ambience",
+      "inSfxTable": false,
+      "loop": true,
+      "selected": 2,
+      "candidates": 3,
+      "file": {
+        "ogg": "audio/music/ambience.ogg",
+        "mp3": "audio/music/ambience.mp3",
+        "duration": 60,
+        "gainDb": 1.4,
+        "peakLimited": false,
+        "limitingDb": 0,
+        "before": {
+          "integrated": -31.4,
+          "momentaryMax": -21.9,
+          "truePeak": -18.3
+        },
+        "after": {
+          "integrated": -30,
+          "momentaryMax": -20.4,
+          "truePeak": -17
+        },
+        "note": "另一位作者的鸟叫和风，叠河水，60 秒无缝循环",
+        "sources": [
+          {
+            "id": "oga-birds-wind",
+            "member": "Birds and Wind - Ambient_1.ogg",
+            "trim": null,
+            "title": "Birds and Wind - Ambient（不带合成器的版本）",
+            "author": "Spring Spring",
+            "page": "https://opengameart.org/content/birds-and-wind-ambient-birds-wind-and-synth",
+            "license": "CC0-1.0"
+          },
+          {
+            "id": "oga-park-river",
+            "member": "park_ambience_river.wav",
+            "trim": null,
+            "title": "Park ambiences：河水",
+            "author": "Thimras",
+            "page": "https://opengameart.org/content/park-ambiences",
+            "license": "CC0-1.0"
+          }
+        ]
+      }
+    }
+  ],
+  "voice": [
+    {
+      "ogg": "audio/voice/ahri/ban.ogg",
+      "mp3": "audio/voice/ahri/ban.mp3",
+      "duration": 2.77,
+      "gainDb": -2.5,
+      "before": {
+        "integrated": -15.5,
+        "momentaryMax": -13.2,
+        "truePeak": -3.6
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -15.8,
+        "truePeak": -6.2
+      }
+    },
+    {
+      "ogg": "audio/voice/ahri/choose.ogg",
+      "mp3": "audio/voice/ahri/choose.mp3",
+      "duration": 3.4,
+      "gainDb": -2.5,
+      "before": {
+        "integrated": -15.5,
+        "momentaryMax": -12.9,
+        "truePeak": -2.4
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -15.3,
+        "truePeak": -4.7
+      }
+    },
+    {
+      "ogg": "audio/voice/akali/choose.ogg",
+      "mp3": "audio/voice/akali/choose.mp3",
+      "duration": 3.18,
+      "gainDb": -5,
+      "before": {
+        "integrated": -13,
+        "momentaryMax": -9.1,
+        "truePeak": 0.7
+      },
+      "after": {
+        "integrated": -17.9,
+        "momentaryMax": -14,
+        "truePeak": -4.2
+      }
+    },
+    {
+      "ogg": "audio/voice/akali/ban.ogg",
+      "mp3": "audio/voice/akali/ban.mp3",
+      "duration": 2.7,
+      "gainDb": -4.4,
+      "before": {
+        "integrated": -13.6,
+        "momentaryMax": -10.1,
+        "truePeak": 1.7
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -14.6,
+        "truePeak": -2.9
+      }
+    },
+    {
+      "ogg": "audio/voice/anivia/ban.ogg",
+      "mp3": "audio/voice/anivia/ban.mp3",
+      "duration": 1.72,
+      "gainDb": -0.8,
+      "before": {
+        "integrated": -17.2,
+        "momentaryMax": -14.4,
+        "truePeak": -2.3
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -15.2,
+        "truePeak": -3
+      }
+    },
+    {
+      "ogg": "audio/voice/anivia/choose.ogg",
+      "mp3": "audio/voice/anivia/choose.mp3",
+      "duration": 2.84,
+      "gainDb": -1.8,
+      "before": {
+        "integrated": -16.2,
+        "momentaryMax": -11.8,
+        "truePeak": -0.3
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -13.6,
+        "truePeak": -2.4
+      }
+    },
+    {
+      "ogg": "audio/voice/annie/choose.ogg",
+      "mp3": "audio/voice/annie/choose.mp3",
+      "duration": 4.41,
+      "gainDb": -2,
+      "before": {
+        "integrated": -16,
+        "momentaryMax": -13.4,
+        "truePeak": -1.6
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -15.4,
+        "truePeak": -3.4
+      }
+    },
+    {
+      "ogg": "audio/voice/annie/ban.ogg",
+      "mp3": "audio/voice/annie/ban.mp3",
+      "duration": 2.53,
+      "gainDb": -3.4,
+      "before": {
+        "integrated": -14.6,
+        "momentaryMax": -12.1,
+        "truePeak": 1.1
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -15.6,
+        "truePeak": -2.9
+      }
+    },
+    {
+      "ogg": "audio/voice/ashe/choose.ogg",
+      "mp3": "audio/voice/ashe/choose.mp3",
+      "duration": 5.2,
+      "gainDb": 0.2,
+      "before": {
+        "integrated": -18.2,
+        "momentaryMax": -14,
+        "truePeak": -1.7
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -14.4,
+        "truePeak": -2.8
+      }
+    },
+    {
+      "ogg": "audio/voice/ashe/ban.ogg",
+      "mp3": "audio/voice/ashe/ban.mp3",
+      "duration": 4.96,
+      "gainDb": -1.7,
+      "before": {
+        "integrated": -16.3,
+        "momentaryMax": -13,
+        "truePeak": -0.6
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -14.9,
+        "truePeak": -2.6
+      }
+    },
+    {
+      "ogg": "audio/voice/braum/choose.ogg",
+      "mp3": "audio/voice/braum/choose.mp3",
+      "duration": 3.03,
+      "gainDb": -0.6,
+      "before": {
+        "integrated": -17.4,
+        "momentaryMax": -14.7,
+        "truePeak": -0.7
+      },
+      "after": {
+        "integrated": -18.4,
+        "momentaryMax": -15.8,
+        "truePeak": -2.1
+      }
+    },
+    {
+      "ogg": "audio/voice/braum/ban.ogg",
+      "mp3": "audio/voice/braum/ban.mp3",
+      "duration": 2.64,
+      "gainDb": -0.4,
+      "before": {
+        "integrated": -17.6,
+        "momentaryMax": -13.7,
+        "truePeak": -1.3
+      },
+      "after": {
+        "integrated": -18.3,
+        "momentaryMax": -14.6,
+        "truePeak": -2.1
+      }
+    },
+    {
+      "ogg": "audio/voice/chogath/ban.ogg",
+      "mp3": "audio/voice/chogath/ban.mp3",
+      "duration": 5.05,
+      "gainDb": -11,
+      "before": {
+        "integrated": -7,
+        "momentaryMax": -4.2,
+        "truePeak": 4.5
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -15.2,
+        "truePeak": -6.6
+      }
+    },
+    {
+      "ogg": "audio/voice/chogath/choose.ogg",
+      "mp3": "audio/voice/chogath/choose.mp3",
+      "duration": 8.04,
+      "gainDb": -11.9,
+      "before": {
+        "integrated": -6.1,
+        "momentaryMax": -3.7,
+        "truePeak": 4.5
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -15.8,
+        "truePeak": -7
+      }
+    },
+    {
+      "ogg": "audio/voice/darius/choose.ogg",
+      "mp3": "audio/voice/darius/choose.mp3",
+      "duration": 6.03,
+      "gainDb": -0.3,
+      "before": {
+        "integrated": -17.7,
+        "momentaryMax": -15.6,
+        "truePeak": -1.7
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -15.9,
+        "truePeak": -2.6
+      }
+    },
+    {
+      "ogg": "audio/voice/darius/ban.ogg",
+      "mp3": "audio/voice/darius/ban.mp3",
+      "duration": 4.17,
+      "gainDb": -0.8,
+      "before": {
+        "integrated": -17.2,
+        "momentaryMax": -13.1,
+        "truePeak": -1
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -14.1,
+        "truePeak": -3.7
+      }
+    },
+    {
+      "ogg": "audio/voice/draven/choose.ogg",
+      "mp3": "audio/voice/draven/choose.mp3",
+      "duration": 4.2,
+      "gainDb": 2.3,
+      "before": {
+        "integrated": -20.5,
+        "momentaryMax": -17.2,
+        "truePeak": -1.8
+      },
+      "after": {
+        "integrated": -18.6,
+        "momentaryMax": -15.6,
+        "truePeak": -2.5
+      }
+    },
+    {
+      "ogg": "audio/voice/draven/ban.ogg",
+      "mp3": "audio/voice/draven/ban.mp3",
+      "duration": 2.99,
+      "gainDb": -0.4,
+      "before": {
+        "integrated": -17.6,
+        "momentaryMax": -13.8,
+        "truePeak": -2
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.4,
+        "truePeak": -2.6
+      }
+    },
+    {
+      "ogg": "audio/voice/fiora/choose.ogg",
+      "mp3": "audio/voice/fiora/choose.mp3",
+      "duration": 3,
+      "gainDb": -1.3,
+      "before": {
+        "integrated": -16.7,
+        "momentaryMax": -12.7,
+        "truePeak": 0.4
+      },
+      "after": {
+        "integrated": -18.3,
+        "momentaryMax": -14.7,
+        "truePeak": -2.5
+      }
+    },
+    {
+      "ogg": "audio/voice/fiora/ban.ogg",
+      "mp3": "audio/voice/fiora/ban.mp3",
+      "duration": 1.32,
+      "gainDb": -4.3,
+      "before": {
+        "integrated": -13.7,
+        "momentaryMax": -11.7,
+        "truePeak": 1.3
+      },
+      "after": {
+        "integrated": -18.3,
+        "momentaryMax": -16.3,
+        "truePeak": -3.2
+      }
+    },
+    {
+      "ogg": "audio/voice/galio/choose.ogg",
+      "mp3": "audio/voice/galio/choose.mp3",
+      "duration": 3.12,
+      "gainDb": -4.2,
+      "before": {
+        "integrated": -13.8,
+        "momentaryMax": -9.8,
+        "truePeak": 0.8
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -14.2,
+        "truePeak": -3.6
+      }
+    },
+    {
+      "ogg": "audio/voice/galio/ban.ogg",
+      "mp3": "audio/voice/galio/ban.mp3",
+      "duration": 1.84,
+      "gainDb": -3.5,
+      "before": {
+        "integrated": -14.5,
+        "momentaryMax": -13.5,
+        "truePeak": 2.2
+      },
+      "after": {
+        "integrated": -18.4,
+        "momentaryMax": -17.4,
+        "truePeak": -2.5
+      }
+    },
+    {
+      "ogg": "audio/voice/garen/choose.ogg",
+      "mp3": "audio/voice/garen/choose.mp3",
+      "duration": 1.29,
+      "gainDb": -0.6,
+      "before": {
+        "integrated": -17.4,
+        "momentaryMax": -15,
+        "truePeak": -3.4
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -15.6,
+        "truePeak": -4
+      }
+    },
+    {
+      "ogg": "audio/voice/garen/ban.ogg",
+      "mp3": "audio/voice/garen/ban.mp3",
+      "duration": 3.02,
+      "gainDb": -1.3,
+      "before": {
+        "integrated": -16.7,
+        "momentaryMax": -11.5,
+        "truePeak": 0
+      },
+      "after": {
+        "integrated": -18.4,
+        "momentaryMax": -13.2,
+        "truePeak": -1.4
+      }
+    },
+    {
+      "ogg": "audio/voice/irelia/choose.ogg",
+      "mp3": "audio/voice/irelia/choose.mp3",
+      "duration": 2.03,
+      "gainDb": -2.8,
+      "before": {
+        "integrated": -15.2,
+        "momentaryMax": -11.7,
+        "truePeak": -0.7
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.7,
+        "truePeak": -4
+      }
+    },
+    {
+      "ogg": "audio/voice/irelia/ban.ogg",
+      "mp3": "audio/voice/irelia/ban.mp3",
+      "duration": 1.09,
+      "gainDb": -1.6,
+      "before": {
+        "integrated": -16.4,
+        "momentaryMax": -15.4,
+        "truePeak": -2
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -17.1,
+        "truePeak": -3.4
+      }
+    },
+    {
+      "ogg": "audio/voice/jarvaniv/choose.ogg",
+      "mp3": "audio/voice/jarvaniv/choose.mp3",
+      "duration": 5.06,
+      "gainDb": -1.9,
+      "before": {
+        "integrated": -16.1,
+        "momentaryMax": -12.4,
+        "truePeak": -0.1
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -14.5,
+        "truePeak": -2.5
+      }
+    },
+    {
+      "ogg": "audio/voice/jarvaniv/ban.ogg",
+      "mp3": "audio/voice/jarvaniv/ban.mp3",
+      "duration": 3.53,
+      "gainDb": 0,
+      "before": {
+        "integrated": -18.8,
+        "momentaryMax": -15.7,
+        "truePeak": 0.5
+      },
+      "after": {
+        "integrated": -19.2,
+        "momentaryMax": -16.5,
+        "truePeak": -2.1
+      }
+    },
+    {
+      "ogg": "audio/voice/karma/choose.ogg",
+      "mp3": "audio/voice/karma/choose.mp3",
+      "duration": 2.73,
+      "gainDb": -3.9,
+      "before": {
+        "integrated": -14.1,
+        "momentaryMax": -11.4,
+        "truePeak": -1.4
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -15.3,
+        "truePeak": -5.8
+      }
+    },
+    {
+      "ogg": "audio/voice/karma/ban.ogg",
+      "mp3": "audio/voice/karma/ban.mp3",
+      "duration": 2.02,
+      "gainDb": -3.8,
+      "before": {
+        "integrated": -14.2,
+        "momentaryMax": -11.4,
+        "truePeak": -1.3
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -15.2,
+        "truePeak": -5
+      }
+    },
+    {
+      "ogg": "audio/voice/katarina/choose.ogg",
+      "mp3": "audio/voice/katarina/choose.mp3",
+      "duration": 3.08,
+      "gainDb": -0.1,
+      "before": {
+        "integrated": -17.9,
+        "momentaryMax": -15.1,
+        "truePeak": -3
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -15.2,
+        "truePeak": -3
+      }
+    },
+    {
+      "ogg": "audio/voice/katarina/ban.ogg",
+      "mp3": "audio/voice/katarina/ban.mp3",
+      "duration": 3.84,
+      "gainDb": 1.8,
+      "before": {
+        "integrated": -19.8,
+        "momentaryMax": -16.8,
+        "truePeak": -6.2
+      },
+      "after": {
+        "integrated": -17.9,
+        "momentaryMax": -15,
+        "truePeak": -4.4
+      }
+    },
+    {
+      "ogg": "audio/voice/kayle/choose.ogg",
+      "mp3": "audio/voice/kayle/choose.mp3",
+      "duration": 3.35,
+      "gainDb": -3.3,
+      "before": {
+        "integrated": -14.7,
+        "momentaryMax": -11,
+        "truePeak": 1.3
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.5,
+        "truePeak": -2.7
+      }
+    },
+    {
+      "ogg": "audio/voice/kayle/ban.ogg",
+      "mp3": "audio/voice/kayle/ban.mp3",
+      "duration": 2.42,
+      "gainDb": -2,
+      "before": {
+        "integrated": -16,
+        "momentaryMax": -12.8,
+        "truePeak": -0.4
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.9,
+        "truePeak": -2.5
+      }
+    },
+    {
+      "ogg": "audio/voice/kennen/choose.ogg",
+      "mp3": "audio/voice/kennen/choose.mp3",
+      "duration": 2.84,
+      "gainDb": -10.2,
+      "before": {
+        "integrated": -7.8,
+        "momentaryMax": -5.8,
+        "truePeak": 3.7
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -16,
+        "truePeak": -6.3
+      }
+    },
+    {
+      "ogg": "audio/voice/kennen/ban.ogg",
+      "mp3": "audio/voice/kennen/ban.mp3",
+      "duration": 1.7,
+      "gainDb": -10.8,
+      "before": {
+        "integrated": -7.2,
+        "momentaryMax": -4.8,
+        "truePeak": 4.5
+      },
+      "after": {
+        "integrated": -18.3,
+        "momentaryMax": -15.9,
+        "truePeak": -6.2
+      }
+    },
+    {
+      "ogg": "audio/voice/khazix/choose.ogg",
+      "mp3": "audio/voice/khazix/choose.mp3",
+      "duration": 5.27,
+      "gainDb": -4.6,
+      "before": {
+        "integrated": -13.4,
+        "momentaryMax": -9.1,
+        "truePeak": 2.8
+      },
+      "after": {
+        "integrated": -18.4,
+        "momentaryMax": -14.1,
+        "truePeak": -3
+      }
+    },
+    {
+      "ogg": "audio/voice/khazix/ban.ogg",
+      "mp3": "audio/voice/khazix/ban.mp3",
+      "duration": 4.67,
+      "gainDb": -4.7,
+      "before": {
+        "integrated": -13.3,
+        "momentaryMax": -8.3,
+        "truePeak": 2.8
+      },
+      "after": {
+        "integrated": -18.3,
+        "momentaryMax": -13.4,
+        "truePeak": -2.3
+      }
+    },
+    {
+      "ogg": "audio/voice/kled/choose.ogg",
+      "mp3": "audio/voice/kled/choose.mp3",
+      "duration": 5.59,
+      "gainDb": -9.8,
+      "before": {
+        "integrated": -8.2,
+        "momentaryMax": -5.3,
+        "truePeak": 4.5
+      },
+      "after": {
+        "integrated": -18.3,
+        "momentaryMax": -15.4,
+        "truePeak": -5.3
+      }
+    },
+    {
+      "ogg": "audio/voice/kled/ban.ogg",
+      "mp3": "audio/voice/kled/ban.mp3",
+      "duration": 4.03,
+      "gainDb": -7.7,
+      "before": {
+        "integrated": -10.3,
+        "momentaryMax": -6,
+        "truePeak": 4
+      },
+      "after": {
+        "integrated": -18.3,
+        "momentaryMax": -14.1,
+        "truePeak": -3.8
+      }
+    },
+    {
+      "ogg": "audio/voice/leesin/ban.ogg",
+      "mp3": "audio/voice/leesin/ban.mp3",
+      "duration": 2.48,
+      "gainDb": -0.8,
+      "before": {
+        "integrated": -17.2,
+        "momentaryMax": -14.9,
+        "truePeak": -3.3
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -15.9,
+        "truePeak": -4.3
+      }
+    },
+    {
+      "ogg": "audio/voice/leesin/choose.ogg",
+      "mp3": "audio/voice/leesin/choose.mp3",
+      "duration": 4.05,
+      "gainDb": 1.3,
+      "before": {
+        "integrated": -19.3,
+        "momentaryMax": -16.1,
+        "truePeak": -4.3
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -15.1,
+        "truePeak": -3.3
+      }
+    },
+    {
+      "ogg": "audio/voice/lissandra/choose.ogg",
+      "mp3": "audio/voice/lissandra/choose.mp3",
+      "duration": 7.57,
+      "gainDb": -4,
+      "before": {
+        "integrated": -14,
+        "momentaryMax": -9.1,
+        "truePeak": 0.7
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -13.1,
+        "truePeak": -3.2
+      }
+    },
+    {
+      "ogg": "audio/voice/lissandra/ban.ogg",
+      "mp3": "audio/voice/lissandra/ban.mp3",
+      "duration": 4.68,
+      "gainDb": -4.1,
+      "before": {
+        "integrated": -13.9,
+        "momentaryMax": -9.8,
+        "truePeak": 0.1
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14,
+        "truePeak": -3.9
+      }
+    },
+    {
+      "ogg": "audio/voice/lucian/choose.ogg",
+      "mp3": "audio/voice/lucian/choose.mp3",
+      "duration": 5.97,
+      "gainDb": -0.8,
+      "before": {
+        "integrated": -17.2,
+        "momentaryMax": -12.9,
+        "truePeak": -0.7
+      },
+      "after": {
+        "integrated": -18.4,
+        "momentaryMax": -14.4,
+        "truePeak": -1.7
+      }
+    },
+    {
+      "ogg": "audio/voice/lucian/ban.ogg",
+      "mp3": "audio/voice/lucian/ban.mp3",
+      "duration": 1.9,
+      "gainDb": -1.4,
+      "before": {
+        "integrated": -16.6,
+        "momentaryMax": -13.9,
+        "truePeak": 0.4
+      },
+      "after": {
+        "integrated": -18.5,
+        "momentaryMax": -16.1,
+        "truePeak": -2.9
+      }
+    },
+    {
+      "ogg": "audio/voice/lulu/choose.ogg",
+      "mp3": "audio/voice/lulu/choose.mp3",
+      "duration": 2.22,
+      "gainDb": -0.5,
+      "before": {
+        "integrated": -17.5,
+        "momentaryMax": -14.8,
+        "truePeak": -3.8
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -15.4,
+        "truePeak": -4.2
+      }
+    },
+    {
+      "ogg": "audio/voice/lulu/ban.ogg",
+      "mp3": "audio/voice/lulu/ban.mp3",
+      "duration": 2.84,
+      "gainDb": -1,
+      "before": {
+        "integrated": -17,
+        "momentaryMax": -13.7,
+        "truePeak": -2.5
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.7,
+        "truePeak": -4.1
+      }
+    },
+    {
+      "ogg": "audio/voice/lux/choose.ogg",
+      "mp3": "audio/voice/lux/choose.mp3",
+      "duration": 1.47,
+      "gainDb": -4.4,
+      "before": {
+        "integrated": -13.6,
+        "momentaryMax": -11.8,
+        "truePeak": -1.5
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -16.2,
+        "truePeak": -6
+      }
+    },
+    {
+      "ogg": "audio/voice/lux/ban.ogg",
+      "mp3": "audio/voice/lux/ban.mp3",
+      "duration": 2.47,
+      "gainDb": 2,
+      "before": {
+        "integrated": -20.7,
+        "momentaryMax": -16.6,
+        "truePeak": -1.5
+      },
+      "after": {
+        "integrated": -19,
+        "momentaryMax": -15.5,
+        "truePeak": -2.4
+      }
+    },
+    {
+      "ogg": "audio/voice/masteryi/choose.ogg",
+      "mp3": "audio/voice/masteryi/choose.mp3",
+      "duration": 2.73,
+      "gainDb": 0.5,
+      "before": {
+        "integrated": -18.5,
+        "momentaryMax": -15.5,
+        "truePeak": -1.6
+      },
+      "after": {
+        "integrated": -18.3,
+        "momentaryMax": -15.5,
+        "truePeak": -2.4
+      }
+    },
+    {
+      "ogg": "audio/voice/masteryi/ban.ogg",
+      "mp3": "audio/voice/masteryi/ban.mp3",
+      "duration": 3.97,
+      "gainDb": 0.4,
+      "before": {
+        "integrated": -18.4,
+        "momentaryMax": -15.2,
+        "truePeak": -1.2
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -15.1,
+        "truePeak": -2.1
+      }
+    },
+    {
+      "ogg": "audio/voice/nunu/choose.ogg",
+      "mp3": "audio/voice/nunu/choose.mp3",
+      "duration": 5.11,
+      "gainDb": -4.2,
+      "before": {
+        "integrated": -13.8,
+        "momentaryMax": -9.8,
+        "truePeak": 0.3
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -14,
+        "truePeak": -3.9
+      }
+    },
+    {
+      "ogg": "audio/voice/nunu/ban.ogg",
+      "mp3": "audio/voice/nunu/ban.mp3",
+      "duration": 2.56,
+      "gainDb": -4.2,
+      "before": {
+        "integrated": -13.8,
+        "momentaryMax": -12,
+        "truePeak": 1.4
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -16.2,
+        "truePeak": -3.3
+      }
+    },
+    {
+      "ogg": "audio/voice/olaf/choose.ogg",
+      "mp3": "audio/voice/olaf/choose.mp3",
+      "duration": 2.73,
+      "gainDb": -5.7,
+      "before": {
+        "integrated": -12.3,
+        "momentaryMax": -8.9,
+        "truePeak": 0.8
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -14.7,
+        "truePeak": -4.9
+      }
+    },
+    {
+      "ogg": "audio/voice/olaf/ban.ogg",
+      "mp3": "audio/voice/olaf/ban.mp3",
+      "duration": 5.42,
+      "gainDb": -3.7,
+      "before": {
+        "integrated": -14.3,
+        "momentaryMax": -10.7,
+        "truePeak": 0.6
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.6,
+        "truePeak": -2.5
+      }
+    },
+    {
+      "ogg": "audio/voice/ornn/choose.ogg",
+      "mp3": "audio/voice/ornn/choose.mp3",
+      "duration": 3.89,
+      "gainDb": -6.9,
+      "before": {
+        "integrated": -11.1,
+        "momentaryMax": -8.6,
+        "truePeak": 2.2
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -15.5,
+        "truePeak": -4.7
+      }
+    },
+    {
+      "ogg": "audio/voice/ornn/ban.ogg",
+      "mp3": "audio/voice/ornn/ban.mp3",
+      "duration": 3.66,
+      "gainDb": -8.8,
+      "before": {
+        "integrated": -9.2,
+        "momentaryMax": -6.4,
+        "truePeak": 4.2
+      },
+      "after": {
+        "integrated": -17.8,
+        "momentaryMax": -15.2,
+        "truePeak": -4.6
+      }
+    },
+    {
+      "ogg": "audio/voice/poppy/choose.ogg",
+      "mp3": "audio/voice/poppy/choose.mp3",
+      "duration": 3.57,
+      "gainDb": -3.9,
+      "before": {
+        "integrated": -14.1,
+        "momentaryMax": -10.6,
+        "truePeak": 1.6
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.7,
+        "truePeak": -2.5
+      }
+    },
+    {
+      "ogg": "audio/voice/poppy/ban.ogg",
+      "mp3": "audio/voice/poppy/ban.mp3",
+      "duration": 4.53,
+      "gainDb": -4.3,
+      "before": {
+        "integrated": -13.7,
+        "momentaryMax": -11.3,
+        "truePeak": -0.4
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -15.6,
+        "truePeak": -4.7
+      }
+    },
+    {
+      "ogg": "audio/voice/quinn/choose.ogg",
+      "mp3": "audio/voice/quinn/choose.mp3",
+      "duration": 3,
+      "gainDb": -2.7,
+      "before": {
+        "integrated": -15.3,
+        "momentaryMax": -13.3,
+        "truePeak": -2
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -16.1,
+        "truePeak": -4.7
+      }
+    },
+    {
+      "ogg": "audio/voice/quinn/ban.ogg",
+      "mp3": "audio/voice/quinn/ban.mp3",
+      "duration": 3.56,
+      "gainDb": -2.4,
+      "before": {
+        "integrated": -15.6,
+        "momentaryMax": -11.2,
+        "truePeak": -2.4
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -13.5,
+        "truePeak": -4.8
+      }
+    },
+    {
+      "ogg": "audio/voice/reksai/choose.ogg",
+      "mp3": "audio/voice/reksai/choose.mp3",
+      "duration": 3.91,
+      "gainDb": -6.4,
+      "before": {
+        "integrated": -11.6,
+        "momentaryMax": -10.2,
+        "truePeak": 3.3
+      },
+      "after": {
+        "integrated": -18.3,
+        "momentaryMax": -16.9,
+        "truePeak": -3.8
+      }
+    },
+    {
+      "ogg": "audio/voice/reksai/ban.ogg",
+      "mp3": "audio/voice/reksai/ban.mp3",
+      "duration": 3.08,
+      "gainDb": 0.5,
+      "before": {
+        "integrated": -18.5,
+        "momentaryMax": -16.5,
+        "truePeak": -5
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -16,
+        "truePeak": -4.5
+      }
+    },
+    {
+      "ogg": "audio/voice/samira/choose.ogg",
+      "mp3": "audio/voice/samira/choose.mp3",
+      "duration": 3,
+      "gainDb": -2.4,
+      "before": {
+        "integrated": -15.6,
+        "momentaryMax": -11.9,
+        "truePeak": -2.3
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.3,
+        "truePeak": -4.8
+      }
+    },
+    {
+      "ogg": "audio/voice/samira/ban.ogg",
+      "mp3": "audio/voice/samira/ban.mp3",
+      "duration": 2.4,
+      "gainDb": -1.6,
+      "before": {
+        "integrated": -16.4,
+        "momentaryMax": -12.6,
+        "truePeak": -1.8
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.3,
+        "truePeak": -4.5
+      }
+    },
+    {
+      "ogg": "audio/voice/sejuani/choose.ogg",
+      "mp3": "audio/voice/sejuani/choose.mp3",
+      "duration": 3.73,
+      "gainDb": -0.3,
+      "before": {
+        "integrated": -17.7,
+        "momentaryMax": -13.9,
+        "truePeak": -3.4
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.4,
+        "truePeak": -3.6
+      }
+    },
+    {
+      "ogg": "audio/voice/shen/choose.ogg",
+      "mp3": "audio/voice/shen/choose.mp3",
+      "duration": 2.61,
+      "gainDb": -1.6,
+      "before": {
+        "integrated": -16.4,
+        "momentaryMax": -13.5,
+        "truePeak": 0.4
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -15.4,
+        "truePeak": -2.4
+      }
+    },
+    {
+      "ogg": "audio/voice/sejuani/ban.ogg",
+      "mp3": "audio/voice/sejuani/ban.mp3",
+      "duration": 2.66,
+      "gainDb": -1.4,
+      "before": {
+        "integrated": -16.6,
+        "momentaryMax": -13.3,
+        "truePeak": -1.6
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.7,
+        "truePeak": -3.4
+      }
+    },
+    {
+      "ogg": "audio/voice/shen/ban.ogg",
+      "mp3": "audio/voice/shen/ban.mp3",
+      "duration": 0.85,
+      "gainDb": -0.3,
+      "before": {
+        "integrated": -17.7,
+        "momentaryMax": -16.6,
+        "truePeak": -1.1
+      },
+      "after": {
+        "integrated": -18.6,
+        "momentaryMax": -17.5,
+        "truePeak": -2
+      }
+    },
+    {
+      "ogg": "audio/voice/sion/ban.ogg",
+      "mp3": "audio/voice/sion/ban.mp3",
+      "duration": 3.58,
+      "gainDb": 5.7,
+      "before": {
+        "integrated": -23.7,
+        "momentaryMax": -21.8,
+        "truePeak": -9.9
+      },
+      "after": {
+        "integrated": -18.3,
+        "momentaryMax": -16.5,
+        "truePeak": -4
+      }
+    },
+    {
+      "ogg": "audio/voice/sion/choose.ogg",
+      "mp3": "audio/voice/sion/choose.mp3",
+      "duration": 3.81,
+      "gainDb": 5.2,
+      "before": {
+        "integrated": -23.2,
+        "momentaryMax": -20,
+        "truePeak": -7.9
+      },
+      "after": {
+        "integrated": -18.4,
+        "momentaryMax": -15.2,
+        "truePeak": -2.7
+      }
+    },
+    {
+      "ogg": "audio/voice/sona/choose.ogg",
+      "mp3": "audio/voice/sona/choose.mp3",
+      "duration": 6.93,
+      "gainDb": -8.6,
+      "before": {
+        "integrated": -9.4,
+        "momentaryMax": -7.4,
+        "truePeak": 2.8
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -16,
+        "truePeak": -5.8
+      }
+    },
+    {
+      "ogg": "audio/voice/sona/ban.ogg",
+      "mp3": "audio/voice/sona/ban.mp3",
+      "duration": 4.57,
+      "gainDb": -9.2,
+      "before": {
+        "integrated": -8.8,
+        "momentaryMax": -6.7,
+        "truePeak": 1.4
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -15.9,
+        "truePeak": -7.8
+      }
+    },
+    {
+      "ogg": "audio/voice/swain/choose.ogg",
+      "mp3": "audio/voice/swain/choose.mp3",
+      "duration": 3.62,
+      "gainDb": -5.5,
+      "before": {
+        "integrated": -12.5,
+        "momentaryMax": -8.7,
+        "truePeak": 5
+      },
+      "after": {
+        "integrated": -18.3,
+        "momentaryMax": -14.3,
+        "truePeak": -2.3
+      }
+    },
+    {
+      "ogg": "audio/voice/syndra/choose.ogg",
+      "mp3": "audio/voice/syndra/choose.mp3",
+      "duration": 4.48,
+      "gainDb": -4.7,
+      "before": {
+        "integrated": -13.3,
+        "momentaryMax": -8.5,
+        "truePeak": 1.2
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -13.2,
+        "truePeak": -3.4
+      }
+    },
+    {
+      "ogg": "audio/voice/swain/ban.ogg",
+      "mp3": "audio/voice/swain/ban.mp3",
+      "duration": 4.77,
+      "gainDb": -3.7,
+      "before": {
+        "integrated": -14.3,
+        "momentaryMax": -9.9,
+        "truePeak": 3.5
+      },
+      "after": {
+        "integrated": -18.5,
+        "momentaryMax": -14.3,
+        "truePeak": -2.3
+      }
+    },
+    {
+      "ogg": "audio/voice/talon/ban.ogg",
+      "mp3": "audio/voice/talon/ban.mp3",
+      "duration": 1.68,
+      "gainDb": -2.2,
+      "before": {
+        "integrated": -15.8,
+        "momentaryMax": -12.6,
+        "truePeak": 1.5
+      },
+      "after": {
+        "integrated": -18.4,
+        "momentaryMax": -15.2,
+        "truePeak": -2.2
+      }
+    },
+    {
+      "ogg": "audio/voice/talon/choose.ogg",
+      "mp3": "audio/voice/talon/choose.mp3",
+      "duration": 3.2,
+      "gainDb": -4.9,
+      "before": {
+        "integrated": -13.1,
+        "momentaryMax": -10.9,
+        "truePeak": 1.6
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -15.9,
+        "truePeak": -3.3
+      }
+    },
+    {
+      "ogg": "audio/voice/syndra/ban.ogg",
+      "mp3": "audio/voice/syndra/ban.mp3",
+      "duration": 5.68,
+      "gainDb": -2.2,
+      "before": {
+        "integrated": -15.8,
+        "momentaryMax": -12.2,
+        "truePeak": -1.2
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -14.5,
+        "truePeak": -3.1
+      }
+    },
+    {
+      "ogg": "audio/voice/trundle/ban.ogg",
+      "mp3": "audio/voice/trundle/ban.mp3",
+      "duration": 1.73,
+      "gainDb": -4.2,
+      "before": {
+        "integrated": -13.8,
+        "momentaryMax": -11.1,
+        "truePeak": -0.5
+      },
+      "after": {
+        "integrated": -18.3,
+        "momentaryMax": -15.6,
+        "truePeak": -4.5
+      }
+    },
+    {
+      "ogg": "audio/voice/teemo/choose.ogg",
+      "mp3": "audio/voice/teemo/choose.mp3",
+      "duration": 2.68,
+      "gainDb": 0.4,
+      "before": {
+        "integrated": -18.4,
+        "momentaryMax": -14.6,
+        "truePeak": -4.2
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -14.2,
+        "truePeak": -3.9
+      }
+    },
+    {
+      "ogg": "audio/voice/teemo/ban.ogg",
+      "mp3": "audio/voice/teemo/ban.mp3",
+      "duration": 5.34,
+      "gainDb": 1.5,
+      "before": {
+        "integrated": -19.5,
+        "momentaryMax": -16.4,
+        "truePeak": -4.6
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.9,
+        "truePeak": -4.2
+      }
+    },
+    {
+      "ogg": "audio/voice/trundle/choose.ogg",
+      "mp3": "audio/voice/trundle/choose.mp3",
+      "duration": 2.71,
+      "gainDb": -2.8,
+      "before": {
+        "integrated": -15.2,
+        "momentaryMax": -12.8,
+        "truePeak": 0
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -15.7,
+        "truePeak": -2.7
+      }
+    },
+    {
+      "ogg": "audio/voice/tryndamere/ban.ogg",
+      "mp3": "audio/voice/tryndamere/ban.mp3",
+      "duration": 1.75,
+      "gainDb": -5,
+      "before": {
+        "integrated": -13,
+        "momentaryMax": -10.7,
+        "truePeak": 0.8
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -15.9,
+        "truePeak": -4.9
+      }
+    },
+    {
+      "ogg": "audio/voice/tryndamere/choose.ogg",
+      "mp3": "audio/voice/tryndamere/choose.mp3",
+      "duration": 3.52,
+      "gainDb": -7.9,
+      "before": {
+        "integrated": -10.1,
+        "momentaryMax": -7.6,
+        "truePeak": 1
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -15.7,
+        "truePeak": -6.7
+      }
+    },
+    {
+      "ogg": "audio/voice/udyr/choose.ogg",
+      "mp3": "audio/voice/udyr/choose.mp3",
+      "duration": 3.74,
+      "gainDb": -0.7,
+      "before": {
+        "integrated": -17.3,
+        "momentaryMax": -13.2,
+        "truePeak": -1
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14,
+        "truePeak": -2.7
+      }
+    },
+    {
+      "ogg": "audio/voice/udyr/ban.ogg",
+      "mp3": "audio/voice/udyr/ban.mp3",
+      "duration": 2.1,
+      "gainDb": 0.4,
+      "before": {
+        "integrated": -18.4,
+        "momentaryMax": -15.8,
+        "truePeak": -3.2
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -15.7,
+        "truePeak": -2.8
+      }
+    },
+    {
+      "ogg": "audio/voice/vayne/ban.ogg",
+      "mp3": "audio/voice/vayne/ban.mp3",
+      "duration": 2.88,
+      "gainDb": -2.4,
+      "before": {
+        "integrated": -15.6,
+        "momentaryMax": -13.7,
+        "truePeak": 1.4
+      },
+      "after": {
+        "integrated": -18.4,
+        "momentaryMax": -16.8,
+        "truePeak": -1.9
+      }
+    },
+    {
+      "ogg": "audio/voice/vayne/choose.ogg",
+      "mp3": "audio/voice/vayne/choose.mp3",
+      "duration": 5.51,
+      "gainDb": -6.3,
+      "before": {
+        "integrated": -11.7,
+        "momentaryMax": -8,
+        "truePeak": 1.2
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.3,
+        "truePeak": -5.2
+      }
+    },
+    {
+      "ogg": "audio/voice/velkoz/choose.ogg",
+      "mp3": "audio/voice/velkoz/choose.mp3",
+      "duration": 5.57,
+      "gainDb": -2.8,
+      "before": {
+        "integrated": -15.2,
+        "momentaryMax": -11.1,
+        "truePeak": 1.4
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -14.2,
+        "truePeak": -2.3
+      }
+    },
+    {
+      "ogg": "audio/voice/vladimir/choose.ogg",
+      "mp3": "audio/voice/vladimir/choose.mp3",
+      "duration": 3,
+      "gainDb": -5.6,
+      "before": {
+        "integrated": -12.4,
+        "momentaryMax": -7.4,
+        "truePeak": 0.8
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -13.4,
+        "truePeak": -4.5
+      }
+    },
+    {
+      "ogg": "audio/voice/velkoz/ban.ogg",
+      "mp3": "audio/voice/velkoz/ban.mp3",
+      "duration": 4.44,
+      "gainDb": -3.9,
+      "before": {
+        "integrated": -14.1,
+        "momentaryMax": -11.3,
+        "truePeak": 0.1
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -15.4,
+        "truePeak": -3.8
+      }
+    },
+    {
+      "ogg": "audio/voice/vladimir/ban.ogg",
+      "mp3": "audio/voice/vladimir/ban.mp3",
+      "duration": 4.39,
+      "gainDb": -4.3,
+      "before": {
+        "integrated": -13.7,
+        "momentaryMax": -7.9,
+        "truePeak": 2.4
+      },
+      "after": {
+        "integrated": -18.3,
+        "momentaryMax": -12.5,
+        "truePeak": -2.3
+      }
+    },
+    {
+      "ogg": "audio/voice/volibear/ban.ogg",
+      "mp3": "audio/voice/volibear/ban.mp3",
+      "duration": 6.59,
+      "gainDb": -10.8,
+      "before": {
+        "integrated": -7.2,
+        "momentaryMax": -4.9,
+        "truePeak": 5.9
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -16,
+        "truePeak": -5.4
+      }
+    },
+    {
+      "ogg": "audio/voice/volibear/choose.ogg",
+      "mp3": "audio/voice/volibear/choose.mp3",
+      "duration": 9.72,
+      "gainDb": -9.3,
+      "before": {
+        "integrated": -8.7,
+        "momentaryMax": -4.8,
+        "truePeak": 5.3
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -14.2,
+        "truePeak": -4.2
+      }
+    },
+    {
+      "ogg": "audio/voice/xinzhao/choose.ogg",
+      "mp3": "audio/voice/xinzhao/choose.mp3",
+      "duration": 4.75,
+      "gainDb": -1.5,
+      "before": {
+        "integrated": -16.5,
+        "momentaryMax": -13.2,
+        "truePeak": -0.5
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -14.8,
+        "truePeak": -2.4
+      }
+    },
+    {
+      "ogg": "audio/voice/xinzhao/ban.ogg",
+      "mp3": "audio/voice/xinzhao/ban.mp3",
+      "duration": 4.68,
+      "gainDb": -0.8,
+      "before": {
+        "integrated": -17.2,
+        "momentaryMax": -13.5,
+        "truePeak": 0.6
+      },
+      "after": {
+        "integrated": -18.4,
+        "momentaryMax": -14.8,
+        "truePeak": -2.4
+      }
+    },
+    {
+      "ogg": "audio/voice/yasuo/choose.ogg",
+      "mp3": "audio/voice/yasuo/choose.mp3",
+      "duration": 5.19,
+      "gainDb": 0.2,
+      "before": {
+        "integrated": -18.5,
+        "momentaryMax": -11,
+        "truePeak": 0.3
+      },
+      "after": {
+        "integrated": -19.2,
+        "momentaryMax": -12.4,
+        "truePeak": -1.6
+      }
+    },
+    {
+      "ogg": "audio/voice/yasuo/ban.ogg",
+      "mp3": "audio/voice/yasuo/ban.mp3",
+      "duration": 2.81,
+      "gainDb": -0.6,
+      "before": {
+        "integrated": -18.3,
+        "momentaryMax": -15.4,
+        "truePeak": 1.1
+      },
+      "after": {
+        "integrated": -19.3,
+        "momentaryMax": -17,
+        "truePeak": -2.6
+      }
+    },
+    {
+      "ogg": "audio/voice/yone/choose.ogg",
+      "mp3": "audio/voice/yone/choose.mp3",
+      "duration": 4.5,
+      "gainDb": -3.9,
+      "before": {
+        "integrated": -14.1,
+        "momentaryMax": -10.5,
+        "truePeak": -0.1
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -14.5,
+        "truePeak": -4.2
+      }
+    },
+    {
+      "ogg": "audio/voice/yone/ban.ogg",
+      "mp3": "audio/voice/yone/ban.mp3",
+      "duration": 4.49,
+      "gainDb": -2.9,
+      "before": {
+        "integrated": -15.1,
+        "momentaryMax": -11.3,
+        "truePeak": 0.8
+      },
+      "after": {
+        "integrated": -18.2,
+        "momentaryMax": -14.6,
+        "truePeak": -2.6
+      }
+    },
+    {
+      "ogg": "audio/voice/zed/ban.ogg",
+      "mp3": "audio/voice/zed/ban.mp3",
+      "duration": 2.95,
+      "gainDb": -4,
+      "before": {
+        "integrated": -14,
+        "momentaryMax": -11.6,
+        "truePeak": -0.3
+      },
+      "after": {
+        "integrated": -18,
+        "momentaryMax": -15.6,
+        "truePeak": -4.2
+      }
+    },
+    {
+      "ogg": "audio/voice/zed/choose.ogg",
+      "mp3": "audio/voice/zed/choose.mp3",
+      "duration": 5.84,
+      "gainDb": 0.2,
+      "before": {
+        "integrated": -18.2,
+        "momentaryMax": -14.8,
+        "truePeak": -0.8
+      },
+      "after": {
+        "integrated": -18.1,
+        "momentaryMax": -14.6,
+        "truePeak": -2.4
+      }
+    }
+  ]
+}

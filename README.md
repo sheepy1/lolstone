@@ -25,9 +25,15 @@ pnpm arena         # AI 互打统计，例：pnpm arena --a l1 --b l1 --games 25
 pnpm smoke         # L0 对 L0 自动打 200 局
 ```
 
+## 部署
+
+纯静态站点：`pnpm build` 出 `dist/`，任何能克隆公开仓库、跑 `pnpm install --frozen-lockfile --prod=false` 和 `pnpm run build`、
+托管 `dist/` 的平台都能部署，pnpm 版本按 `package.json` 的 `packageManager`。素材成品在 git 里，构建时不跑抓取脚本。
+`/assets/` 下的文件名带内容哈希，可以长期缓存；美术和音频文件改了内容但没改名时，发布后浏览器可能要强制刷新。
+
 ## 拉取素材
 
-英雄头像、竖版原画、语音、音效和音乐都不进 git，第一次 clone 之后在仓库根目录跑：（不跑 `fetch:sfx` 和 `normalize:audio` 的话，游戏里没有音效和音乐，请求全是 404）。开发环境默认有声，地址带 `?mute=1` 静音。
+英雄头像、竖版原画、语音、音效和音乐的成品都在 git 里（`public/art`、`public/audio`），clone 下来就能玩，部署时也不用再跑脚本。要换版本或刷新素材时在仓库根目录跑下面的脚本（`fetch:sfx` 和 `normalize:audio` 要先装 ffmpeg）。开发环境默认有声，地址带 `?mute=1` 静音。
 
 ```bash
 pnpm fetch:art         # 等于 node scripts/fetch-art.ts

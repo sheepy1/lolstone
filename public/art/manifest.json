@@ -1,0 +1,996 @@
+{
+  "generatedAt": "2026-10-19T12:48:20.355Z",
+  "source": "ddragon",
+  "version": "16.20.1",
+  "champions": [
+    {
+      "key": "Teemo",
+      "dir": "teemo",
+      "id": 17,
+      "name": "提莫",
+      "title": "迅捷斥候",
+      "icon": {
+        "path": "art/teemo/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Teemo.png",
+        "bytes": 21456,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/teemo/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Teemo_0.jpg",
+        "bytes": 50982,
+        "version": null
+      }
+    },
+    {
+      "key": "Lulu",
+      "dir": "lulu",
+      "id": 117,
+      "name": "璐璐",
+      "title": "仙灵女巫",
+      "icon": {
+        "path": "art/lulu/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Lulu.png",
+        "bytes": 29539,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/lulu/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Lulu_0.jpg",
+        "bytes": 47923,
+        "version": null
+      }
+    },
+    {
+      "key": "Khazix",
+      "dir": "khazix",
+      "id": 121,
+      "name": "卡兹克",
+      "title": "虚空掠夺者",
+      "icon": {
+        "path": "art/khazix/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Khazix.png",
+        "bytes": 23545,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/khazix/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Khazix_0.jpg",
+        "bytes": 41422,
+        "version": null
+      }
+    },
+    {
+      "key": "RekSai",
+      "dir": "reksai",
+      "id": 421,
+      "name": "雷克塞",
+      "title": "虚空遁地兽",
+      "icon": {
+        "path": "art/reksai/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/RekSai.png",
+        "bytes": 27922,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/reksai/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/RekSai_0.jpg",
+        "bytes": 43753,
+        "version": null
+      }
+    },
+    {
+      "key": "Velkoz",
+      "dir": "velkoz",
+      "id": 161,
+      "name": "维克兹",
+      "title": "虚空之眼",
+      "icon": {
+        "path": "art/velkoz/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Velkoz.png",
+        "bytes": 29187,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/velkoz/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Velkoz_0.jpg",
+        "bytes": 39853,
+        "version": null
+      }
+    },
+    {
+      "key": "Chogath",
+      "dir": "chogath",
+      "id": 31,
+      "name": "科加斯",
+      "title": "虚空恐惧",
+      "icon": {
+        "path": "art/chogath/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Chogath.png",
+        "bytes": 32006,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/chogath/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Chogath_0.jpg",
+        "bytes": 45477,
+        "version": null
+      }
+    },
+    {
+      "key": "Lucian",
+      "dir": "lucian",
+      "id": 236,
+      "name": "卢锡安",
+      "title": "圣枪游侠",
+      "icon": {
+        "path": "art/lucian/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Lucian.png",
+        "bytes": 27998,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/lucian/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Lucian_0.jpg",
+        "bytes": 32009,
+        "version": null
+      }
+    },
+    {
+      "key": "Vayne",
+      "dir": "vayne",
+      "id": 67,
+      "name": "薇恩",
+      "title": "暗夜猎手",
+      "icon": {
+        "path": "art/vayne/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Vayne.png",
+        "bytes": 28367,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/vayne/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Vayne_0.jpg",
+        "bytes": 49806,
+        "version": null
+      }
+    },
+    {
+      "key": "Poppy",
+      "dir": "poppy",
+      "id": 78,
+      "name": "波比",
+      "title": "圣锤之毅",
+      "icon": {
+        "path": "art/poppy/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Poppy.png",
+        "bytes": 31447,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/poppy/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Poppy_0.jpg",
+        "bytes": 56845,
+        "version": null
+      }
+    },
+    {
+      "key": "XinZhao",
+      "dir": "xinzhao",
+      "id": 5,
+      "name": "赵信",
+      "title": "德邦总管",
+      "icon": {
+        "path": "art/xinzhao/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/XinZhao.png",
+        "bytes": 35410,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/xinzhao/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/XinZhao_0.jpg",
+        "bytes": 45686,
+        "version": null
+      }
+    },
+    {
+      "key": "Quinn",
+      "dir": "quinn",
+      "id": 133,
+      "name": "奎因",
+      "title": "德玛西亚之翼",
+      "icon": {
+        "path": "art/quinn/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Quinn.png",
+        "bytes": 30154,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/quinn/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Quinn_0.jpg",
+        "bytes": 44618,
+        "version": null
+      }
+    },
+    {
+      "key": "Lux",
+      "dir": "lux",
+      "id": 99,
+      "name": "拉克丝",
+      "title": "光辉女郎",
+      "icon": {
+        "path": "art/lux/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Lux.png",
+        "bytes": 29188,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/lux/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Lux_0.jpg",
+        "bytes": 59727,
+        "version": null
+      }
+    },
+    {
+      "key": "Fiora",
+      "dir": "fiora",
+      "id": 114,
+      "name": "菲奥娜",
+      "title": "无双剑姬",
+      "icon": {
+        "path": "art/fiora/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Fiora.png",
+        "bytes": 28094,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/fiora/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Fiora_0.jpg",
+        "bytes": 46460,
+        "version": null
+      }
+    },
+    {
+      "key": "Sona",
+      "dir": "sona",
+      "id": 37,
+      "name": "娑娜",
+      "title": "琴瑟仙女",
+      "icon": {
+        "path": "art/sona/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Sona.png",
+        "bytes": 26340,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/sona/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Sona_0.jpg",
+        "bytes": 49166,
+        "version": null
+      }
+    },
+    {
+      "key": "JarvanIV",
+      "dir": "jarvaniv",
+      "id": 59,
+      "name": "嘉文四世",
+      "title": "德玛西亚皇子",
+      "icon": {
+        "path": "art/jarvaniv/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/JarvanIV.png",
+        "bytes": 28504,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/jarvaniv/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/JarvanIV_0.jpg",
+        "bytes": 63154,
+        "version": null
+      }
+    },
+    {
+      "key": "Galio",
+      "dir": "galio",
+      "id": 3,
+      "name": "加里奥",
+      "title": "正义巨像",
+      "icon": {
+        "path": "art/galio/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Galio.png",
+        "bytes": 24739,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/galio/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Galio_0.jpg",
+        "bytes": 48214,
+        "version": null
+      }
+    },
+    {
+      "key": "Kayle",
+      "dir": "kayle",
+      "id": 10,
+      "name": "凯尔",
+      "title": "正义天使",
+      "icon": {
+        "path": "art/kayle/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Kayle.png",
+        "bytes": 24103,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/kayle/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Kayle_0.jpg",
+        "bytes": 42596,
+        "version": null
+      }
+    },
+    {
+      "key": "Annie",
+      "dir": "annie",
+      "id": 1,
+      "name": "安妮",
+      "title": "黑暗之女",
+      "icon": {
+        "path": "art/annie/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Annie.png",
+        "bytes": 30267,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/annie/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Annie_0.jpg",
+        "bytes": 51418,
+        "version": null
+      }
+    },
+    {
+      "key": "Kled",
+      "dir": "kled",
+      "id": 240,
+      "name": "克烈",
+      "title": "暴怒骑士",
+      "icon": {
+        "path": "art/kled/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Kled.png",
+        "bytes": 28478,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/kled/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Kled_0.jpg",
+        "bytes": 39174,
+        "version": null
+      }
+    },
+    {
+      "key": "Talon",
+      "dir": "talon",
+      "id": 91,
+      "name": "泰隆",
+      "title": "刀锋之影",
+      "icon": {
+        "path": "art/talon/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Talon.png",
+        "bytes": 26989,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/talon/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Talon_0.jpg",
+        "bytes": 49535,
+        "version": null
+      }
+    },
+    {
+      "key": "Draven",
+      "dir": "draven",
+      "id": 119,
+      "name": "德莱文",
+      "title": "荣耀行刑官",
+      "icon": {
+        "path": "art/draven/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Draven.png",
+        "bytes": 26400,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/draven/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Draven_0.jpg",
+        "bytes": 40963,
+        "version": null
+      }
+    },
+    {
+      "key": "Katarina",
+      "dir": "katarina",
+      "id": 55,
+      "name": "卡特琳娜",
+      "title": "不祥之刃",
+      "icon": {
+        "path": "art/katarina/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Katarina.png",
+        "bytes": 26732,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/katarina/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Katarina_0.jpg",
+        "bytes": 55234,
+        "version": null
+      }
+    },
+    {
+      "key": "Vladimir",
+      "dir": "vladimir",
+      "id": 8,
+      "name": "弗拉基米尔",
+      "title": "猩红收割者",
+      "icon": {
+        "path": "art/vladimir/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Vladimir.png",
+        "bytes": 24626,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/vladimir/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Vladimir_0.jpg",
+        "bytes": 50903,
+        "version": null
+      }
+    },
+    {
+      "key": "Samira",
+      "dir": "samira",
+      "id": 360,
+      "name": "莎弥拉",
+      "title": "沙漠玫瑰",
+      "icon": {
+        "path": "art/samira/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Samira.png",
+        "bytes": 24690,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/samira/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Samira_0.jpg",
+        "bytes": 40937,
+        "version": null
+      }
+    },
+    {
+      "key": "Sion",
+      "dir": "sion",
+      "id": 14,
+      "name": "赛恩",
+      "title": "亡灵战神",
+      "icon": {
+        "path": "art/sion/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Sion.png",
+        "bytes": 26066,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/sion/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Sion_0.jpg",
+        "bytes": 42177,
+        "version": null
+      }
+    },
+    {
+      "key": "Swain",
+      "dir": "swain",
+      "id": 50,
+      "name": "斯维因",
+      "title": "诺克萨斯统领",
+      "icon": {
+        "path": "art/swain/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Swain.png",
+        "bytes": 24066,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/swain/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Swain_0.jpg",
+        "bytes": 31653,
+        "version": null
+      }
+    },
+    {
+      "key": "Kennen",
+      "dir": "kennen",
+      "id": 85,
+      "name": "凯南",
+      "title": "狂暴之心",
+      "icon": {
+        "path": "art/kennen/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Kennen.png",
+        "bytes": 26105,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/kennen/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Kennen_0.jpg",
+        "bytes": 36978,
+        "version": null
+      }
+    },
+    {
+      "key": "Akali",
+      "dir": "akali",
+      "id": 84,
+      "name": "阿卡丽",
+      "title": "离群之刺",
+      "icon": {
+        "path": "art/akali/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Akali.png",
+        "bytes": 27191,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/akali/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Akali_0.jpg",
+        "bytes": 44259,
+        "version": null
+      }
+    },
+    {
+      "key": "Karma",
+      "dir": "karma",
+      "id": 43,
+      "name": "卡尔玛",
+      "title": "天启者",
+      "icon": {
+        "path": "art/karma/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Karma.png",
+        "bytes": 30154,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/karma/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Karma_0.jpg",
+        "bytes": 49169,
+        "version": null
+      }
+    },
+    {
+      "key": "Zed",
+      "dir": "zed",
+      "id": 238,
+      "name": "劫",
+      "title": "影流之主",
+      "icon": {
+        "path": "art/zed/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Zed.png",
+        "bytes": 28879,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/zed/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Zed_0.jpg",
+        "bytes": 44630,
+        "version": null
+      }
+    },
+    {
+      "key": "Yasuo",
+      "dir": "yasuo",
+      "id": 157,
+      "name": "亚索",
+      "title": "疾风剑豪",
+      "icon": {
+        "path": "art/yasuo/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Yasuo.png",
+        "bytes": 28213,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/yasuo/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Yasuo_0.jpg",
+        "bytes": 53646,
+        "version": null
+      }
+    },
+    {
+      "key": "LeeSin",
+      "dir": "leesin",
+      "id": 64,
+      "name": "李青",
+      "title": "盲僧",
+      "icon": {
+        "path": "art/leesin/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/LeeSin.png",
+        "bytes": 24979,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/leesin/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/LeeSin_0.jpg",
+        "bytes": 36736,
+        "version": null
+      }
+    },
+    {
+      "key": "Shen",
+      "dir": "shen",
+      "id": 98,
+      "name": "慎",
+      "title": "暮光之眼",
+      "icon": {
+        "path": "art/shen/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Shen.png",
+        "bytes": 25298,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/shen/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Shen_0.jpg",
+        "bytes": 44277,
+        "version": null
+      }
+    },
+    {
+      "key": "Irelia",
+      "dir": "irelia",
+      "id": 39,
+      "name": "艾瑞莉娅",
+      "title": "刀锋舞者",
+      "icon": {
+        "path": "art/irelia/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Irelia.png",
+        "bytes": 29037,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/irelia/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Irelia_0.jpg",
+        "bytes": 48197,
+        "version": null
+      }
+    },
+    {
+      "key": "MasterYi",
+      "dir": "masteryi",
+      "id": 11,
+      "name": "易",
+      "title": "无极剑圣",
+      "icon": {
+        "path": "art/masteryi/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/MasterYi.png",
+        "bytes": 29421,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/masteryi/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/MasterYi_0.jpg",
+        "bytes": 53949,
+        "version": null
+      }
+    },
+    {
+      "key": "Yone",
+      "dir": "yone",
+      "id": 777,
+      "name": "永恩",
+      "title": "封魔剑魂",
+      "icon": {
+        "path": "art/yone/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Yone.png",
+        "bytes": 26864,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/yone/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Yone_0.jpg",
+        "bytes": 48850,
+        "version": null
+      }
+    },
+    {
+      "key": "Syndra",
+      "dir": "syndra",
+      "id": 134,
+      "name": "辛德拉",
+      "title": "暗黑元首",
+      "icon": {
+        "path": "art/syndra/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Syndra.png",
+        "bytes": 30524,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/syndra/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Syndra_0.jpg",
+        "bytes": 49648,
+        "version": null
+      }
+    },
+    {
+      "key": "Olaf",
+      "dir": "olaf",
+      "id": 2,
+      "name": "奥拉夫",
+      "title": "狂战士",
+      "icon": {
+        "path": "art/olaf/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Olaf.png",
+        "bytes": 30509,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/olaf/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Olaf_0.jpg",
+        "bytes": 49571,
+        "version": null
+      }
+    },
+    {
+      "key": "Udyr",
+      "dir": "udyr",
+      "id": 77,
+      "name": "乌迪尔",
+      "title": "兽灵行者",
+      "icon": {
+        "path": "art/udyr/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Udyr.png",
+        "bytes": 29169,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/udyr/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Udyr_0.jpg",
+        "bytes": 38319,
+        "version": null
+      }
+    },
+    {
+      "key": "Braum",
+      "dir": "braum",
+      "id": 201,
+      "name": "布隆",
+      "title": "弗雷尔卓德之心",
+      "icon": {
+        "path": "art/braum/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Braum.png",
+        "bytes": 23674,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/braum/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Braum_0.jpg",
+        "bytes": 43050,
+        "version": null
+      }
+    },
+    {
+      "key": "Sejuani",
+      "dir": "sejuani",
+      "id": 113,
+      "name": "瑟庄妮",
+      "title": "北地之怒",
+      "icon": {
+        "path": "art/sejuani/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Sejuani.png",
+        "bytes": 31761,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/sejuani/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Sejuani_0.jpg",
+        "bytes": 49439,
+        "version": null
+      }
+    },
+    {
+      "key": "Anivia",
+      "dir": "anivia",
+      "id": 34,
+      "name": "艾尼维亚",
+      "title": "冰晶凤凰",
+      "icon": {
+        "path": "art/anivia/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Anivia.png",
+        "bytes": 27008,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/anivia/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Anivia_0.jpg",
+        "bytes": 60945,
+        "version": null
+      }
+    },
+    {
+      "key": "Nunu",
+      "dir": "nunu",
+      "id": 20,
+      "name": "努努和威朗普",
+      "title": "雪原双子",
+      "icon": {
+        "path": "art/nunu/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Nunu.png",
+        "bytes": 27502,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/nunu/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Nunu_0.jpg",
+        "bytes": 44510,
+        "version": null
+      }
+    },
+    {
+      "key": "Tryndamere",
+      "dir": "tryndamere",
+      "id": 23,
+      "name": "泰达米尔",
+      "title": "蛮族之王",
+      "icon": {
+        "path": "art/tryndamere/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Tryndamere.png",
+        "bytes": 31840,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/tryndamere/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Tryndamere_0.jpg",
+        "bytes": 58086,
+        "version": null
+      }
+    },
+    {
+      "key": "Trundle",
+      "dir": "trundle",
+      "id": 48,
+      "name": "特朗德尔",
+      "title": "巨魔之王",
+      "icon": {
+        "path": "art/trundle/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Trundle.png",
+        "bytes": 28260,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/trundle/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Trundle_0.jpg",
+        "bytes": 42586,
+        "version": null
+      }
+    },
+    {
+      "key": "Ornn",
+      "dir": "ornn",
+      "id": 516,
+      "name": "奥恩",
+      "title": "山隐之焰",
+      "icon": {
+        "path": "art/ornn/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Ornn.png",
+        "bytes": 25086,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/ornn/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Ornn_0.jpg",
+        "bytes": 47365,
+        "version": null
+      }
+    },
+    {
+      "key": "Lissandra",
+      "dir": "lissandra",
+      "id": 127,
+      "name": "丽桑卓",
+      "title": "冰霜女巫",
+      "icon": {
+        "path": "art/lissandra/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Lissandra.png",
+        "bytes": 28806,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/lissandra/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Lissandra_0.jpg",
+        "bytes": 40245,
+        "version": null
+      }
+    },
+    {
+      "key": "Volibear",
+      "dir": "volibear",
+      "id": 106,
+      "name": "沃利贝尔",
+      "title": "不灭狂雷",
+      "icon": {
+        "path": "art/volibear/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Volibear.png",
+        "bytes": 29127,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/volibear/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Volibear_0.jpg",
+        "bytes": 49148,
+        "version": null
+      }
+    },
+    {
+      "key": "Garen",
+      "dir": "garen",
+      "id": 86,
+      "name": "盖伦",
+      "title": "德玛西亚之力",
+      "icon": {
+        "path": "art/garen/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Garen.png",
+        "bytes": 30705,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/garen/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Garen_0.jpg",
+        "bytes": 52371,
+        "version": null
+      }
+    },
+    {
+      "key": "Darius",
+      "dir": "darius",
+      "id": 122,
+      "name": "德莱厄斯",
+      "title": "诺克萨斯之手",
+      "icon": {
+        "path": "art/darius/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Darius.png",
+        "bytes": 27666,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/darius/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Darius_0.jpg",
+        "bytes": 42720,
+        "version": null
+      }
+    },
+    {
+      "key": "Ahri",
+      "dir": "ahri",
+      "id": 103,
+      "name": "阿狸",
+      "title": "九尾妖狐",
+      "icon": {
+        "path": "art/ahri/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Ahri.png",
+        "bytes": 28511,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/ahri/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Ahri_0.jpg",
+        "bytes": 57774,
+        "version": null
+      }
+    },
+    {
+      "key": "Ashe",
+      "dir": "ashe",
+      "id": 22,
+      "name": "艾希",
+      "title": "寒冰射手",
+      "icon": {
+        "path": "art/ashe/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Ashe.png",
+        "bytes": 32121,
+        "version": "16.20.1"
+      },
+      "loading": {
+        "path": "art/ashe/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Ashe_0.jpg",
+        "bytes": 48832,
+        "version": null
+      }
+    }
+  ],
+  "failed": []
+}

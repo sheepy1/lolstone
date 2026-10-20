@@ -38,7 +38,7 @@ import { OPENING } from '../../presentation/animations/mulliganStart';
 import { TURN_END } from '../../presentation/animations/turnEnd';
 import { FLOW } from '../../presentation/fx/flow';
 import { MANA_FX } from '../../scene/tableParts';
-import { AI_PACE } from '../../app/match';
+import { AI_PACE } from '../../server/table';
 import { BOUNCE } from '../../presentation/animations/bounce';
 import { TRANSFORM } from '../../presentation/animations/transform';
 import { TRIGGER } from '../../presentation/animations/trigger';

@@ -115,18 +115,72 @@ export function actionKey(action: Action): string {
   }
 }
 
-// 检查动作是否合法，合法返回 null，否则返回错误说明。
-export function checkAction(state: GameState, action: Action): string | null {
-  let key: string;
-  let side: Side;
-  try {
-    key = actionKey(action);
-    if (key === undefined) return `unknown action kind`;
-    side = action.kind === 'mulligan' ? action.player : state.current;
-  } catch {
-    return 'malformed action';
+// 动作字段的形状校验（docs/online.md 4.2 第 2 步、5.5 第 3 条）。动作可能来自网络，这里先把每个字段的类型和整数范围
+// 查一遍，不对直接返回原因。不能靠后面的逻辑兜底：handIndex 传字符串 "0" 时 actionKey 拼出的键和合法动作一样，
+// 但 applyAction 里按严格相等找手牌找不到，法术生效了牌还在手里（online.md 2.3 第三项）。
+// 可选字段的值是 undefined 时当作没给；不认识的字段一律拒。合法返回 null。
+export function checkActionShape(action: unknown): string | null {
+  if (typeof action !== 'object' || action === null || Array.isArray(action)) return 'malformed action: not an object';
+  const a = action as Record<string, unknown>;
+  if (typeof a.kind !== 'string' || !Object.hasOwn(ACTION_FIELDS, a.kind)) return 'malformed action: unknown kind';
+  const allowed = ACTION_FIELDS[a.kind as Action['kind']];
+  for (const key of Object.keys(a)) {
+    if (!allowed.includes(key)) return `malformed action: unexpected field ${key}`;
   }
-  if (side !== 0 && side !== 1) return 'malformed action: bad player';
+  const bad = (field: string) => `malformed action: bad ${field}`;
+  switch (a.kind as Action['kind']) {
+    case 'mulligan':
+      if (a.player !== 0 && a.player !== 1) return bad('player');
+      if (!Array.isArray(a.replace) || !a.replace.every(isIndex)) return bad('replace');
+      return null;
+    case 'play_card':
+      if (!isIndex(a.handIndex)) return bad('handIndex');
+      if (a.position !== undefined && !isIndex(a.position)) return bad('position');
+      if (a.target !== undefined && !isTargetRef(a.target)) return bad('target');
+      return null;
+    case 'attack':
+      if (!isTargetRef(a.attacker)) return bad('attacker');
+      if (!isTargetRef(a.target)) return bad('target');
+      return null;
+    case 'hero_power':
+      if (a.target !== undefined && !isTargetRef(a.target)) return bad('target');
+      return null;
+    case 'end_turn':
+      return null;
+  }
+}
+
+// 每种动作允许出现的字段
+const ACTION_FIELDS: Record<Action['kind'], readonly string[]> = {
+  mulligan: ['kind', 'player', 'replace'],
+  play_card: ['kind', 'handIndex', 'position', 'target'],
+  attack: ['kind', 'attacker', 'target'],
+  hero_power: ['kind', 'target'],
+  end_turn: ['kind'],
+};
+
+// 非负整数（手牌下标、站位、实例 id）。字符串、负数、小数、NaN、Infinity 都不算
+function isIndex(v: unknown): v is number {
+  return typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
+}
+
+function isTargetRef(v: unknown): v is TargetRef {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return false;
+  const t = v as Record<string, unknown>;
+  if (t.side !== 0 && t.side !== 1) return false;
+  const keys = Object.keys(t);
+  if (t.kind === 'hero') return keys.every((k) => k === 'side' || k === 'kind');
+  if (t.kind === 'minion') return isIndex(t.instanceId) && keys.every((k) => k === 'side' || k === 'kind' || k === 'instanceId');
+  return false;
+}
+
+// 检查动作是否合法，合法返回 null，否则返回错误说明。先查字段形状（checkActionShape），再对照合法动作列表。
+export function checkAction(state: GameState, input: unknown): string | null {
+  const shapeError = checkActionShape(input);
+  if (shapeError) return shapeError;
+  const action = input as Action;
+  const key = actionKey(action);
+  const side: Side = action.kind === 'mulligan' ? action.player : state.current;
   if (state.phase === 'over') return 'game is over';
   if (state.phase === 'mulligan' && action.kind !== 'mulligan') return 'only mulligan is allowed in mulligan phase';
   if (state.phase === 'playing' && action.kind === 'mulligan') return 'mulligan phase is over';

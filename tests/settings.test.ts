@@ -1,6 +1,6 @@
-// 设置页的持久化（src/ui/settings.ts）和对局菜单的认输（Match.concede）。
+// 设置页的持久化（src/ui/settings.ts）和对局菜单的认输（LocalMatch.concede）。
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Match } from '../src/app/match';
+import { LocalMatch } from '../src/app/localMatch';
 import { PRESET_DECKS } from '../src/cards';
 import type { Director } from '../src/presentation/director';
 import type { PresentationEvent } from '../src/presentation/events';
@@ -74,16 +74,17 @@ describe('settings', () => {
   });
 });
 
-describe('Match.concede', () => {
+describe('LocalMatch.concede', () => {
   it('记为对手获胜，发 game_over，之后玩家不能再行动', () => {
     const batches: PresentationEvent[][] = [];
     const director = { busy: false, enqueue: (e: PresentationEvent[]) => batches.push([...e]) } as unknown as Director;
-    const match = new Match({ seed: 7, classes: ['demacia', 'noxus'], decks: [[...PRESET_DECKS.demacia!], [...PRESET_DECKS.noxus!]], human: 0 });
+    const match = new LocalMatch({ seed: 7, classes: ['demacia', 'noxus'], decks: [[...PRESET_DECKS.demacia!], [...PRESET_DECKS.noxus!]], human: 0 });
     match.start(director);
     expect(match.humanToAct()).toBe(true);
     match.concede();
     expect(match.over).toBe(true);
-    expect(match.state.winner).toBe(1);
+    expect(match.visible.winner).toBe(1);
+    expect(match.result).toEqual({ winner: 1, reason: 'concede' });
     expect(batches[batches.length - 1]).toEqual([{ kind: 'game_over', group: 0, winner: 1 }]);
     expect(match.humanToAct()).toBe(false);
     expect(match.legalActions()).toBeNull();

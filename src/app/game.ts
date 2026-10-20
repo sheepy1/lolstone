@@ -22,7 +22,8 @@ import { isPreset, matchDecks } from '../ui/decks';
 import { l0ChooseAction } from '../ai/l0';
 import { l2Async } from '../ai/l2Worker';
 import { warmCardFaces } from '../presentation/fx/warm';
-import { Match } from './match';
+import { LocalMatch } from './localMatch';
+import type { MatchSeat } from './seat';
 import { getUi, popPanel, pushPanel, setUi, type Panel } from './store';
 
 const LOG_LIMIT = 400;
@@ -40,7 +41,7 @@ type Session = {
   player: GsapPlayer;
   interaction: Interaction;
   keywordHover: KeywordHover;
-  match: Match | null; // 回放时为 null
+  match: MatchSeat | null; // 回放时为 null
   unsubscribe: () => void;
 };
 
@@ -164,7 +165,7 @@ export class GameApp {
     // l0 随机、l1 贪心（同步，主线程）、l2 回合内搜索（Web Worker）
     const ai = difficulty === 'l0' ? l0ChooseAction : undefined;
     const aiAsync = difficulty === 'l2' ? l2Async() : undefined;
-    const match = new Match({ seed: matchSeed, classes: [humanClass, aiClass], decks, human: 0, ai, aiAsync });
+    const match = new LocalMatch({ seed: matchSeed, classes: [humanClass, aiClass], decks, human: 0, ai, aiAsync });
     this.names = new LogNames();
     match.onBatch = (events) => this.log(events, 0);
     this.open(match.initial, match);
@@ -189,7 +190,7 @@ export class GameApp {
     });
   }
 
-  private open(initial: ViewState, match: Match | null): void {
+  private open(initial: ViewState, match: MatchSeat | null): void {
     const scene = new TableScene(initial, this.stage!);
     const player = createGsapPlayer(scene);
     const director = new Director(initial, player.play);
@@ -274,7 +275,7 @@ export class GameApp {
     if (!this.autoplayOn || !s?.match) return;
     const legal = s.match.legalActions();
     if (!legal) return;
-    const choice = l0ChooseAction(maskHidden(s.match.state, s.match.human), s.match.human, this.autoRng);
+    const choice = l0ChooseAction(maskHidden(s.match.visible, s.match.side), s.match.side, this.autoRng);
     if (!choice) return;
     this.autoRng = choice.rng;
     if (choice.action.kind === 'mulligan') setUi({ mulligan: { open: false, marked: 0 } });

@@ -2,7 +2,7 @@
 export * from './state';
 export type { GameEvent, GameEventKind, EventOf, SourceRef, ManaSnapshot, TriggerTiming } from './events';
 export { ENGINE_EVENT_KINDS } from './events';
-export { type Action, listLegalActions, actionKey, checkAction } from './actions';
+export { type Action, listLegalActions, actionKey, checkAction, checkActionShape } from './actions';
 export { applyAction, type ApplyResult } from './game';
 export { createGame, type CreateGameOptions } from './setup';
 export { maskEvents, maskHidden, visibleState } from './mask';

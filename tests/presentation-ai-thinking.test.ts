@@ -1,7 +1,7 @@
 // AI 思考（m4-storyboard E27）的衔接：对局层发 ai_thinking 时，如果下一步是出牌，就带上那张牌的实例 id，
 // 表现层抬起的就是这一张、再直接飞出。这里核对带的 id 确实就是紧接着打出的那张，不是出牌时不带。
 import { describe, expect, it } from 'vitest';
-import { Match } from '../src/app/match';
+import { LocalMatch } from '../src/app/localMatch';
 import { PRESET_DECKS } from '../src/cards';
 import type { Director } from '../src/presentation/director';
 import type { PresentationEvent } from '../src/presentation/events';
@@ -11,7 +11,7 @@ describe('ai_thinking 带下一张要打出的牌', () => {
     for (const seed of [3, 11, 4243]) {
       const batches: PresentationEvent[][] = [];
       const director = { busy: false, enqueue: (e: PresentationEvent[]) => batches.push([...e]) } as unknown as Director;
-      const match = new Match({ seed, classes: ['demacia', 'noxus'], decks: [[...PRESET_DECKS.demacia!], [...PRESET_DECKS.noxus!]], human: 0 });
+      const match = new LocalMatch({ seed, classes: ['demacia', 'noxus'], decks: [[...PRESET_DECKS.demacia!], [...PRESET_DECKS.noxus!]], human: 0 });
       match.start(director);
       // 我方只换牌和结束回合，让 AI 出够多的牌
       for (let i = 0; i < 30 && !match.over; i++) {

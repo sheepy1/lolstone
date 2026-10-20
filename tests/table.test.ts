@@ -1,5 +1,6 @@
 // 权威对局 Table（docs/online.md 5.2、9.1）：两个假座位打完一局，核对 version、动作日志、遮蔽和校验；
-// AI 座位走和真人一样的 submit。
+// AI 座位走和真人一样的 submit；计时到点按座位依次调逻辑模块的 onTimeout。动作的校验和遮蔽都在 src/logic，
+// 这里核对的就是逻辑模块在单机里的行为。
 import { describe, expect, it, vi } from 'vitest';
 import { l0ChooseAction } from '../src/ai/l0';
 import { l1ChooseAction } from '../src/ai/l1';
@@ -21,8 +22,11 @@ function aiSeat(choose: AiChooser = l1ChooseAction, seed = 1): Seat {
   return { kind: 'ai', choose, rng: seedRng(seed) };
 }
 
+let clock = 1000;
+
 function table(seats: [Seat, Seat], seed = 42): Table {
-  return new Table({ seed, classes: CLASSES, decks: DECKS, seats, thinkSeconds: 0.5, now: () => 1000 });
+  clock = 1000;
+  return new Table({ seed, classes: CLASSES, decks: DECKS, seats, thinkSeconds: 0.5, now: () => clock });
 }
 
 // 一个座位收到的东西都是遮过的：对手手牌、双方牌库是占位牌，rng 置零，快照里没有动作日志；事件里对手抽到、换到的牌也是占位牌
@@ -78,7 +82,7 @@ describe('Table：两个真人座位', () => {
     expect(t.result()).toEqual({ winner: expect.anything(), reason: 'game' });
     expect(mulligans).toBe(2);
     expect(t.version).toBe(submitted.length);
-    expect(t.state.log).toEqual(submitted.map((x) => ({ ...x, at: 1000 })));
+    expect(t.state.log).toEqual(submitted);
     for (const s of [0, 1] as const) {
       expect(inbox[s]).toHaveLength(submitted.length + 1);
       for (const b of inbox[s]) expectMasked(b, s);
@@ -133,7 +137,7 @@ describe('Table：两个真人座位', () => {
     const loser = other(t.state.game.current);
     expect(t.submit(loser, 2, { kind: 'concede' })).toEqual({ ok: true });
     expect(t.result()).toEqual({ winner: other(loser), reason: 'concede' });
-    expect(t.state.log[t.state.log.length - 1]).toEqual({ seat: loser, action: { kind: 'concede' }, at: 1000 });
+    expect(t.state.log[t.state.log.length - 1]).toEqual({ seat: loser, action: { kind: 'concede' } });
     for (const s of [0, 1] as const) {
       const last = inbox[s][inbox[s].length - 1]!;
       expect(last.events).toEqual([{ kind: 'game_over', group: 0, winner: other(loser) }]);
@@ -142,13 +146,39 @@ describe('Table：两个真人座位', () => {
     }
   });
 
-  it('计时钩子还没实现：deadline 一直为 null，batch 的 deadlineIn 为 null', () => {
+  it('计时：换牌共用 60 秒，先交的一方不重置；到点替没交的一方交，进入对局开 75 秒；回合到点只替当前方结束回合', () => {
     const inbox: Inbox = [];
     const t = table([humanSeat(inbox), humanSeat([])]);
     t.start();
+    expect(t.deadline).toBe(61_000);
+    expect(inbox[0]!.deadlineIn).toBe(60_000);
+    clock = 11_000;
+    expect(t.submit(0, 0, { kind: 'mulligan', player: 0, replace: [0] }).ok).toBe(true);
+    expect(t.deadline).toBe(61_000);
+    expect(inbox[inbox.length - 1]!.deadlineIn).toBe(50_000);
+
+    clock = 61_000;
+    t.timeout();
+    // 0 号已经交了，只替 1 号交"一张都不换"，这一步进入对局阶段、带回回合计时
+    expect(t.version).toBe(2);
+    expect(t.state.log[1]).toEqual({ seat: 1, action: { kind: 'mulligan', player: 1, replace: [] }, by: 'timeout' });
+    expect(t.state.game.phase).toBe('playing');
+    expect(t.deadline).toBe(61_000 + 75_000);
+    const first = t.state.game.current;
+
+    clock = 136_000;
+    t.timeout();
+    // 替当前方结束回合，轮到对方、开新的 75 秒；同一轮不再替对方结束回合
+    expect(t.version).toBe(3);
+    expect(t.state.log[2]).toEqual({ seat: first, action: { kind: 'end_turn' }, by: 'timeout' });
+    expect(t.state.game.current).toBe(other(first));
+    expect(t.deadline).toBe(136_000 + 75_000);
+
+    // 认输结束对局，计时器停掉；之后再到点什么都不做
+    expect(t.submit(first, 3, { kind: 'concede' }).ok).toBe(true);
     expect(t.deadline).toBeNull();
-    expect(inbox[0]!.deadlineIn).toBeNull();
-    expect(() => t.timeout()).toThrow(/not implemented/);
+    t.timeout();
+    expect(t.version).toBe(4);
   });
 });
 

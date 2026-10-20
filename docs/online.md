@@ -1,11 +1,12 @@
 # LoLstone 联机对战规格
 
-版本 v0.4 · 2026-10-20
+版本 v0.4.1 · 2026-10-20
 
 配合 [spec.md](spec.md) 使用。规则、事件、局面模型、表现层以 spec 为准，这里只讲联机：为什么选服务端权威、客户端接缝、逻辑模块的契约、托管、单机的去向、持久化、里程碑、测试。
 
 修订记录：
 
+- v0.4.1：按 M6b 逻辑模块的实现回写。2.3 平台的那次实测换成打包后的模块在隔离环境里自己跑的数；4.1 MatchState 的动作日志不记时间（隔离环境没有时钟）、计时到点替玩家做的也记进去，bots 的形状，bot 座位 config 的形状，setup 先查座位 config 的形状，结束原因加 invalid_deck；5.1 模块清单按实际的文件；5.2 Table 调的是 src/logic/match.ts，计时到点 timeout() 接上；5.7 的量按新的实测。
 - v0.4：按平台定稿的协议对齐（逻辑模块的类型定义、声明的 schema、本地 runner，2026-10-20）。4.1 签名按平台的 Logic 接口：setup 返回 Step、onTimeout 按座位依次调、不带 deadline 的步保留计时器、bot 返回 null 表示没事做、result 只放公开字段；4.2 座位 config 去掉昵称；4.3 批次、座位广播、结束广播、拒绝码、重连按协议重写；4.4 version 的计法；3.3 加续局和座位广播；5.1 声明写在构建设置里、模块文件上限；5.3 断线从平台发现断开起算；5.4 一个主体同时只在一局里由平台保证；5.6 bot 的节奏由平台定；5.7 加批次 60 KiB、模块 2 MB、纯 JSON；2.3 加平台的实测；第 8 节本地 runner 的形态；9.6 观众参数。
 - v0.3.2：5.2 的 Table 按 M6a 的实现回写：AI 座位是 { kind: 'ai', choose, rng }，choose 能接 Worker 里的 L2 和测试里的假 AI；真人座位只有 deliver，昵称在座位配置里；apply、mask、result 在 M6a 里叫 applyMatchAction、maskMatch、matchResult，M6b 从 src/logic 原样导出。
 - v0.3.1：平台规格定了三件待定的事和座位配置的形状。4.1 加 forfeit 和 setup 的入参形状；4.3 加座位间的瞬时消息；5.3 断线判负和双方都断线定稿；第 7 节回放改成用平台导出的整局记录；3.3、3.4、第 8 节的对手抬牌提示不再待定；第 8 节加平台的本地 runner，9.6 用它；第 10 节第 7 条；第 11 节去掉已定的三条。
@@ -99,7 +100,17 @@
 | 一批里最多的事件数 | 22 |
 | 一局的动作数 | 54 到 120 |
 
-runner 的限制是一次 apply 50 ms、局面 1 MB（5.7），慢 50 倍也在里面。平台用同一份导出拼了临时入口，打成 94 KB 的单文件，在只有 ES 内置对象加 structuredClone 的隔离环境里两个 L0 机器人打完一局：91 步、7 次计时到点，apply 最长 0.32 ms，发给一个座位的一条批次最大 5.4 KB。
+runner 的限制是一次 apply 50 ms、局面 1 MB（5.7），慢 50 倍也在里面。
+
+打包后的逻辑模块（M6b，`pnpm build:logic`，105 KB 的单文件）装进只有 ES 内置对象加 structuredClone 的 `node:vm` 上下文里跑（Node 22，Apple M4 Pro）：
+
+| 项目 | 量 |
+| --- | --- |
+| 40 局 bot 对 bot（L0、L1 各 20 局），3276 个动作，每个动作 apply 加双方 mask 和 maskEvents | p50 0.10 ms，p99 0.21 ms，最大 0.69 ms |
+| 发给一个座位的一条批次（遮过的快照加这批事件，JSON） | 最大 8.0 KB |
+| MatchState（含动作日志，JSON） | 最大 17.5 KB |
+| 一局的步数 | 36 到 194（L0 随机乱打，步数比 L1 多） |
+| 假 runner 按协议跑两个 L0（tests/logic-isolate.test.ts，seed 42） | 187 步、13 次计时到点，apply 最长 0.44 ms，批次最大 7.2 KB；中途序列化再装回、重新加载模块接着打，结果和不中断的一致 |
 
 ### 2.4 总图
 
@@ -136,7 +147,7 @@ type MatchSeat = {
   readonly initial: ViewState;     // 开局（或重连时）的显示局面
   readonly visible: GameState;     // 我看到的局面：联机是平台发来的遮过的快照，单机是真实局面
   readonly over: boolean;
-  readonly result: { winner: Side | 'draw'; reason: 'game' | 'concede' | 'timeout' | 'abandon' | 'kicked' } | null;
+  readonly result: { winner: Side | 'draw'; reason: 'game' | 'concede' | 'timeout' | 'abandon' | 'kicked' | 'invalid_deck' } | null;
   humanToAct(): boolean;           // 轮到我行动（换牌阶段：我还没提交）
   legalActions(): Action[] | null; // 导演忙、不轮到我、上一个动作还没回包时为 null，表示锁定
   submit(action: Action): string | null; // 不合法返回原因，不改局面
@@ -185,16 +196,16 @@ RemoteMatch 包一个平台 SDK 的对局对象（逻辑模式）。建房、进
 
 | 函数 | 做什么 | 对应的引擎调用 |
 | --- | --- | --- |
-| setup({ seed, seats, options }) | 开局。seed 由平台给；seats 是每个座位的 `{ kind: 'human' \| 'bot', config }`，config 是建局或进局时客户端交的 JSON（每个不超过 4 KiB），lolstone 放 { heroClass, deck, poolHash }，bot 座位的 config 放等级；options 不用。先核对两边的 poolHash，不一致返回 ok:false、reason 'version_mismatch'，对局不开始；再 validateDeck 校验两套卡组，不合规返回一个已经结束的局面，不合规那方判负、reason invalid_deck；都过了 createGame。返回的 Step 带初始的 MatchState、开局那批事件（mulligan_start）和换牌的 60 秒 deadline | createGame |
-| apply(state, seat, action) | 执行一个座位的动作，按 4.2 的顺序校验。返回 Step；不带 deadline 时平台保留正在走的计时器。拒绝的 reason 原样回给发动作的人（最长 256 字）。对任何输入都返回，不抛；抛错按模块缺陷算，连续 10 次平台会关局 | checkAction、applyAction |
+| setup({ seed, seats, options }) | 开局。seed 由平台给；seats 是每个座位的 `{ kind: 'human' \| 'bot', config }`，config 是建局或进局时客户端交的 JSON（每个不超过 4 KiB），lolstone 放 { heroClass, deck, poolHash }（poolHash 是 `src/cards/poolHash.ts` 对装好的卡池算的哈希），bot 座位的 config 放 { level: 'L0' 或 'L1', heroClass, deck? }，不给 deck 用这个职业的预组；options 不用。先查座位 config 的形状（正好两个座位、字段齐全、类型对、没有多余字段），不对返回 ok:false、reason 以 malformed 开头；再核对人类座位的 poolHash 和模块里的一致，不一致返回 ok:false、reason 'version_mismatch'，对局不开始；再 validateDeck 校验两套卡组，不合规返回一个已经结束的局面，不合规那方判负、reason invalid_deck（双方都不合规算平局）；都过了 createGame。返回的 Step 带初始的 MatchState、开局那批事件（mulligan_start）和换牌的 60 秒 deadline | createGame |
+| apply(state, seat, action) | 执行一个座位的动作，按 4.2 的顺序校验。返回 Step；不带 deadline 时平台保留正在走的计时器。拒绝的 reason 原样回给发动作的人（最长 256 字）。对任何输入都返回，不抛；抛错按模块缺陷算，连续 10 次平台会关局。所以 `src/logic/index.ts` 给每个方法包一层：seat 不是 0 或 1 拒 'bad seat'，实现里意外抛错兜成 ok:false、reason 'module_error'（mask、maskEvents、result、bot 兜成 null 或空数组），原因不带错误信息，免得漏出真实局面。正常路径不靠这一层 | checkAction、applyAction |
 | mask(state, seat) | 这个座位能看到的局面（4.5） | maskHidden，再把 rng 置零 |
 | maskEvents(events, seat) | 这个座位能看到的事件 | maskEvents |
 | onTimeout(state, seat) | 计时到点。平台按座位号依次调，每次传上一次之后的局面：ok:false 跳过，ok:true 生效，某一步带回新的 deadline 这一轮就停。换牌阶段：这个 seat 还没提交就替它提交"一张都不换"，已提交返回 ok:false；对局阶段：game.current 等于 seat 才替它执行 end_turn，否则 ok:false | applyAction |
 | forfeit(state, seat, reason) | 平台发起的判负：断线宽限到（abandon）或运营踢人（kicked）。不走引擎，把 game 换成 phase over、对方获胜，reason 照填，合成一条只有 game_over 的事件 | 无 |
-| result(state) | 对局结束了返回 `{ winner, reason }`，没结束返回 null。reason 是 game、concede、timeout、abandon、kicked。返回值会原样广播给所有座位，只放这两样 | state.phase、state.winner |
-| bot(state, seat) | 可选。bot 座位的下一步动作，现在没事做返回 null。每一步之后平台都问一次，出手前等声明里的 botDelayMs（默认 1 秒），再按那个座位走 apply。只用 L0、L1（5.6），等级从 setup 时该座位的 config 来 | l0ChooseAction、l1ChooseAction |
+| result(state) | 对局结束了返回 `{ winner, reason }`，没结束返回 null。reason 是 game、concede、timeout、abandon、kicked、invalid_deck。返回值会原样广播给所有座位，只放这两样 | state.phase、state.winner |
+| bot(state, seat) | 可选。bot 座位的下一步动作，现在没事做返回 null。每一步之后平台都问一次，出手前等声明里的 botDelayMs（默认 1 秒），再按那个座位走 apply。只用 L0、L1（5.6），等级从 setup 时该座位的 config 来。AI 只看遮过的局面；隔离环境没有 Math.random，随机数用 forkRng 从真实局面的 rng 派生，混上座位号和已走的步数，不推进局面里的 rng | l0ChooseAction、l1ChooseAction |
 
-MatchState 是引擎的 GameState 外面包一层（M6a 已定义在 `src/server/table.ts`，M6b 挪到 `src/logic`）：`{ game: GameState, log: { seat, action, at }[], reason: Reason | null, bots }`。log 是动作日志（一局最多 120 条），reason 是结束原因，bots 记每个 bot 座位的等级。State 和事件都必须是纯 JSON（没有 undefined、函数、Map、Set）：平台每一步之后把它序列化存起来，runner 重启后装回。mask 只留遮过的 game 和 reason，log 和 bots 不下发，客户端从快照里读结果。
+MatchState 是引擎的 GameState 外面包一层（`src/logic/state.ts`）：`{ game: GameState, log: { seat, action, by? }[], reason: Reason | null, bots: [等级或 null, 等级或 null] }`。log 是动作日志（L1 对局 54 到 120 条，L0 乱打能到将近 200 条，2.3），计时到点替玩家做的动作也记进去、by 为 'timeout'，所以按 log 重放就能重建局面；隔离环境没有时钟，log 不记时间，什么时候发生的看平台的整局记录（第 7 节）。reason 是结束原因，bots 记每个座位是不是 bot、什么等级。State 和事件都必须是纯 JSON（没有 undefined、函数、Map、Set）：平台每一步之后把它序列化存起来，runner 重启后装回。mask 只留遮过的 game 和 reason，log 和 bots 不下发，客户端从快照里读结果。
 
 deadline 是"距现在多少毫秒"，由逻辑模块按 5.3 的表算，平台存成到期时刻、到点调 onTimeout，并把剩余时间作为 deadlineIn 发给客户端。只有一个 deadline：换牌阶段是开局起 60 秒，双方共用；对局阶段是当前回合的 75 秒。Step 不带 deadline 时平台保留正在走的计时器，所以先提交换牌的一方那一步不带 deadline，共用的 60 秒照走；进入对局阶段和每次换人时带上 75 秒的新计时。
 
@@ -241,18 +252,22 @@ snapshot 是 `maskHidden(game, seat)` 再把 `rng` 置成 `{ s: 0 }`，外面带
 ### 5.1 模块
 
 ```
-src/logic/index.ts       逻辑模块入口：导出满足平台 Logic 接口的 logic 对象（setup、apply、mask、maskEvents、onTimeout、forfeit、result、bot）。只引 engine、cards、ai 的 l0 和 l1
-src/logic/validate.ts    动作字段校验（4.2 第 2 步）
+src/logic/index.ts       逻辑模块入口：加载时装卡池，导出满足平台 Logic 接口的 logic 对象（setup、apply、mask、maskEvents、onTimeout、forfeit、result、bot），每个方法包一层不抛的兜底。只引 engine、cards、ai 的 l0 和 l1
+src/logic/match.ts       各个方法的实现，纯函数：setupMatch、applyMatch、timeoutMatch、forfeitMatch、maskMatch、maskMatchEvents、matchResult、botMatch
+src/logic/state.ts       MatchState、Snapshot、结束原因、认输动作、动作日志
+src/logic/types.ts       平台 Logic 接口的类型，照平台发布的定义抄一份，不依赖平台的包
+src/logic/validate.ts    座位 config 和动作的形状校验（4.1、4.2 第 2 步；引擎六种动作的字段由 checkActionShape 查）
 src/logic/timeouts.ts    deadline 怎么算、onTimeout 替谁做什么（5.3）
-src/server/table.ts      Table：浏览器里的权威对局编排（单机）和测试里的假 runner；调的是同一份 src/logic
+src/cards/poolHash.ts    卡池哈希，页面和逻辑模块各算一次（5.4）
+src/server/table.ts      Table：浏览器里的权威对局编排（单机）；调的是 src/logic/match.ts，和平台走同一段代码
 src/app/seat.ts          MatchSeat
 src/app/localMatch.ts    LocalMatch
 src/app/remoteMatch.ts   RemoteMatch：包平台 SDK
 scripts/build-logic.ts   把 src/logic 打成一个不带依赖的 ES 文件 dist-logic/logic.js，交给平台
 ```
 
-- 逻辑模块跑在只有 ES 内置对象加平台注入的 structuredClone 的隔离环境里，没有 Node 和 Web API。`src/engine`、`src/cards`、`src/ai` 的 l0 和 l1 只用 ES 内置对象，模块之间只有相对引用、没有第三方包（2026-10-20 查过）；唯一碰到的全局是 `src/engine/invariants.ts` 读 `process.env`，有 `typeof process` 保护，在隔离环境里就是关闭不变量检查。
-- 模块级初始化只有装卡池（installCardPool），加载时跑一次。平台构建时拒绝引用了 Node 或 Web 全局对象的模块，并在隔离环境里加载一遍确认能跑；本地用 9.5 的测试先过一遍。打包后的文件上限 2 MB，现在 94 KB。
+- 逻辑模块跑在只有 ES 内置对象加平台注入的 structuredClone 的隔离环境里，没有 Node 和 Web API。`src/engine`、`src/cards`、`src/ai` 的 l0 和 l1 只用 ES 内置对象，模块之间只有相对引用、没有第三方包（2026-10-20 查过）；唯一碰到的全局是 `src/engine/invariants.ts` 读 `process.env`，有 `typeof process` 保护；打包时把 `process` 换成 undefined，不变量检查关闭，打出来的文件里没有这个名字。
+- 模块级初始化只有装卡池（installCardPool），加载时跑一次。平台构建时拒绝引用了 Node 或 Web 全局对象的模块，并在隔离环境里加载一遍确认能跑；本地用 9.5 的测试先过一遍；`pnpm build:logic` 打完也会查文件里有没有隔离环境里没有的全局名字（process、window、document、fetch、setTimeout、Date、console、Math.random 等），有就失败。打包后的文件上限 2 MB，现在 105 KB。
 - 页面和逻辑模块从同一个提交构建、一起发布，卡池哈希（poolHash）两边一致；客户端缓存了旧页面时 setup 会发现不一致（4.1）。
 - 声明写在托管平台的构建设置里（平台也接受仓库里的声明文件，lolstone 不用，仓库里不留平台的东西）：入口 dist-logic/logic.js、座位 2 到 2、断线宽限 60 秒、空局关闭 10 分钟、bot 出手前等 1 秒（默认）、对局结束后导出整局记录（第 7 节）。本机开发命令读同一份声明，文件名由命令行参数给；这个文件和本机快照目录都用 .git/info/exclude 排除，不进 .gitignore。
 
@@ -274,7 +289,7 @@ class Table {
 }
 ```
 
-submit 做的事就是平台的 runner 做的事：version 不等于自己的拒 'stale'，否则调 apply（M6a 里叫 applyMatchAction，连同 maskMatch、matchResult 放在 table.ts，M6b 从 src/logic 原样导出成 apply、mask、result）；成功就 version 加一，给每个座位发 batch（events 是 maskEvents 遮过的，snapshot 是 mask 的，deadlineIn 按 deadline 算），AI 座位的"发"就是按节奏调它的 choose（5.6）；phase 或 current 变了就重置计时器。Table 自己不校验动作、不核对行动方，那些都在 apply 里，这样单机和线上走的是同一段代码。
+submit 做的事就是平台的 runner 做的事：version 不等于自己的拒 'stale'，否则调 apply（Table 直接调 `src/logic/match.ts` 的 applyMatch、maskMatch、maskMatchEvents、matchResult、timeoutMatch，就是 logic 对象包兜底之前的那几个函数；引擎的缺陷在单机和测试里照常抛出来，看得见）；成功就 version 加一，给每个座位发 batch（events 是 maskEvents 遮过的，snapshot 是 mask 的，deadlineIn 按 deadline 算），AI 座位的"发"就是按节奏调它的 choose（5.6）；Step 带了 deadline 就重置计时器。timeout() 和平台一样按座位号依次调 onTimeout，某一步带回新的 deadline 就停；Table 不开定时器，单机不限时、从不调它。Table 自己不校验动作、不核对行动方，那些都在 apply 里，这样单机和线上走的是同一段代码。
 
 ### 5.3 计时与断线
 
@@ -323,15 +338,15 @@ submit 做的事就是平台的 runner 做的事：version 不等于自己的拒
 | 限制 | lolstone |
 | --- | --- |
 | 隔离环境只有 ES 内置对象加注入的 structuredClone，没有 Node 和 Web API；模块级初始化加载时跑一次 | 引擎、卡牌、L0 和 L1 只用 ES 内置对象（5.1）；初始化只有装卡池 |
-| 一次 apply、onTimeout、forfeit、bot 各 50 ms，setup、mask、maskEvents、result 同样 | apply 最大 0.75 ms（2.3）；L1 一步远小于 1 ms |
-| 局面 1 MB | 5 KB |
+| 一次 apply、onTimeout、forfeit、bot 各 50 ms，setup、mask、maskEvents、result 同样 | 隔离环境里 apply 加双方遮蔽最大 0.69 ms（2.3）；L1 一步远小于 1 ms |
+| 局面 1 MB | 引擎局面 5 KB，加上动作日志最大 17.5 KB（2.3） |
 | 2 到 8 个座位 | 2 |
 | 每座位每秒 10 个动作，单个动作 4 KiB | 一局 54 到 120 个动作，真人几秒一个；最大的动作是换牌的 replace 列表 |
 | apply 抛错按模块缺陷算，同一局连续 10 次关局 | apply 对任何输入都返回拒绝、不抛（4.2） |
 | 真实局面只在 runner 内存和平台的库里 | 对局结束后平台导出整局记录（seed 加动作），回放用它（第 7 节） |
 | runner 空闲会睡，第一次请求要等几秒 | 等待页有"正在连接"提示（3.4） |
-| 发给一个座位的一条批次（遮过的快照加这批事件）60 KiB，超了先丢事件只发快照 | 最大 5.4 KB（2.3） |
-| 打包后的模块文件 2 MB | 94 KB |
+| 发给一个座位的一条批次（遮过的快照加这批事件）60 KiB，超了先丢事件只发快照 | 最大 8.0 KB（2.3） |
+| 打包后的模块文件 2 MB | 105 KB |
 | State 和事件必须是纯 JSON，平台每一步之后序列化存起来 | 引擎局面本来就是纯 JSON（spec 6.3） |
 
 ## 6. 单机的去向
@@ -363,7 +378,7 @@ M6b 的逻辑模块和假 runner 测试不依赖平台，可以先做；逻辑�
 2. 属性测试：随机 L0 对局的每个局面，对双方各算一次，`listLegalActions(maskHidden(s, side), side)` 的 actionKey 集合等于真实局面的。就是 2.3 第一项，进 tests。
 3. 遮蔽：扩 `tests/presentation-mask.test.ts`，断言 mask 的 rng.s 为 0、对手手牌和双方牌库都是占位牌、对手的 mulliganReplace 不出现、MatchState 的 log 不出现在快照里。
 4. 动作模糊测试：handIndex 为字符串、负数、小数、NaN，多余字段，replace 里混字符串，不是对象的动作，都被 apply 拒绝且局面不变，并且 apply 不抛。
-5. 隔离环境加载：用 `node:vm` 造一个只有 ES 内置对象加 structuredClone 的上下文，加载打包后的 dist-logic/logic.js，用假 runner 按脚本打完一局；中途把 MatchState 序列化再装回去，接着打，结果和不中断的一致（模拟 runner 重启）。
+5. 隔离环境加载（`tests/logic-isolate.test.ts`）：用 `node:vm` 造一个只有 ES 内置对象加 structuredClone 的上下文（删掉 Date、console，Math.random 一调就抛），加载打包后的 dist-logic/logic.js，用按协议跑的假 runner（每步后问 bot、到点按座位号依次调 onTimeout、version 递增）让两个 L0 打完一局；中途把 MatchState 序列化再装回重新加载的模块，接着打，结果和不中断的一致（模拟 runner 重启）；断言每次 apply 小于 50 ms、每个座位一条批次小于 60 KiB、State 小于 1 MB。逻辑模块的各个方法另有 `tests/logic.test.ts`。
 6. 浏览器冒烟：两个标签页带 `?autoplay`，再各带本地 runner 要求的不同观众参数（同一个浏览器的标签页共享 cookie，会被当成同一个人），用本地 runner 打完一局，控制台 0 报错；平台上线后用两个浏览器在云端再跑一次。
 
 ## 10. 已经定下的选择

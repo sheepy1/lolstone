@@ -12,6 +12,7 @@ import { validateCardPool } from './validate';
 
 export { HERO_CLASSES } from './classes';
 export { PRESET_DECKS } from './decks';
+export { poolHash } from './poolHash';
 export { validateCardPool, validateDeck } from './validate';
 
 export const CARD_POOL: readonly CardDef[] = [

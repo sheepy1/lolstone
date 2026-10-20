@@ -1,13 +1,13 @@
 // React 文字界面的根，叠在 Three.js 画布上面一层（spec 6.1）：加载页、主菜单、换牌页、结算页、悬停卡面、日志，
 // 以及叠在页面上的对局菜单和设置页。
 // 换页时上一页不立刻消失：在新页上面淡出 0.45 秒（m4-first-minutes 第 1 步：加载完不能直接切到主菜单）。
-import { useEffect, useState, type ReactNode } from 'react';
-import type { GameApp } from '../app/game';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
+import type { AppShell } from '../app/shell';
 import { useUi, type Screen } from '../app/store';
 import { GameLog } from './GameLog';
 import { HoverCardPanel } from './HoverCard';
+import { MenuBackdrop } from './hextech';
 import { LoadingScreen } from './LoadingScreen';
-import { DeckScreen } from './DeckScreen';
 import { MainMenu } from './MainMenu';
 import { MulliganOverlay } from './MulliganOverlay';
 import { PauseMenu, useEscOpensPauseMenu } from './PauseMenu';
@@ -16,6 +16,24 @@ import { SettingsPanel } from './SettingsPanel';
 import { StatusBar } from './StatusBar';
 
 const LEAVE_MS = 450;
+
+// 卡组页不在首包里：卡牌缩略图用场景层的卡面绘制，会把 three 带进来。主菜单显示后空闲时预取，
+// 还没到时先显示同样的背景，不出现空白
+const loadDeckScreen = () => import('./DeckScreen');
+const DeckScreen = lazy(() => loadDeckScreen().then((m) => ({ default: m.DeckScreen })));
+
+function useIdlePrefetch(when: boolean, load: () => Promise<unknown>): void {
+  useEffect(() => {
+    if (!when) return;
+    const run = () => void load().catch(() => {});
+    if (!('requestIdleCallback' in window)) {
+      const t = setTimeout(run, 200);
+      return () => clearTimeout(t);
+    }
+    const id = requestIdleCallback(run, { timeout: 2000 });
+    return () => cancelIdleCallback(id);
+  }, [when, load]);
+}
 
 // 当前页，加上正在淡出的上一页（对局页销毁时场景已经没了，不留）。
 // 上一页先原样盖着，等新页真正画出一帧（两次 requestAnimationFrame）再开始淡出：进对局时建场景会卡住主线程
@@ -47,17 +65,29 @@ function useScreenLayers(screen: Screen): { current: Screen; leaving: Screen | n
   return { current: screen, leaving: leaving === screen ? null : leaving, fading };
 }
 
-export function UiRoot({ app }: { app: GameApp }) {
+export function UiRoot({ app }: { app: AppShell }) {
   const screen = useUi((s) => s.screen);
   const error = useUi((s) => s.error);
   const panels = useUi((s) => s.panels);
   const { current, leaving, fading } = useScreenLayers(screen);
   useEscOpensPauseMenu(app);
+  useIdlePrefetch(screen === 'menu', loadDeckScreen);
   const render = (s: Screen): ReactNode => {
     if (s === 'boot') return <LoadingScreen mode="boot" />;
     if (s === 'loading') return <LoadingScreen mode="match" />;
     if (s === 'menu') return <MainMenu app={app} />;
-    if (s === 'decks') return <DeckScreen app={app} />;
+    if (s === 'decks')
+      return (
+        <Suspense
+          fallback={
+            <div className="hx-screen dk-screen">
+              <MenuBackdrop />
+            </div>
+          }
+        >
+          <DeckScreen app={app} />
+        </Suspense>
+      );
     return (
       <>
         <HoverCardPanel />

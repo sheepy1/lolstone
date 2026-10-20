@@ -3,7 +3,6 @@ import gsap from 'gsap';
 import { matchManifest, matchVoiceManifest } from '../assets/manifest';
 import { loadManifest } from '../assets/loader';
 import { initAudio, playMusic, playSfx, stopAmbience } from '../audio';
-import { PRESET_DECKS } from '../cards';
 import { getCard, getHeroClass, maskEvents, maskHidden, seedRng, type Action, type HeroClass, type Side } from '../engine';
 import { Director } from '../presentation/director';
 import type { PresentationEvent } from '../presentation/events';
@@ -19,12 +18,12 @@ import { KEYWORD_NAMES } from '../presentation/keywordText';
 import { describe, LogNames } from '../ui/logText';
 import type { Difficulty } from '../ui/menuData';
 import { getSettings, onSettingsChange } from '../ui/settings';
-import { deckForMatch, isPreset } from '../ui/decks';
+import { isPreset, matchDecks } from '../ui/decks';
 import { l0ChooseAction } from '../ai/l0';
 import { l2Async } from '../ai/l2Worker';
 import { warmCardFaces } from '../presentation/fx/warm';
 import { Match } from './match';
-import { getUi, setUi, type Panel } from './store';
+import { getUi, popPanel, pushPanel, setUi, type Panel } from './store';
 
 const LOG_LIMIT = 400;
 // 对局加载页的最短停留时间（毫秒）
@@ -68,13 +67,13 @@ export class GameApp {
 
   // 打开一个面板（对局菜单或设置）。对局中有面板打开时游戏暂停。
   openPanel(panel: Panel): void {
-    setUi((s) => ({ panels: [...s.panels.filter((p) => p !== panel), panel] }));
+    pushPanel(panel);
     this.syncPause();
   }
 
   // 关掉最上面的面板；all 为 true 时全部关掉。面板都关掉后游戏继续。
   closePanel(all = false): void {
-    setUi((s) => ({ panels: all ? [] : s.panels.slice(0, -1) }));
+    popPanel(all);
     this.syncPause();
   }
 
@@ -136,9 +135,7 @@ export class GameApp {
     initAudio();
     this.teardown();
     const loadStart = performance.now();
-    // 我方可以用自组卡组（不存在或不合规时退回预组），对手用预组
-    const mine = deckForMatch(humanClass, humanDeck);
-    const decks: [string[], string[]] = [[...mine.cards], [...(PRESET_DECKS[aiClass] ?? [])]];
+    const { mine, decks } = matchDecks(humanClass, aiClass, humanDeck);
     setUi((s) => ({
       screen: 'loading',
       loading: { progress: 0, label: '载入英雄美术' },

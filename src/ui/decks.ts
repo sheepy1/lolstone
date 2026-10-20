@@ -252,3 +252,9 @@ export function deckForMatch(heroClass: HeroClass, deckId: string | null): Saved
   }
   return presetDeck(heroClass);
 }
+
+// 一局两边的卡组：我方可以用自组卡组（不存在或不合规时退回预组），对手用预组
+export function matchDecks(humanClass: HeroClass, aiClass: HeroClass, humanDeck: string | null): { mine: SavedDeck; decks: [string[], string[]] } {
+  const mine = deckForMatch(humanClass, humanDeck);
+  return { mine, decks: [[...mine.cards], [...(PRESET_DECKS[aiClass] ?? [])]] };
+}

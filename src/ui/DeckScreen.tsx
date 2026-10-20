@@ -4,7 +4,7 @@
 // 点卡加入，点卡组里的卡移除；不合规则时提示原因。悬停显示大卡和关键词说明。改动要点"保存"才写进存档。
 // 键盘：Tab 在区域间移动；卡池网格和卡组列表里用方向键，Enter 加入或移除；"/" 跳到搜索框；Esc 返回上一层。
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import type { GameApp } from '../app/game';
+import type { AppShell } from '../app/shell';
 import { setUi, useUi } from '../app/store';
 import { loadingArtUrl } from '../assets/manifest';
 import { playSfx } from '../audio';
@@ -47,7 +47,7 @@ function useDecks() {
   return loadDecks();
 }
 
-export function DeckScreen({ app }: { app: GameApp }) {
+export function DeckScreen({ app }: { app: AppShell }) {
   const [editing, setEditing] = useState<string | null>(null);
   return (
     <div className="hx-screen dk-screen">
@@ -61,7 +61,7 @@ export function DeckScreen({ app }: { app: GameApp }) {
 
 type Dialog = { kind: 'new' } | { kind: 'rename'; deck: SavedDeck } | { kind: 'delete'; deck: SavedDeck } | null;
 
-function DeckList({ app, onEdit }: { app: GameApp; onEdit: (id: string) => void }) {
+function DeckList({ app, onEdit }: { app: AppShell; onEdit: (id: string) => void }) {
   const { decks, dropped } = useDecks();
   const menuClass = useUi((s) => s.menu.humanClass);
   const presets = HERO_CLASSES.map(presetDeck);

@@ -1,7 +1,7 @@
 // 对局菜单：左上角"菜单"按钮或 Esc 打开，游戏暂停。里面有继续、设置、认输、回主菜单；认输和回主菜单要再确认一次。
 // Esc：没有面板时打开对局菜单；在对局菜单里关掉它（确认步骤里先退回列表）；设置页自己处理 Esc，关掉后回到这里。
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import type { GameApp } from '../app/game';
+import type { AppShell } from '../app/shell';
 import { getUi, useUi } from '../app/store';
 import { playSfx } from '../audio';
 import { trapFocus } from './SettingsPanel';
@@ -11,7 +11,7 @@ type Confirm = 'concede' | 'menu' | null;
 const hover = () => playSfx('ui.hover');
 
 // 对局中按 Esc 打开对局菜单（结算面板出现后、回放时不响应）。面板打开时按键由面板自己处理并拦下，不会走到这里。
-export function useEscOpensPauseMenu(app: GameApp): void {
+export function useEscOpensPauseMenu(app: AppShell): void {
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
       if (e.key !== 'Escape') return;
@@ -26,7 +26,7 @@ export function useEscOpensPauseMenu(app: GameApp): void {
   }, [app]);
 }
 
-export function PauseMenu({ app }: { app: GameApp }) {
+export function PauseMenu({ app }: { app: AppShell }) {
   const [confirm, setConfirm] = useState<Confirm>(null);
   const top = useUi((s) => s.panels[s.panels.length - 1]);
   const root = useRef<HTMLDivElement>(null);

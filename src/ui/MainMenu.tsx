@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { PRESET_DECKS } from '../cards';
 import { allHeroClasses, type HeroClassDef } from '../engine';
-import type { GameApp } from '../app/game';
+import type { AppShell } from '../app/shell';
 import { setUi, useUi } from '../app/store';
 import { iconUrl, loadingArtUrl } from '../assets/manifest';
 import { initAudio, playMusic, playSfx } from '../audio';
@@ -24,7 +24,7 @@ function unlockAudio(): void {
 
 const hover = () => playSfx('ui.hover');
 
-export function MainMenu({ app }: { app: GameApp }) {
+export function MainMenu({ app }: { app: AppShell }) {
   const menu = useUi((s) => s.menu);
   const classes = allHeroClasses().filter((c) => PRESET_DECKS[c.id]);
   const started = useRef(false);

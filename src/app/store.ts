@@ -60,6 +60,16 @@ export function setUi(patch: Partial<UiState> | ((s: UiState) => Partial<UiState
   for (const fn of listeners) fn();
 }
 
+// 打开一个面板，放到最上面（已经开着就挪到最上面）
+export function pushPanel(panel: Panel): void {
+  setUi((s) => ({ panels: [...s.panels.filter((p) => p !== panel), panel] }));
+}
+
+// 关掉最上面的面板；all 为 true 时全部关掉
+export function popPanel(all = false): void {
+  setUi((s) => ({ panels: all ? [] : s.panels.slice(0, -1) }));
+}
+
 export function subscribeUi(fn: () => void): () => void {
   listeners.add(fn);
   return () => listeners.delete(fn);

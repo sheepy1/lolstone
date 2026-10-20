@@ -1,8 +1,8 @@
 // 左上角的小状态条：快进提示、对局菜单（回放时直接回主菜单）。
-import type { GameApp } from '../app/game';
+import type { AppShell } from '../app/shell';
 import { useUi } from '../app/store';
 
-export function StatusBar({ app }: { app: GameApp }) {
+export function StatusBar({ app }: { app: AppShell }) {
   const status = useUi((s) => s.status);
   return (
     <div className="status-bar">

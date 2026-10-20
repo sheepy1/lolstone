@@ -1,8 +1,8 @@
 // 换牌页（spec 5.1）：起手牌在画布中央翻开（Pixi），点牌标记替换，这里只画说明和确认按钮。
-import type { GameApp } from '../app/game';
+import type { AppShell } from '../app/shell';
 import { useUi } from '../app/store';
 
-export function MulliganOverlay({ app }: { app: GameApp }) {
+export function MulliganOverlay({ app }: { app: AppShell }) {
   const { open, marked } = useUi((s) => s.mulligan);
   if (!open) return null;
   return (

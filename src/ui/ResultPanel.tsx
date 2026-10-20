@@ -1,7 +1,7 @@
 // 结算面板（spec 5.1）：胜负演出播完后升起，回合数、再来一局、回主菜单。
 // 胜利和失败两套配色：胜利亮金、有光芒；失败压暗、冷色、安静（m4-first-minutes 第 12 步：输了也不刺眼）。
 import { useEffect, useRef } from 'react';
-import type { GameApp } from '../app/game';
+import type { AppShell } from '../app/shell';
 import { getUi, useUi } from '../app/store';
 import { playSfx } from '../audio';
 import { Stage } from './hextech';
@@ -9,7 +9,7 @@ import { CLASS_BLURBS, difficultyName } from './menuData';
 
 const hover = () => playSfx('ui.hover');
 
-export function ResultPanel({ app }: { app: GameApp }) {
+export function ResultPanel({ app }: { app: AppShell }) {
   const result = useUi((s) => s.result);
   const replay = useUi((s) => s.status.replay);
   const menu = useUi((s) => s.menu);

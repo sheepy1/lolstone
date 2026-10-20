@@ -2,7 +2,7 @@
 // （GameApp.openPanel）。拖音效音量时试放一声短音效，拖语音音量时试放一句当前职业英雄的语音。
 // 键盘：Tab 在控件间移动（焦点困在面板里），滑杆用方向键调，单选组用方向键选，Esc 关闭。
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import type { GameApp } from '../app/game';
+import type { AppShell } from '../app/shell';
 import { setUi, useUi } from '../app/store';
 import { getVolumes, onVolumeChange, playSfx, playVoice, preloadVoice, setVolume, type Channel, type Volumes } from '../audio';
 import { getHeroClass } from '../engine';
@@ -50,7 +50,7 @@ export function trapFocus(e: KeyboardEvent, root: HTMLElement | null): void {
   }
 }
 
-export function SettingsPanel({ app }: { app: GameApp }) {
+export function SettingsPanel({ app }: { app: AppShell }) {
   const volumes = useVolumes();
   const settings = useSettings();
   const humanClass = useUi((s) => s.menu.humanClass);

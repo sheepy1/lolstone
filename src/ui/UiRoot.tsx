@@ -1,5 +1,5 @@
 // React 文字界面的根，叠在 Three.js 画布上面一层（spec 6.1）：加载页、主菜单、换牌页、结算页、悬停卡面、日志，
-// 以及叠在页面上的对局菜单和设置页。
+// 以及叠在页面上的对局菜单和设置页。有联机入口时还有联机面板、续局提示、等待页和对局里的倒计时、断线横幅。
 // 换页时上一页不立刻消失：在新页上面淡出 0.45 秒（m4-first-minutes 第 1 步：加载完不能直接切到主菜单）。
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import type { AppShell } from '../app/shell';
@@ -10,10 +10,13 @@ import { MenuBackdrop } from './hextech';
 import { LoadingScreen } from './LoadingScreen';
 import { MainMenu } from './MainMenu';
 import { MulliganOverlay } from './MulliganOverlay';
+import { OnlineHud } from './OnlineHud';
+import { OnlinePanel, ResumePrompt } from './OnlinePanel';
 import { PauseMenu, useEscOpensPauseMenu } from './PauseMenu';
 import { ResultPanel } from './ResultPanel';
 import { SettingsPanel } from './SettingsPanel';
 import { StatusBar } from './StatusBar';
+import { WaitingScreen } from './WaitingScreen';
 
 const LEAVE_MS = 450;
 
@@ -69,6 +72,9 @@ export function UiRoot({ app }: { app: AppShell }) {
   const screen = useUi((s) => s.screen);
   const error = useUi((s) => s.error);
   const panels = useUi((s) => s.panels);
+  const onlineOpen = useUi((s) => s.online?.open ?? false);
+  const pending = useUi((s) => !!s.online?.pending);
+  const onlineMatch = useUi((s) => !!s.online?.match);
   const { current, leaving, fading } = useScreenLayers(screen);
   useEscOpensPauseMenu(app);
   useIdlePrefetch(screen === 'menu', loadDeckScreen);
@@ -76,6 +82,7 @@ export function UiRoot({ app }: { app: AppShell }) {
     if (s === 'boot') return <LoadingScreen mode="boot" />;
     if (s === 'loading') return <LoadingScreen mode="match" />;
     if (s === 'menu') return <MainMenu app={app} />;
+    if (s === 'waiting') return <WaitingScreen app={app} />;
     if (s === 'decks')
       return (
         <Suspense
@@ -94,6 +101,7 @@ export function UiRoot({ app }: { app: AppShell }) {
         <MulliganOverlay app={app} />
         <ResultPanel app={app} />
         <StatusBar app={app} />
+        {onlineMatch && <OnlineHud app={app} />}
         <GameLog />
       </>
     );
@@ -108,6 +116,8 @@ export function UiRoot({ app }: { app: AppShell }) {
           {render(s)}
         </div>
       ))}
+      {screen === 'menu' && onlineOpen && !pending && <OnlinePanel app={app} />}
+      {screen === 'menu' && pending && <ResumePrompt app={app} />}
       {screen === 'match' && panels.includes('pause') && <PauseMenu app={app} />}
       {panels[panels.length - 1] === 'settings' && <SettingsPanel app={app} />}
       {error && <div className="error-toast">{error}</div>}

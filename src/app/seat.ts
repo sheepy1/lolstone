@@ -1,5 +1,5 @@
 // 客户端座位（docs/online.md 3.2）：GameApp 只认这个接口。单机的实现是 LocalMatch（浏览器里直接持有一个 Table，
-// 对手是 AI 座位），联机的实现是 RemoteMatch（M6b，接平台的对局）。
+// 对手是 AI 座位），联机的实现是 RemoteMatch（对着 src/net/link.ts 的 MatchLink 接平台的对局）。
 import type { Action, GameState, Side } from '../engine';
 import type { Director } from '../presentation/director';
 import type { PresentationEvent } from '../presentation/events';
@@ -21,4 +21,6 @@ export type MatchSeat = {
   start(director: Director): void;
   stop(): void;
   onBatch: ((events: PresentationEvent[], state: GameState) => void) | null; // 对局日志用
+  // 局面以外的状态变了、界面要刷新（联机：在途动作被拒、计时、对手在线状态）。单机的状态都在 submit 里同步变，不用
+  onChange?: (() => void) | null;
 };

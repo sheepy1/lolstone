@@ -1,5 +1,6 @@
 // 对局控制：把对局层、导演、场景、输入、界面状态接起来。一局一套，回主菜单时整套销毁。
 import gsap from 'gsap';
+import * as THREE from 'three';
 import { matchManifest, matchVoiceManifest } from '../assets/manifest';
 import { loadManifest } from '../assets/loader';
 import { initAudio, playMusic, playSfx, stopAmbience } from '../audio';
@@ -7,6 +8,7 @@ import { getCard, getHeroClass, maskEvents, maskHidden, seedRng, type Action, ty
 import { Director } from '../presentation/director';
 import type { PresentationEvent } from '../presentation/events';
 import { createGsapPlayer, type GsapPlayer } from '../presentation/player';
+import { endTurnSlot } from '../presentation/layout';
 import type { ViewState } from '../presentation/viewState';
 import type { ReplayFixture } from '../presentation/fixture';
 import { Interaction, type HoverInfo } from '../scene/interaction';
@@ -145,10 +147,34 @@ export class GameApp {
       log: [],
       error: null,
     }));
+    await this.preload(decks, [humanClass, aiClass], loadStart);
+    const matchSeed = seed ?? Math.floor(Math.random() * 1_000_000);
+    if (seed !== undefined) this.autoRng = seedRng(seed);
+    console.info(`[match] seed ${matchSeed}`);
+    // l0 随机、l1 贪心（同步，主线程）、l2 回合内搜索（Web Worker）
+    const ai = difficulty === 'l0' ? l0ChooseAction : undefined;
+    const aiAsync = difficulty === 'l2' ? l2Async() : undefined;
+    const match = new LocalMatch({ seed: matchSeed, classes: [humanClass, aiClass], decks, human: 0, ai, aiAsync });
+    this.begin(match, decks, [humanClass, aiClass]);
+  }
+
+  // 联机开一局（docs/online.md 3.3）：对局已经在平台上开始了，这里只预载美术、建场景。加载期间到的批次由 RemoteMatch
+  // 攒着，接上导演时按顺序交给它。对手的卡组看不到，预载它这个职业的预组（打出预组以外的牌时卡面现画，和缺图时一样）。
+  // classes、decks 按座位号排
+  async startOnline(match: MatchSeat, classes: [HeroClass, HeroClass], decks: [string[], string[]]): Promise<void> {
+    initAudio();
+    this.teardown();
+    const loadStart = performance.now();
+    setUi({ screen: 'loading', loading: { progress: 0, label: '载入英雄美术' }, result: null, log: [], error: null });
+    await this.preload(decks, classes, loadStart);
+    if (match.over && !match.result) return;
+    this.begin(match, decks, classes);
+  }
+
+  // 加载页：先预载两套卡组的美术，再载卡面字体、预画卡面，至少停留 MIN_LOADING_MS
+  private async preload(decks: [string[], string[]], classes: [HeroClass, HeroClass], loadStart: number): Promise<void> {
     // 进度条：美术占前 90%，卡面字体占最后 10%
-    const report = await loadManifest(matchManifest(decks, [humanClass, aiClass]), (p) =>
-      setUi((s) => ({ loading: { ...s.loading, progress: p * 0.9 } })),
-    );
+    const report = await loadManifest(matchManifest(decks, classes), (p) => setUi((s) => ({ loading: { ...s.loading, progress: p * 0.9 } })));
     // 卡面 SDF 字体和本局两套卡组用到的字，开局时不用临时排版
     setUi((s) => ({ loading: { ...s.loading, label: '载入卡面字体' } }));
     const chars = [...decks[0], ...decks[1]].map((id) => getCard(id)).map((d) => d.name + d.text).join('') + '0123456789';
@@ -159,20 +185,46 @@ export class GameApp {
     // 资源已在缓存里时加载只要几十毫秒，加载页至少停留一小段，双方英雄对峙的画面和进度条走完都看得见
     await waitUntil(loadStart + MIN_LOADING_MS);
     if (report.missing.length > 0) console.info(`[assets] ${report.missing.length} 个资源缺失，用纯色兜底`, report.missing.slice(0, 5));
-    const matchSeed = seed ?? Math.floor(Math.random() * 1_000_000);
-    if (seed !== undefined) this.autoRng = seedRng(seed);
-    console.info(`[match] seed ${matchSeed}`);
-    // l0 随机、l1 贪心（同步，主线程）、l2 回合内搜索（Web Worker）
-    const ai = difficulty === 'l0' ? l0ChooseAction : undefined;
-    const aiAsync = difficulty === 'l2' ? l2Async() : undefined;
-    const match = new LocalMatch({ seed: matchSeed, classes: [humanClass, aiClass], decks, human: 0, ai, aiAsync });
+  }
+
+  // 建场景、接上对局并开始
+  private begin(match: MatchSeat, decks: [string[], string[]], classes: [HeroClass, HeroClass]): void {
     this.names = new LogNames();
-    match.onBatch = (events) => this.log(events, 0);
+    match.onBatch = (events) => this.log(events, match.side);
     this.open(match.initial, match);
     match.start(this.session!.director);
     // 语音不占加载页：进对局后在后台加载，登场台词先、死亡台词后，两条两条地来，不和对局音乐抢带宽（spec 5.10）。
     // 还没加载好时触发的台词不播（voice.ts）。
-    void loadManifest(matchVoiceManifest(decks, [humanClass, aiClass]), () => {}, { concurrency: 2 });
+    void loadManifest(matchVoiceManifest(decks, classes), () => {}, { concurrency: 2 });
+  }
+
+  // 联机断线后只拿到当前快照（漏掉了事件，显示局面接不上）：场景按快照重建，对局接着用
+  resync(view: ViewState): void {
+    const match = this.session?.match;
+    if (!match) return;
+    this.teardown(true);
+    this.open(view, match);
+    match.start(this.session!.director);
+  }
+
+  // 结束回合按钮正下方在页面上的位置和按钮的宽度（联机的回合倒计时贴在这里）。不在对局里为 null
+  endTurnAnchor(): { x: number; y: number; width: number } | null {
+    const stage = this.stage;
+    if (!stage || !this.session) return null;
+    const p = endTurnSlot().pos;
+    const rect = stage.canvas.getBoundingClientRect();
+    const toPage = (dx: number, dz: number) => {
+      const v = new THREE.Vector3(p.x + dx, p.y, p.z + dz).project(stage.camera);
+      return { x: rect.left + ((v.x + 1) / 2) * rect.width, y: rect.top + ((1 - v.y) / 2) * rect.height };
+    };
+    const l = toPage(-1.3, 1.25);
+    const r = toPage(1.3, 1.25);
+    return { x: (l.x + r.x) / 2, y: (l.y + r.y) / 2, width: r.x - l.x };
+  }
+
+  // 对局层的状态变了（联机：在途动作被拒、计时、对手在线状态），刷新输入和界面
+  refresh(): void {
+    this.onDirector();
   }
 
   // 回放夹具：观战视角，不接受输入。
@@ -220,10 +272,11 @@ export class GameApp {
     this.onDirector();
   }
 
-  private teardown(): void {
+  // keepMatch 为 true 时只拆场景，对局留着（resync 重建场景用）
+  private teardown(keepMatch = false): void {
     const s = this.session;
     if (!s) return;
-    s.match?.stop();
+    if (!keepMatch) s.match?.stop();
     s.unsubscribe();
     s.interaction.destroy();
     s.keywordHover.destroy();
@@ -307,7 +360,7 @@ export class GameApp {
     if (mulliganOpen !== ui.mulligan.open) patch.mulligan = { open: mulliganOpen, marked: scene.mulliganMarks.size };
     if (view.phase === 'over' && !director.busy && !ui.result && view.winner !== null) {
       const winner = view.winner;
-      patch.result = { winner, won: winner === view.viewer, turns: view.turn };
+      patch.result = { winner, won: winner === view.viewer, turns: view.turn, reason: match?.result?.reason ?? 'game' };
     }
     if (Object.keys(patch).length > 0) setUi(patch);
   }

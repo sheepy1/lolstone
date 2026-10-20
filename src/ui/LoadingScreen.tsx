@@ -1,6 +1,7 @@
 // 加载页（spec 5.1）。两种：
 // - 打开页面时（screen 为 boot）：游戏名、台面远景、进度条。进度来自 main.tsx 的启动步骤（渲染器、界面字体）。
 // - 开一局时（screen 为 loading）：双方英雄原画对峙、进度条、随机小提示。进度来自 src/assets 清单的真实预载。
+//   联机对局右侧的对手显示昵称和职业，不显示难度（docs/online.md 3.4）。
 // 显示的进度追着真实进度走，但每秒最多走 1.6 格（整条约 0.6 秒），资源已经缓存时进度条也看得出在走，不会一跳到底。
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getHeroClass } from '../engine';
@@ -59,14 +60,19 @@ function BootTitle() {
 
 function Faceoff() {
   const { humanClass, aiClass, difficulty, humanDeck } = useUi((s) => s.menu);
+  const online = useUi((s) => s.online?.match ?? null);
   const deckName = humanDeck ? getDeck(humanDeck)?.name : null;
   return (
     <div className="ld-faceoff">
-      <Contender cls={humanClass} side="left" caption={deckName ? `你 · ${deckName}` : '你'} />
+      <Contender cls={online ? online.myClass : humanClass} side="left" caption={deckName ? `你 · ${deckName}` : '你'} />
       <div className="ld-vs">
         <span>VS</span>
       </div>
-      <Contender cls={aiClass} side="right" caption={`对手 · ${difficultyName(difficulty)}`} />
+      {online ? (
+        <Contender cls={online.opponentClass} side="right" caption={online.opponent} />
+      ) : (
+        <Contender cls={aiClass} side="right" caption={`对手 · ${difficultyName(difficulty)}`} />
+      )}
     </div>
   );
 }

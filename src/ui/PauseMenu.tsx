@@ -1,4 +1,5 @@
 // 对局菜单：左上角"菜单"按钮或 Esc 打开，游戏暂停。里面有继续、设置、认输、回主菜单；认输和回主菜单要再确认一次。
+// 联机对局里回主菜单等于认输（docs/online.md 3.4），确认文案说明这一点。
 // Esc：没有面板时打开对局菜单；在对局菜单里关掉它（确认步骤里先退回列表）；设置页自己处理 Esc，关掉后回到这里。
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import type { AppShell } from '../app/shell';
@@ -29,6 +30,7 @@ export function useEscOpensPauseMenu(app: AppShell): void {
 export function PauseMenu({ app }: { app: AppShell }) {
   const [confirm, setConfirm] = useState<Confirm>(null);
   const top = useUi((s) => s.panels[s.panels.length - 1]);
+  const online = useUi((s) => !!s.online?.match);
   const root = useRef<HTMLDivElement>(null);
   const active = top === 'pause';
 
@@ -101,7 +103,7 @@ export function PauseMenu({ app }: { app: AppShell }) {
         {confirm !== null && (
           <>
             <div className="ov-pause-title">{confirm === 'concede' ? '确定认输？' : '回到主菜单？'}</div>
-            <div className="ov-confirm-text">{confirm === 'concede' ? '本局记为失败，对手获胜。' : '这一局会直接结束，不保存进度。'}</div>
+            <div className="ov-confirm-text">{confirm === 'concede' ? '本局记为失败，对手获胜。' : online ? '离开就算认输，对手获胜。' : '这一局会直接结束，不保存进度。'}</div>
             <button
               className="ov-item danger"
               onPointerEnter={hover}

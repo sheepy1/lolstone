@@ -87,7 +87,8 @@ export function uiTextChars(): string {
 }
 
 // 打开页面的加载页和主菜单上的字所在的文件：主菜单组件、职业介绍和难度（menuData）、
-// 共用的标题和单选组、加载页、启动进度的说明、职业名。界面字体按 unicode-range 切成两片（src/ui/fontFaces.css）：
+// 共用的标题和单选组、加载页、启动进度的说明、职业名。主菜单上的"联机"按钮在 MainMenu 里；点开的联机面板（OnlinePanel）
+// 不收：它的字约 6.5 KB，50 KB/s 下所有人打开页面要多等 0.13 秒，而面板要点了才出来，那时其余的字通常已经下好。界面字体按 unicode-range 切成两片（src/ui/fontFaces.css）：
 // 这些字单独一片，打开页面时只等这一片；其余的字在主菜单出来以后后台加载。主菜单上加了别的文件里的文字，要加进这里。
 export const MENU_TEXT_FILES = [
   'src/ui/MainMenu.tsx',

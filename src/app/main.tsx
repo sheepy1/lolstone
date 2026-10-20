@@ -1,5 +1,6 @@
 // 启动：装卡池、等界面字体、挂 React 文字界面。地址带 ?replay 时回放夹具。
 // 渲染器和对局控制不在首包里（shell.ts）：主菜单显示后在后台加载；回放和自动驾驶直接进对局，启动时就加载。
+// 地址带 ?online=fake 时主菜单有联机入口，接开发用的假平台；再带 ?autoplay 时自动建房、我方自动出牌，一局接一局。
 import { createRoot } from 'react-dom/client';
 import { loadManifest } from '../assets/loader';
 import { loadingArtUrl, type AssetEntry } from '../assets/manifest';
@@ -12,6 +13,7 @@ import '../ui/menu.css';
 import '../ui/overlay.css';
 import '../ui/deck.css';
 import '../ui/cursors.css';
+import '../ui/online.css';
 import { MENU_FONT } from '../ui/hextech';
 import { getSettings } from '../ui/settings';
 import type { GameApp } from './game';
@@ -63,6 +65,9 @@ function loadMenuArt(): Promise<unknown> {
 async function boot(): Promise<void> {
   const t0 = performance.now();
   const params = new URLSearchParams(location.search);
+  const online = params.has('online');
+  // 联机的流程和平台接口在后台载，和主菜单要等的字体同时进行
+  const onlineReady = online ? app.loadOnline(params).catch((err: unknown) => (console.error('[online]', err), null)) : Promise.resolve(null);
   // 回放和自动驾驶不经过主菜单，渲染器在加载页上就起好：渲染器 0 到 30%，字体 30% 到 90%；直接进对局，界面字体整份都等
   let game: GameApp | null = null;
   let menuArt: Promise<unknown> | null = null;
@@ -81,6 +86,11 @@ async function boot(): Promise<void> {
   if (game && params.has('replay')) {
     const { default: fixture } = await import('../../tests/fixtures/l0-replay.json');
     game.startReplay(fixture as unknown as Parameters<GameApp['startReplay']>[0]);
+    return;
+  }
+  if (game && online) {
+    setUi({ screen: 'menu' });
+    (await onlineReady)?.startAutoplay();
     return;
   }
   if (game) {

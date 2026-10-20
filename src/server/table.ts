@@ -1,97 +1,18 @@
-// 权威对局 Table（docs/online.md 3.1、5.2）：持有真实局面、version、动作日志和两个座位，把动作交给 apply、
+// 权威对局 Table（docs/online.md 3.1、5.2）：持有真实局面、version、动作日志和两个座位，把动作交给逻辑模块的 apply、
 // 把结果按座位遮过再发出去，驱动 AI 座位并在它的动作之间插 ai_thinking。
 // 纯模块：不碰 DOM、网络和定时器，浏览器（单机的 LocalMatch）和 Node（测试）都能跑。
 //
-// 分两层：
-// - 上半部分 applyMatchAction、maskMatch 是纯函数，只调引擎导出的 applyAction、maskHidden、maskEvents。
-//   M6b 把它们原样挪进逻辑模块（online.md 5.1 的 src/logic），交给平台的 runner 调。
-// - Table 只做编排：version、发批次、AI 节奏。线上这些是平台做的事，所以 Table 自己不校验动作、不核对行动方，
-//   都在 applyMatchAction 里，单机和线上走同一段校验。
+// Table 只做平台的 runner 在线上做的那部分编排：version、发批次、计时到点按座位依次调 onTimeout、AI 节奏。
+// 动作校验、行动方核对、遮蔽、结果都调 src/logic 里和平台同一段代码，Table 自己不做。
 import type { AiChoice } from '../ai/types';
-import {
-  applyAction,
-  checkActionShape,
-  createGame,
-  maskEvents,
-  maskHidden,
-  nextFloat,
-  other,
-  seedRng,
-  type Action,
-  type GameEvent,
-  type GameState,
-  type HeroClass,
-  type RngState,
-  type Side,
-} from '../engine';
+import { createGame, maskHidden, nextFloat, seedRng, type GameEvent, type GameState, type HeroClass, type RngState, type Side } from '../engine';
+import { applyMatch, forfeitMatch, maskMatch, maskMatchEvents, matchResult, timeoutMatch, type MatchStep } from '../logic/match';
+import type { MatchResult, MatchState, Snapshot } from '../logic/state';
+import { MULLIGAN_MS } from '../logic/timeouts';
+import type { ForfeitReason } from '../logic/types';
 import type { PresentationEvent } from '../presentation/events';
 
-// ---------- 纯函数：局面、动作、遮蔽（online.md 4.1、4.2、4.5） ----------
-
-// 对局结束的原因（online.md 4.1 的 result）。timeout、abandon、kicked 在 M6b 接上计时和平台判负后才会出现
-export type EndReason = 'game' | 'concede' | 'timeout' | 'abandon' | 'kicked';
-export type MatchResult = { winner: Side | 'draw'; reason: EndReason };
-
-// 认输不进引擎，是模块级的动作（online.md 4.2）
-export type ConcedeAction = { kind: 'concede' };
-export type MatchAction = Action | ConcedeAction;
-
-export type LogEntry = { seat: Side; action: MatchAction; at: number };
-
-// 引擎局面外面包一层（online.md 4.1 的 MatchState）：动作日志和结束原因
-export type MatchState = { game: GameState; log: LogEntry[]; reason: EndReason | null };
-
-// 发给一个座位的快照（online.md 4.5）：遮过的局面，rng 置零，带上结束原因。动作日志不下发
-export type Snapshot = { game: GameState; reason: EndReason | null };
-
-export type ApplyOutcome = { ok: true; state: MatchState; events: GameEvent[] } | { ok: false; reason: string };
-
-// 执行一个座位的动作（online.md 4.2 的校验顺序），每一步失败都返回原因、不改局面。
-// seat 永远来自调用方（单机是 LocalMatch，线上是平台核对过的座位），动作里的字段不能决定是谁在行动。
-export function applyMatchAction(state: MatchState, seat: Side, action: unknown, at: number): ApplyOutcome {
-  const game = state.game;
-  if (game.phase === 'over') return { ok: false, reason: 'over' };
-  if (isConcede(action)) {
-    const winner = other(seat);
-    return {
-      ok: true,
-      state: { game: { ...game, phase: 'over', winner }, log: [...state.log, { seat, action: { kind: 'concede' }, at }], reason: 'concede' },
-      events: [{ kind: 'game_over', group: 0, winner }],
-    };
-  }
-  const shapeError = checkActionShape(action);
-  if (shapeError) return { ok: false, reason: shapeError };
-  const a = action as Action;
-  // 行动方核对（online.md 5.5 第 2 条）：引擎把 state.current 当作行动方，不核对的话对手能在你的回合替你结束回合
-  if (game.phase === 'mulligan' ? a.kind !== 'mulligan' || a.player !== seat : game.current !== seat) {
-    return { ok: false, reason: 'not your turn' };
-  }
-  // applyAction 先调 checkAction，不合法时原因照引擎的
-  const r = applyAction(game, a);
-  if (!r.ok) return { ok: false, reason: r.error };
-  return {
-    ok: true,
-    state: { game: r.state, log: [...state.log, { seat, action: structuredClone(a), at }], reason: r.state.phase === 'over' ? 'game' : null },
-    events: r.events,
-  };
-}
-
-function isConcede(action: unknown): action is ConcedeAction {
-  if (typeof action !== 'object' || action === null) return false;
-  const keys = Object.keys(action);
-  return keys.length === 1 && keys[0] === 'kind' && (action as { kind: unknown }).kind === 'concede';
-}
-
-// 这个座位能看到的局面：maskHidden 再把 rng 置零（online.md 5.5 第 4 条：maskHidden 的派生随机数可逆）
-export function maskMatch(state: MatchState, seat: Side): Snapshot {
-  return { game: { ...maskHidden(state.game, seat), rng: { s: 0 } }, reason: state.reason };
-}
-
-export function matchResult(state: MatchState): MatchResult | null {
-  const { game, reason } = state;
-  if (game.phase !== 'over' || game.winner === undefined) return null;
-  return { winner: game.winner, reason: reason ?? 'game' };
-}
+export type { EndReason, MatchResult, MatchState, Snapshot } from '../logic/state';
 
 // ---------- Table：编排 ----------
 
@@ -110,7 +31,7 @@ export type TableConfig = {
   seats: [Seat, Seat];
   // AI 每个动作前固定停这么多秒；不给时按 AI_PACE 算
   thinkSeconds?: number;
-  // 动作日志的时间戳。默认 Date.now，测试里可以换成固定的
+  // 算计时到期时刻用的时钟。默认 Date.now，测试里可以换成固定的
   now?: () => number;
 };
 
@@ -131,7 +52,8 @@ export class Table {
   // 已执行的动作数（online.md 4.4）：开局为 0，每次成功执行加一
   version = 0;
   readonly seats: [Seat, Seat];
-  // 当前计时的到期时刻。计时在 M6b 接上（online.md 5.3），现在一直是 null
+  // 当前计时的到期时刻（online.md 5.3），没有计时为 null。Table 不开定时器：到点由调用方调 timeout()，
+  // 单机不限时、从不调；batch 的 deadlineIn 按它算
   deadline: number | null = null;
   private readonly aiRng: [RngState | null, RngState | null];
   private readonly thinkSeconds: number | null;
@@ -143,7 +65,8 @@ export class Table {
 
   constructor(config: TableConfig) {
     const created = createGame({ seed: config.seed, classes: config.classes, decks: config.decks });
-    this.state = { game: created.state, log: [], reason: null };
+    // 单机的 AI 座位由 Table 自己驱动（能接 Worker 里的 L2），不用逻辑模块的 bot，所以 bots 都是 null
+    this.state = { game: created.state, log: [], reason: null, bots: [null, null] };
     this.opening = created.events;
     this.seats = config.seats;
     this.aiRng = [seatRng(config.seats[0]), seatRng(config.seats[1])];
@@ -151,6 +74,8 @@ export class Table {
     this.thinkSeconds = config.thinkSeconds ?? null;
     this.thinkRng = seedRng(config.seed ^ 0x7417);
     this.now = config.now ?? Date.now;
+    // 和逻辑模块的 setup 一样，换牌从开局起计 60 秒
+    this.deadline = this.now() + MULLIGAN_MS;
   }
 
   // 发开局那批事件，然后让该行动的 AI 座位行动（换牌阶段 AI 先提交；只有一方提交时引擎不发事件）
@@ -162,22 +87,38 @@ export class Table {
     this.driveAi();
   }
 
-  // 一个座位提交动作（online.md 5.2）。version 不是当前的拒 'stale'；其余校验都在 applyMatchAction 里。
+  // 一个座位提交动作（online.md 5.2）。version 不是当前的拒 'stale'；其余校验都在逻辑模块的 apply 里。
   // AI 座位的动作也走这里。
   submit(seat: Side, version: number, action: unknown): SubmitResult {
     if (version !== this.version) return { ok: false, reason: 'stale' };
-    const r = applyMatchAction(this.state, seat, action, this.now());
+    const r = applyMatch(this.state, seat, action);
     if (!r.ok) return r;
-    this.state = r.state;
-    this.version++;
-    this.deliver(r.events);
+    this.commit(r);
     this.driveAi();
     return { ok: true };
   }
 
-  // 计时到点（online.md 5.3：换牌替没提交的一方提交"一张都不换"，回合替当前方结束回合）。M6b 实现
+  // 计时到点（online.md 4.1、5.3），和平台的 runner 做法一样：按座位号依次调 onTimeout，每次传上一次之后的局面；
+  // 生效的各算一步，某一步带回新的 deadline 就停。这一轮没有一步带回新计时，计时器停掉
   timeout(): void {
-    throw new Error('turn timer is not implemented yet (online.md M6b)');
+    if (this.deadline === null) return;
+    this.deadline = null;
+    for (const seat of [0, 1] as const) {
+      const r = timeoutMatch(this.state, seat);
+      if (!r.ok) continue;
+      this.commit(r);
+      if (typeof r.deadline === 'number') break;
+    }
+    this.driveAi();
+  }
+
+  // 平台发起的判负（online.md 4.1 的 forfeit）：断线宽限到或运营踢人，对方获胜。单机不用，测试和开发用的假平台
+  // （src/net/fakeLink.ts）模拟断线判负时调它
+  forfeit(seat: Side, reason: ForfeitReason): SubmitResult {
+    const r = forfeitMatch(this.state, seat, reason);
+    if (!r.ok) return r;
+    this.commit(r);
+    return { ok: true };
   }
 
   snapshotFor(seat: Side): Snapshot {
@@ -193,19 +134,31 @@ export class Table {
     this.stopped = true;
   }
 
+  // 一步生效：换局面、version 加一、按 Step 的 deadline 更新计时（不带就保留），再发给每个座位
+  private commit(step: MatchStep & { ok: true }): void {
+    this.state = step.state;
+    this.version++;
+    if (step.deadline !== undefined) this.deadline = step.deadline === null ? null : this.now() + step.deadline;
+    this.deliver(step.events);
+  }
+
   // 给每个真人座位各发一份遮过的事件和快照。AI 座位不收：它的"收"是轮到它时 driveAi 去调 choose
   private deliver(events: GameEvent[]): void {
     this.seats.forEach((seat, side) => {
       if (seat.kind !== 'human') return;
       const s = side as Side;
-      seat.deliver({ version: this.version, events: maskEvents(events, s), snapshot: this.snapshotFor(s), deadlineIn: null });
+      seat.deliver({ version: this.version, events: maskMatchEvents(events, s), snapshot: this.snapshotFor(s), deadlineIn: this.deadlineIn() });
     });
   }
 
   private sendToHumans(event: PresentationEvent): void {
     this.seats.forEach((seat, side) => {
-      if (seat.kind === 'human') seat.deliver({ version: this.version, events: [event], snapshot: this.snapshotFor(side as Side), deadlineIn: null });
+      if (seat.kind === 'human') seat.deliver({ version: this.version, events: [event], snapshot: this.snapshotFor(side as Side), deadlineIn: this.deadlineIn() });
     });
+  }
+
+  private deadlineIn(): number | null {
+    return this.deadline === null ? null : Math.max(0, this.deadline - this.now());
   }
 
   // 现在该行动的 AI 座位，没有时为 null

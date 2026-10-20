@@ -148,7 +148,7 @@ async function main(): Promise<void> {
 
   const html = `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MeLoL 卡牌配图对照</title>
+<title>LoLstone 卡牌配图对照</title>
 <style>
   :root { --bg:#14161b; --panel:#1d2027; --line:#2e333d; --text:#e8e4da; --muted:#9a9488; --gold:#c8aa6e; --warn:#e0a040; --gen:#d06a8a; }
   * { box-sizing:border-box; }
@@ -178,7 +178,7 @@ async function main(): Promise<void> {
   .small .reason { font-size:13px; }
   ol.gen { color:var(--gen); }
 </style></head><body>
-<h1>MeLoL 卡牌配图对照</h1>
+<h1>LoLstone 卡牌配图对照</h1>
 <p class="intro">没有英雄原画的 ${ids.length} 张卡、4 个英雄技能、${Object.keys(map.keywords).length} 个关键词。金框是卡面原画窗口（宽高比 1 : 0.86，和现在 canvasArt.ts 的卡面一致）按映射表的焦点裁切的效果；右边的方图给场上随从头像和小图标用。虚线下面是备选，直接引用远程地址。
 映射表：scripts/data/card-art.json。Data Dragon ${esc(manifest.ddragonVersion)}，符文之地传说 ${esc(manifest.lorVersion)}。</p>
 <p class="intro">以后要生成大图的卡，按先后排（现在先用替代图）：</p>

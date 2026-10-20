@@ -39,7 +39,7 @@ async function downloadOnce(src: Source, part: string): Promise<void> {
   const have = (await fileSize(part)) ?? 0;
   const end = src.maxBytes ? src.maxBytes - 1 : undefined;
   if (end !== undefined && have > end) return;
-  const headers: Record<string, string> = { 'User-Agent': 'melol-fetch-sfx' };
+  const headers: Record<string, string> = { 'User-Agent': 'lolstone-fetch-sfx' };
   if (have > 0 || end !== undefined) headers.Range = `bytes=${have}-${end ?? ''}`;
 
   const ctrl = new AbortController();

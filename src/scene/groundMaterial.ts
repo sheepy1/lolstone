@@ -14,9 +14,9 @@ type Uniforms = Record<string, THREE.IUniform>;
 
 // 着色器字符串里只写 ASCII：tests/presentation-font.test.ts 把 src/scene 里字符串中的中文当成界面文字，
 // 要求都在字体子集里。说明写在这里的注释里。
-// melolBump：世界坐标下按高度做凹凸（Mikkelsen 的 perturbNormalArb，不需要切线）
+// lolstoneBump：世界坐标下按高度做凹凸（Mikkelsen 的 perturbNormalArb，不需要切线）
 const BUMP_GLSL = /* glsl */ `
-vec3 melolBump(vec3 pos, vec3 n, float h, float scale) {
+vec3 lolstoneBump(vec3 pos, vec3 n, float h, float scale) {
   vec3 dpx = dFdx(pos);
   vec3 dpy = dFdy(pos);
   float dhx = dFdx(h) * scale;
@@ -27,7 +27,7 @@ vec3 melolBump(vec3 pos, vec3 n, float h, float scale) {
   vec3 grad = sign(det) * (dhx * r1 + dhy * r2);
   return normalize(abs(det) * n - grad);
 }
-vec3 melolGrade(vec3 c, float sat, float bright) {
+vec3 lolstoneGrade(vec3 c, float sat, float bright) {
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
   return mix(vec3(l), c, sat) * bright;
 }
@@ -55,12 +55,12 @@ ${BUMP_GLSL}
 // - rock：野区高处和陡坡是山石，横向的岩层纹，平缓处长苔；
 // - focus：外圈压暗，中央（双方随从行之间）最亮；
 // - caustics：河床的焦散，两层沃罗诺伊边缘反向流动取较小值，只在水下。
-// 分支里取样用显式梯度（MELOL_TG）：分支里的隐式求导没有定义，分支边界上会选错 mip。
+// 分支里取样用显式梯度（LOLSTONE_TG）：分支里的隐式求导没有定义，分支边界上会选错 mip。
 const GROUND_ALBEDO = /* glsl */ `
   vec2 p = vLocal.xz;
   vec2 dpx = dFdx(p);
   vec2 dpy = dFdy(p);
-  #define MELOL_TG(s, k, o) textureGrad(s, p * (k) + (o), dpx * (k), dpy * (k))
+  #define LOLSTONE_TG(s, k, o) textureGrad(s, p * (k) + (o), dpx * (k), dpy * (k))
   vec4 mk = texture2D(uMask, p / uBoard + 0.5);
   vec4 nA = texture2D(uNoise, p * 0.045);
   vec4 nB = texture2D(uNoise, p * 0.17 + 0.37);
@@ -83,11 +83,11 @@ const GROUND_ALBEDO = /* glsl */ `
   float peb = 0.0;
   vec3 dirt = vec3(0.0);
   if (mk.r > 0.01) {
-    float laneN = mk.r + (nB.r - 0.5) * 0.6 + (MELOL_TG(uNoise, 0.38, vec2(0.7)).g - 0.5) * 0.45 + (nC.g - 0.5) * 0.22;
+    float laneN = mk.r + (nB.r - 0.5) * 0.6 + (LOLSTONE_TG(uNoise, 0.38, vec2(0.7)).g - 0.5) * 0.45 + (nC.g - 0.5) * 0.22;
     lane = smoothstep(0.42, 0.6, laneN);
     lane *= 1.0 - smoothstep(0.5, 0.8, blade) * (1.0 - smoothstep(0.6, 0.85, laneN));
     dirt = mix(vec3(0.085, 0.058, 0.03), vec3(0.15, 0.108, 0.058), nC.r);
-    vec4 pb = MELOL_TG(uNoise, 0.75, vec2(0.3));
+    vec4 pb = LOLSTONE_TG(uNoise, 0.75, vec2(0.3));
     peb = (1.0 - smoothstep(0.16, 0.3, pb.b)) * step(0.45, nC.g);
     dirt = mix(dirt, vec3(0.19, 0.17, 0.14) * (0.8 + 0.4 * nC.a), peb * 0.75);
     dirt *= 0.8 + 0.35 * smoothstep(0.0, 0.25, pb.a);
@@ -100,7 +100,7 @@ const GROUND_ALBEDO = /* glsl */ `
   vec3 bed = vec3(0.0);
   if (wet > 0.0) {
     vec3 mud = mix(vec3(0.04, 0.032, 0.02), vec3(0.085, 0.066, 0.04), nC.r * 0.6 + nB.r * 0.4);
-    vec4 cb = MELOL_TG(uNoise, 0.34, vec2(0.2));
+    vec4 cb = LOLSTONE_TG(uNoise, 0.34, vec2(0.2));
     cobble = (1.0 - smoothstep(0.14, 0.3, cb.b)) * smoothstep(0.6, 0.9, mk.g + (nB.r - 0.5) * 0.9) * smoothstep(0.55, 0.68, nB.g) * step(0.35, nC.g);
     vec3 stones = mix(vec3(0.1, 0.098, 0.088), vec3(0.2, 0.19, 0.165), nC.r) * (0.8 + 0.2 * (1.0 - cb.b));
     vec3 bank = mix(mud, stones, cobble);
@@ -132,21 +132,21 @@ const GROUND_ALBEDO = /* glsl */ `
   vec2 q = p / (uBoard * 0.5);
   float r = length(q * vec2(0.92, 1.12));
   float focus = 1.0 - uEdgeDark * smoothstep(0.4, 1.1, r);
-  diffuseColor.rgb = melolGrade(col, uSat, uBright * focus);
+  diffuseColor.rgb = lolstoneGrade(col, uSat, uBright * focus);
 
   // caustics
-  vec3 melolEmit = vec3(0.0);
+  vec3 lolstoneEmit = vec3(0.0);
   if (depth > 0.04) {
-    float c1 = MELOL_TG(uNoise, 0.5, vec2(uTime * 0.025, uTime * 0.01)).a;
-    float c2 = MELOL_TG(uNoise, 0.66, vec2(-uTime * 0.018, uTime * 0.016) + 0.5).a;
+    float c1 = LOLSTONE_TG(uNoise, 0.5, vec2(uTime * 0.025, uTime * 0.01)).a;
+    float c2 = LOLSTONE_TG(uNoise, 0.66, vec2(-uTime * 0.018, uTime * 0.016) + 0.5).a;
     float ca = pow(1.0 - smoothstep(0.0, 0.2, min(c1, c2)), 2.0);
-    melolEmit = vec3(0.35, 0.6, 0.55) * ca * smoothstep(0.05, 0.6, depth) * uCaustics * 0.09;
+    lolstoneEmit = vec3(0.35, 0.6, 0.55) * ca * smoothstep(0.05, 0.6, depth) * uCaustics * 0.09;
   }
 
-  vec3 melolN = wN;
-  melolN = normalize(melolN + vec3(gr.g * 2.0 - 1.0, 0.0, gr.b * 2.0 - 1.0) * 0.55 * (1.0 - lane) * (1.0 - wet) * (1.0 - rockM));
-  melolN = melolBump(vLocal, melolN, hgt, 0.06);
-  float melolRough = rough;
+  vec3 lolstoneN = wN;
+  lolstoneN = normalize(lolstoneN + vec3(gr.g * 2.0 - 1.0, 0.0, gr.b * 2.0 - 1.0) * 0.55 * (1.0 - lane) * (1.0 - wet) * (1.0 - rockM));
+  lolstoneN = lolstoneBump(vLocal, lolstoneN, hgt, 0.06);
+  float lolstoneRough = rough;
 `;
 
 function patchVertex(s: { vertexShader: string }): void {
@@ -158,7 +158,7 @@ function patchVertex(s: { vertexShader: string }): void {
     );
 }
 
-export type GroundMaterial = THREE.MeshStandardMaterial & { melol: Uniforms };
+export type GroundMaterial = THREE.MeshStandardMaterial & { lolstone: Uniforms };
 
 export function groundMaterial(tex: BoardTextures): GroundMaterial {
   const m = new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0 }) as GroundMaterial;
@@ -173,18 +173,18 @@ export function groundMaterial(tex: BoardTextures): GroundMaterial {
     uBright: { value: BOARD_ART.brightness },
     uCaustics: { value: BOARD_ART.caustics },
   };
-  m.melol = u;
+  m.lolstone = u;
   m.onBeforeCompile = (s) => {
     Object.assign(s.uniforms, u);
     patchVertex(s);
     s.fragmentShader = s.fragmentShader
       .replace('#include <common>', `#include <common>\n${GROUND_PARS}`)
       .replace('#include <map_fragment>', GROUND_ALBEDO)
-      .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = melolRough;')
-      .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = normalize((viewMatrix * vec4(melolN, 0.0)).xyz);')
-      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += melolEmit;');
+      .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = lolstoneRough;')
+      .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = normalize((viewMatrix * vec4(lolstoneN, 0.0)).xyz);')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += lolstoneEmit;');
   };
-  m.customProgramCacheKey = () => 'melol-ground-2';
+  m.customProgramCacheKey = () => 'lolstone-ground-2';
   return m;
 }
 
@@ -208,20 +208,20 @@ const WATER_ALBEDO = /* glsl */ `
   vec2 p = vLocal.xz;
   vec3 wa = texture2D(uWater, p * vec2(0.16, 0.28) + vec2(uTime * 0.012, uTime * 0.004)).xyz * 2.0 - 1.0;
   vec3 wb = texture2D(uWater, p * vec2(0.27, 0.41) + vec2(-uTime * 0.009, uTime * 0.007) + 0.5).xyz * 2.0 - 1.0;
-  vec3 melolN = normalize(vec3(wa.x + wb.x, 0.0, -(wa.y + wb.y)) * 0.22 + vec3(0.0, 1.0, 0.0));
+  vec3 lolstoneN = normalize(vec3(wa.x + wb.x, 0.0, -(wa.y + wb.y)) * 0.22 + vec3(0.0, 1.0, 0.0));
   float deep = smoothstep(0.02, 0.3, vDepth);
   vec3 col = mix(vec3(0.03, 0.12, 0.11), vec3(0.006, 0.042, 0.07), deep);
   // foam
   float fn = texture2D(uNoise, p * 0.9 + vec2(uTime * 0.02, 0.0)).g;
   float foam = (1.0 - smoothstep(0.01, 0.06, vDepth)) * smoothstep(0.0, 0.012, vDepth) * smoothstep(0.42, 0.7, fn + texture2D(uNoise, p * 2.3 - vec2(uTime * 0.03, 0.0)).r * 0.3);
   col = mix(col, vec3(0.3, 0.36, 0.35), foam * 0.4);
-  diffuseColor.rgb = melolGrade(col, uSat, uBright);
+  diffuseColor.rgb = lolstoneGrade(col, uSat, uBright);
   diffuseColor.a = smoothstep(0.0, 0.05, vDepth) * mix(0.3, 0.88, deep) + foam * 0.35;
-  float melolRough = 0.08 + foam * 0.5;
+  float lolstoneRough = 0.08 + foam * 0.5;
   // caustics
   float c1 = texture2D(uNoise, p * 0.42 + vec2(uTime * 0.02, uTime * 0.008)).a;
   float c2 = texture2D(uNoise, p * 0.55 + vec2(-uTime * 0.015, uTime * 0.013) + 0.5).a;
-  float melolCa = pow(1.0 - smoothstep(0.0, 0.18, min(c1, c2)), 2.0) * (0.4 + 0.6 * deep);
+  float lolstoneCa = pow(1.0 - smoothstep(0.0, 0.18, min(c1, c2)), 2.0) * (0.4 + 0.6 * deep);
 `;
 
 // 太阳在波纹上的碎光、掠射角的天光、焦散，加在自发光上（不进泛光）
@@ -235,11 +235,11 @@ const WATER_SPEC = /* glsl */ `
     #endif
     float fres = pow(1.0 - max(dot(normal, V), 0.0), 2.0);
     totalEmissiveRadiance += vec3(0.05, 0.11, 0.13) * fres * uGloss;
-    totalEmissiveRadiance += vec3(0.25, 0.5, 0.48) * melolCa * uCaustics * 0.06;
+    totalEmissiveRadiance += vec3(0.25, 0.5, 0.48) * lolstoneCa * uCaustics * 0.06;
   }
 `;
 
-export type WaterMaterial = THREE.MeshStandardMaterial & { melol: Uniforms };
+export type WaterMaterial = THREE.MeshStandardMaterial & { lolstone: Uniforms };
 
 export function waterMaterial(tex: BoardTextures): WaterMaterial {
   const m = new THREE.MeshStandardMaterial({ roughness: 0.07, metalness: 0, transparent: true }) as WaterMaterial;
@@ -252,7 +252,7 @@ export function waterMaterial(tex: BoardTextures): WaterMaterial {
     uGloss: { value: BOARD_ART.waterGloss },
     uCaustics: { value: BOARD_ART.caustics },
   };
-  m.melol = u;
+  m.lolstone = u;
   m.onBeforeCompile = (s) => {
     Object.assign(s.uniforms, u);
     patchVertex(s);
@@ -262,11 +262,11 @@ export function waterMaterial(tex: BoardTextures): WaterMaterial {
     s.fragmentShader = s.fragmentShader
       .replace('#include <common>', `#include <common>\n${WATER_PARS}`)
       .replace('#include <map_fragment>', WATER_ALBEDO)
-      .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = melolRough;')
-      .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = normalize((viewMatrix * vec4(melolN, 0.0)).xyz);')
+      .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = lolstoneRough;')
+      .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = normalize((viewMatrix * vec4(lolstoneN, 0.0)).xyz);')
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + WATER_SPEC);
   };
-  m.customProgramCacheKey = () => 'melol-water-2';
+  m.customProgramCacheKey = () => 'lolstone-water-2';
   return m;
 }
 
@@ -288,7 +288,7 @@ const STONE_ALBEDO = /* glsl */ `
   vec2 suv = bw.y > 0.5 ? wp.xz : (bw.x > bw.z ? wp.zy : wp.xy);
   float sh = textureGrad(uStone, suv, dFdx(suv), dFdy(suv)).r;
   diffuseColor.rgb *= 0.7 + 0.45 * sh;
-  float melolH = sh;
+  float lolstoneH = sh;
 `;
 
 export function stoneMaterial(color: number, scale = 0.45, roughness = 0.82): THREE.MeshStandardMaterial {
@@ -302,9 +302,9 @@ export function stoneMaterial(color: number, scale = 0.45, roughness = 0.82): TH
       .replace('#include <map_fragment>', '#include <map_fragment>\n' + STONE_ALBEDO)
       .replace(
         '#include <normal_fragment_maps>',
-        '#include <normal_fragment_maps>\nnormal = normalize((viewMatrix * vec4(melolBump(vWorldP, normalize(vWN), melolH, 0.05), 0.0)).xyz);',
+        '#include <normal_fragment_maps>\nnormal = normalize((viewMatrix * vec4(lolstoneBump(vWorldP, normalize(vWN), lolstoneH, 0.05), 0.0)).xyz);',
       );
   };
-  m.customProgramCacheKey = () => `melol-stone-${scale}`;
+  m.customProgramCacheKey = () => `lolstone-stone-${scale}`;
   return shared(m);
 }

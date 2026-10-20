@@ -117,7 +117,7 @@ tests/        测试，helpers/ 里是场景 DSL、事件字段表、测试专�
   覆盖连击、回手、再次攻击、受伤条件、随机目标、全场目标等 M1 卡池里没有卡用到的机制）。
 - `pnpm typecheck`：tsc --noEmit。
 - `pnpm play`：人（玩家 0）对 L0，输入编号选动作。`--class`、`--ai-class` 选 demacia 或 freljord，`--seed` 固定种子。
-- `pnpm smoke`：L0 对 L0 自动打 200 局，`--games N`、`--seed N` 可改，`--log` 打印事件。环境变量 `MELOL_INVARIANTS=1` 打开不变量检查。
+- `pnpm smoke`：L0 对 L0 自动打 200 局，`--games N`、`--seed N` 可改，`--log` 打印事件。环境变量 `LOLSTONE_INVARIANTS=1` 打开不变量检查。
 - 仓库根目录的 `.npmrc` 把 registry 指回 npmjs 官方源：本机全局 npm 配置把默认源指到了一个需要鉴权的私有源，不加这个装不了依赖。
 
 ## 已确认的规则（2026-10-19）
@@ -143,7 +143,7 @@ M1 实现时按字面理解、会影响对局结果的四处，用户已经拍�
 - 传送回城不会碰到手牌已满：打出它本身就空出了一格。所以"回手时手牌已满直接销毁"只用李青测。
 - `PRESET_DECKS` 的类型从 `Partial<Record<HeroClass, …>>` 改成了 `Record<HeroClass, …>`，四个职业都有预组了。
 - `pnpm smoke` 的自动对局按 4×4 共 16 种先后手组合轮换（第 g 局用第 g % 16 种），默认 200 局时每种组合只有 12～13 局；
-  要每种组合 200 局，跑 `MELOL_INVARIANTS=1 npx tsx src/cli/play.ts --auto --games 3200`。
+  要每种组合 200 局，跑 `LOLSTONE_INVARIANTS=1 npx tsx src/cli/play.ts --auto --games 3200`。
   `tests/smoke.test.ts` 也是 16 种组合各 200 局（共 3200 局，打开不变量检查），整套测试的耗时从约 1 秒涨到约 10 秒。
 - L0 随机对打的胜率差得很多（3200 局，种子 1..3200，按职业计胜场，镜像局的胜场也算给该职业）：德玛西亚 1130、弗雷尔卓德 1145、
   诺克萨斯 539、艾欧尼亚 386。L0 是随机出牌，不代表平衡，L1 有数据后再看。
@@ -290,12 +290,12 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
 
 ### 命令和调试入口
 
-- `pnpm dev`：Vite 开发服务器（`.claude/launch.json` 里的 `melol-dev` 用 5174 端口）。`pnpm build` 先跑浏览器侧类型检查再打包。
+- `pnpm dev`：Vite 开发服务器（`.claude/launch.json` 里的 `lolstone-dev` 用 5174 端口）。`pnpm build` 先跑浏览器侧类型检查再打包。
 - 地址参数：`?replay` 回放夹具（观战，不接受输入）；`?autoplay` 开一局并让玩家这边也随机选合法动作，三倍速；
   默认有声，开发环境也一样；`?mute=1` 静音。其他会话在内置浏览器里自动试玩时必须带 `?mute=1`，否则声音会从用户的电脑里放出来。
-- 控制台 `melol`：`melol.startMatch(我方职业, 对手职业, 种子?)` 给种子时对局和对手 AI 可复现（自动驾驶下玩家这边的
-  动作时机受动画影响，不保证同一条路线）；`melol.autoplay(true/false)`；`melol.renderFrame()` 手动渲染一帧；
-  `melol.gsap` 是应用自己的 GSAP 实例。
+- 控制台 `lolstone`：`lolstone.startMatch(我方职业, 对手职业, 种子?)` 给种子时对局和对手 AI 可复现（自动驾驶下玩家这边的
+  动作时机受动画影响，不保证同一条路线）；`lolstone.autoplay(true/false)`；`lolstone.renderFrame()` 手动渲染一帧；
+  `lolstone.gsap` 是应用自己的 GSAP 实例。
 - 素材不进 git：没有 `public/art`、`public/audio/voice` 时头像用纯色加名字兜底、不出声，照样能玩。
 - tsconfig：`tsconfig.json` 排除浏览器侧目录，引擎和命令行没有 DOM 类型；`tsconfig.web.json` 带 DOM 和 JSX 检查全部。
   `pnpm typecheck` 两个都跑。
@@ -391,7 +391,7 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
 - 换牌阶段压暗棋盘：一块朝镜头的半透明黑板，放在离镜头 18 的位置，在起手牌（17.6）之后、我方枢纽（18.4）之前。
 
 - 卡面字体：思源宋体粗体（Noto Serif SC Bold，OFL，许可证在 `public/fonts/OFL.txt`）按卡池和界面用到的字做子集，
-  `public/fonts/melol-serif-sc.woff`（585 个字，约 110 KB），旁边的 `.chars.txt` 记着带了哪些字。主菜单、加载页、
+  `public/fonts/lolstone-serif-sc.woff`（585 个字，约 110 KB），旁边的 `.chars.txt` 记着带了哪些字。主菜单、加载页、
   结算面板也用这个子集（`src/ui/menu.css` 的 @font-face），缺的字会由系统宋体补，字形不统一。
   界面文字由 `src/dev/fontChars.ts` 扫 `src/ui` 和 `src/app` 的源码收集：去掉注释后，字符串和 JSX 文本里的非 ASCII 字符
   （ASCII 本来就全带）。`src/app` 也扫，是因为加载页的进度说明、出错提示这些字符串写在对局层里。
@@ -411,18 +411,18 @@ spec 5.8、6.1、6.6 没写、实现时定下的细节。表现层在 `src/prese
   "重置棋盘"（R）恢复。样例事件在 `src/dev/sampleEvents.ts` 按当前显示局面构造。
 - 节奏：全局速度（慢放）、整步时长倍数、整步缓动（把整条时间线的进度映射到一条曲线上，`GsapPlayer.tune`）；
   光照与泛光强度也能实时调。GSDevTools 接在最近一步的时间线上，可以拖时间轴。
-- 开发服务器还有 `POST /__dev/screenshot?name=xxx`：`melol.saveScreenshot(name)` 把画布原尺寸存到 `.dev-output/`。
+- 开发服务器还有 `POST /__dev/screenshot?name=xxx`：`lolstone.saveScreenshot(name)` 把画布原尺寸存到 `.dev-output/`。
 
 ### 踩过的坑
 
 - GSAP 动画去改已经销毁的物件会在 GSAP 的帧回调里抛错，那一帧之后所有动画都停住，导演永远等不到这一步结束。
   所有销毁都先停掉子树上的全部动画（`scene/dispose.ts`），换局时停掉全局时间线上的全部动画。
 - 浏览器标签页或面板不可见时 requestAnimationFrame 停掉，GSAP 和渲染都不动，对局暂停，回来后继续。自动化验证时要在
-  页面里手动调 `gsap.ticker.tick()` 和 `melol.renderFrame()`；后台页面的 setTimeout 会被节流到几百毫秒一次，要精确
+  页面里手动调 `gsap.ticker.tick()` 和 `lolstone.renderFrame()`；后台页面的 setTimeout 会被节流到几百毫秒一次，要精确
   推进时间就用 MessageChannel 让出。CSS 动画在后台也不前进，截结算页前要关掉。
-- 自动化验证时要推进的是应用自己的 GSAP（`melol.gsap`）。从网络请求列表里 import 的 gsap 模块，在 Vite 重新预构建依赖后
+- 自动化验证时要推进的是应用自己的 GSAP（`lolstone.gsap`）。从网络请求列表里 import 的 gsap 模块，在 Vite 重新预构建依赖后
   可能是另一份实例，推它的时钟对应用没有作用。要截动画中间帧，最稳的办法是把全局时间线调慢
-  （`melol.gsap.globalTimeline.timeScale(0.05)`），不管页面在不在后台都有效。
+  （`lolstone.gsap.globalTimeline.timeScale(0.05)`），不管页面在不在后台都有效。
 
 - 自动化录帧要完全接管 GSAP 的时钟：`gsap.ticker.sleep()` 之后再把 `gsap.ticker.wake` 换成空函数，然后每步
   `gsap.updateRoot(T += 1/60)`、`stage.frame(1/60)`，再用 MessageChannel 让出一次（处理 promise 和 troika 的 worker 回复）。
@@ -670,7 +670,7 @@ tl.add(particleTimeline(fx, 'dust_land', { at, count: 8 }).tl, '命中帧'); // 
   地方都开始对局。进主菜单时焦点在已选的职业卡上。结算面板出现时焦点在"再来一局"。
 - 声音：悬停 `ui.hover`、选择 `ui.click`、开始和再来一局 `ui.button`，第一次点击或按键后 `playMusic('menu')`。音效表和
   曲目表现在都是空的（M4 填素材），所以实际没声音；接口已经接好。
-- 字体：`menu.css` 用 `@font-face` 声明 M3 的子集字体 `MeLoL Serif SC`，`--hx-font` 先读 `--melol-font-cn`，没有就用
+- 字体：`menu.css` 用 `@font-face` 声明 M3 的子集字体 `LoLstone Serif SC`，`--hx-font` 先读 `--lolstone-font-cn`，没有就用
   子集字体、再兜底到系统宋体。子集只带卡池用到的字，菜单文字里约 140 个字不在子集里（"局""胜""败""选"等），由系统宋体
   补；为了粗细一致，菜单文字统一按粗体排。要统一字形，把菜单文字加进字体子集。
 
@@ -1121,8 +1121,8 @@ M1 基准机上没测，合并后要在 M1 上用 `bench.benchCombat(bench.fullB
 
 ## 设置页和对局菜单（spec 5.1，2026-10-20 从 M5 提前）
 
-- `src/ui/settings.ts`：动画速度（1、1.5、2 倍）和 AI 难度默认值，存在 localStorage 的 `melol.settings`。读写都包 try/catch，
-  存不下时只在本次生效；读到不认识的值按默认值（`parseSettings`）。四条音量仍由 `src/audio` 自己存（`melol.volumes`），
+- `src/ui/settings.ts`：动画速度（1、1.5、2 倍）和 AI 难度默认值，存在 localStorage 的 `lolstone.settings`。读写都包 try/catch，
+  存不下时只在本次生效；读到不认识的值按默认值（`parseSettings`）。四条音量仍由 `src/audio` 自己存（`lolstone.volumes`），
   恢复默认时按 `VOLUME_DEFAULTS` 设回去，这份默认值要和 `src/audio/channels.ts` 的 `DEFAULTS` 保持一致。
 - `SettingsPanel.tsx`：四条音量滑杆接 `setVolume`；拖音效音量时试放 `card.land`（间隔至少 160ms），拖语音音量时试放当前职业
   英雄的选用语音（间隔至少 1.4 秒），每次试放记进 `auditionLog`，静音的开发环境靠它核对。难度和主菜单的选择双向同步。
@@ -1237,9 +1237,9 @@ M1 基准机上没测，合并后要在 M1 上用 `bench.benchCombat(bench.fullB
 ## 卡组编辑器（spec 5.1、第 7 节 M5，2026-10-20）
 
 - 入口：主菜单右上角"我的卡组"（UiState.screen 为 `decks`）。`DeckScreen.tsx` 里有列表和编辑两个视图，弹窗在 `DeckDialogs.tsx`。
-- 存档 `src/ui/decks.ts`：localStorage 的 `melol.decks`，格式 `{ version: 1, decks: [{ id, name, heroClass, cards, updatedAt }] }`。
+- 存档 `src/ui/decks.ts`：localStorage 的 `lolstone.decks`，格式 `{ version: 1, decks: [{ id, name, heroClass, cards, updatedAt }] }`。
   读写都包 try/catch，存不下时只在本次生效。读档时卡池里没有的卡跳过，列表页顶上提示是哪套、哪些 id；版本不认识或格式坏了时
-  当成空的，原始内容先备份到 `melol.decks.backup`，免得下次保存时被覆盖。
+  当成空的，原始内容先备份到 `lolstone.decks.backup`，免得下次保存时被覆盖。
 - 规则：`addProblem`（加一张卡时的原因：同名最多 2 张、只能用本职业和中立卡、卡组已满 30 张、衍生物不能放）和 `deckProblems`
   （整套卡组的问题）给的是中文提示，结论和 `src/cards` 的 `validateDeck` 一致，`tests/decks.test.ts` 两边对照。
   `isPlayable` 要求两边都没有问题。

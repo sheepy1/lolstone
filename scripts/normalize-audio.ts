@@ -381,7 +381,7 @@ async function main(): Promise<void> {
     ...(only.has('voice') ? await voiceJobs(state) : []),
   ];
 
-  const tmp = await mkdtemp(path.join(tmpdir(), 'melol-audio-'));
+  const tmp = await mkdtemp(path.join(tmpdir(), 'lolstone-audio-'));
   let done = 0;
   let skipped = 0;
   const failed: { base: string; error: string }[] = [];

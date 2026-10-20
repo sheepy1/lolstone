@@ -4,15 +4,15 @@
    类名用 hx-（共用）、mm-（主菜单）、ld-（加载）、rs-（结算）前缀，和 styles.css 里对局界面的类分开。 */
 
 @font-face {
-  font-family: 'MeLoL Serif SC';
-  src: url('/fonts/melol-serif-sc.woff') format('woff');
+  font-family: 'LoLstone Serif SC';
+  src: url('/fonts/lolstone-serif-sc.woff') format('woff');
   font-weight: 700 900;
   font-display: swap;
 }
 
 :root {
-  /* M3 以后统一定义界面字体时设 --melol-font-cn；没设时用卡面同款子集字体，子集里缺的字由系统宋体补 */
-  --hx-font: var(--melol-font-cn, 'MeLoL Serif SC', 'Songti SC', 'STSong', 'Noto Serif SC', serif);
+  /* M3 以后统一定义界面字体时设 --lolstone-font-cn；没设时用卡面同款子集字体，子集里缺的字由系统宋体补 */
+  --hx-font: var(--lolstone-font-cn, 'LoLstone Serif SC', 'Songti SC', 'STSong', 'Noto Serif SC', serif);
   --hx-gold: #d4b06a;
   --hx-gold-bright: #f6dc9a;
   --hx-gold-deep: #7a5c2c;
@@ -205,7 +205,7 @@
 /* ---------- 共用件 ---------- */
 
 .hx-logo {
-  font-family: 'MeLoL Serif SC', Georgia, 'Songti SC', serif;
+  font-family: 'LoLstone Serif SC', Georgia, 'Songti SC', serif;
   font-size: 112px;
   font-weight: 900;
   line-height: 1;

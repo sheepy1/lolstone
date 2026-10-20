@@ -47,6 +47,17 @@ describe('settings', () => {
     setSettings({ ...SETTINGS_DEFAULTS });
   });
 
+  it('改名前的 melol.settings 还能读到，保存后写新键', () => {
+    const store = fakeStorage();
+    store.data.set('melol.settings', JSON.stringify({ animSpeed: 2, difficulty: 'l2' }));
+    vi.stubGlobal('localStorage', store);
+    expect(reloadSettings()).toEqual({ animSpeed: 2, difficulty: 'l2' });
+    setSettings({ animSpeed: 1.5 });
+    expect(JSON.parse(store.data.get(SETTINGS_KEY)!)).toEqual({ animSpeed: 1.5, difficulty: 'l2' });
+    expect(store.data.get('melol.settings')).toBe(JSON.stringify({ animSpeed: 2, difficulty: 'l2' }));
+    setSettings({ ...SETTINGS_DEFAULTS });
+  });
+
   it('存储不可用时只在本次生效，不抛错', () => {
     vi.stubGlobal('localStorage', {
       getItem: () => {

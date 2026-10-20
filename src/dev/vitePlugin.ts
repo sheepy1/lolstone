@@ -6,9 +6,9 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Plugin } from 'vite';
 
-export function melolDevPlugin(): Plugin {
+export function lolstoneDevPlugin(): Plugin {
   return {
-    name: 'melol-dev',
+    name: 'lolstone-dev',
     apply: 'serve',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {

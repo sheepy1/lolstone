@@ -60,7 +60,7 @@ export class GameApp {
     // 渲染器版本只在排查画面问题时有用，打到控制台，不放在界面上
     console.info(`[stage] ${this.stage.rendererName}`);
     // 调试入口：在控制台看显示局面、对局状态
-    (window as unknown as { melol: unknown }).melol = this;
+    (window as unknown as { lolstone: unknown }).lolstone = this;
     onSettingsChange(() => this.applyBaseSpeed());
   }
 
@@ -263,7 +263,7 @@ export class GameApp {
     this.submit({ kind: 'mulligan', player: view.viewer, replace });
   }
 
-  // 打开或关闭自动驾驶（控制台 melol.autoplay()，或地址带 ?autoplay）。
+  // 打开或关闭自动驾驶（控制台 lolstone.autoplay()，或地址带 ?autoplay）。
   autoplay(on = true): void {
     this.autoplayOn = on;
     this.onDirector();

@@ -1,5 +1,5 @@
 // 卡组（spec 2.1 组卡规则、5.1 卡组编辑页）：玩家自组卡组的存档、组卡规则的中文提示、开局时取卡组。
-// 存在 localStorage 的 melol.decks，数据带版本号。读写都包 try/catch：存不下时只在本次生效。
+// 存在 localStorage 的 lolstone.decks，数据带版本号。读写都包 try/catch：存不下时只在本次生效。
 // 读档时卡池里已经没有的卡跳过不要，记进 dropped，卡组页面上提示。
 // 规则和 src/cards 的 validateDeck 一致（tests/decks.test.ts 核对两边的结论相同），这里给的是能直接显示的中文。
 import { PRESET_DECKS, validateDeck } from '../cards';
@@ -7,7 +7,9 @@ import { allCards, findCard, getHeroClass, type CardDef, type HeroClass } from '
 
 export const DECK_SIZE = 30;
 export const MAX_COPIES = 2;
-export const DECKS_KEY = 'melol.decks';
+export const DECKS_KEY = 'lolstone.decks';
+// 改名前（MeLoL 时期）的键：新键没有时读一次，之后只写新键
+const LEGACY_DECKS_KEY = 'melol.decks';
 export const DECKS_VERSION = 1;
 
 export type SavedDeck = {
@@ -143,7 +145,7 @@ export function loadDecks(): { decks: SavedDeck[]; dropped: DroppedCards[] } {
   if (cache) return cache;
   let raw: string | null = null;
   try {
-    raw = storage()?.getItem(DECKS_KEY) ?? null;
+    raw = storage()?.getItem(DECKS_KEY) ?? storage()?.getItem(LEGACY_DECKS_KEY) ?? null;
   } catch {
     raw = null;
   }

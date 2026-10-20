@@ -42,7 +42,7 @@ const yieldOnce = () =>
   });
 
 export async function recordMatch(o: Opts): Promise<MatchReport> {
-  const app = (window as unknown as { melol: GameApp }).melol;
+  const app = (window as unknown as { lolstone: GameApp }).lolstone;
   const threshold = o.threshold ?? 50;
   const stage0 = (app as unknown as { stage: { renderer: { setAnimationLoop(f: (() => void) | null): void }; frame(dt?: number): void } }).stage;
   // 停掉舞台自己的渲染循环，只在下面手动渲染：不然它在别的时刻先把着色器编译掉，长帧记在别处

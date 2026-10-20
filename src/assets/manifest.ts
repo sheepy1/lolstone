@@ -31,7 +31,7 @@ export function loadingArtUrl(championKey: string): string {
 
 // 卡面文字用的字体：思源宋体粗体按卡池用到的字做的子集
 export function cardFontUrl(): string {
-  return `${base()}fonts/melol-serif-sc.woff`;
+  return `${base()}fonts/lolstone-serif-sc.woff`;
 }
 
 export function voiceUrl(championKey: string, which: 'choose' | 'ban'): string {

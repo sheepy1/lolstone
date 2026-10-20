@@ -29,7 +29,7 @@ export const BODY_BOX: Record<'minion' | 'spell', BodyBox> = {
 };
 
 // 量宽度用的 canvas 和卡面字体。字体加载好之前用近似宽度，加载好后之前建的卡重新排一次。
-const MEASURE_FAMILY = 'MeLoL Card Measure';
+const MEASURE_FAMILY = 'LoLstone Card Measure';
 let measureCtx: CanvasRenderingContext2D | null = null;
 let measureFontReady = false;
 let measureFontLoading: Promise<void> | null = null;

@@ -2,7 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
-import { melolDevPlugin } from './src/dev/vitePlugin';
+import { lolstoneDevPlugin } from './src/dev/vitePlugin';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 
@@ -11,7 +11,7 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const insideDotClaude = (file: string) => path.relative(root, file).split(path.sep)[0] === '.claude';
 
 export default defineConfig({
-  plugins: [react(), melolDevPlugin()],
+  plugins: [react(), lolstoneDevPlugin()],
   server: { port: 5173, strictPort: false, watch: { ignored: insideDotClaude } },
   // 动画调试台、粒子预设演示页（只在开发服务器里有）也是入口，依赖要一起预构建
   optimizeDeps: { entries: ['index.html', 'src/dev/fx/index.html', 'src/dev/particles/index.html'] },

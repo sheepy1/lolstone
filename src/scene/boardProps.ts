@@ -235,7 +235,7 @@ export function rocksAndBushes(): THREE.Group {
 
 // ---------- 草丛 ----------
 
-export type Tufts = THREE.InstancedMesh & { melolTime: THREE.IUniform; melolSway: THREE.IUniform };
+export type Tufts = THREE.InstancedMesh & { lolstoneTime: THREE.IUniform; lolstoneSway: THREE.IUniform };
 
 function tuftGeometry(): THREE.BufferGeometry {
   const pos: number[] = [];
@@ -299,7 +299,7 @@ export function grassTufts(): Tufts {
         transformed.z += cos(ph * 0.8) * 0.012 * aTip * uSway;`,
       );
   };
-  mat.customProgramCacheKey = () => 'melol-tuft-1';
+  mat.customProgramCacheKey = () => 'lolstone-tuft-1';
   const mesh = new THREE.InstancedMesh(tuftGeometry(), mat, spots.length) as unknown as Tufts;
   const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
@@ -314,8 +314,8 @@ export function grassTufts(): Tufts {
     mesh.setColorAt(i, c.copy(dark).lerp(light, r()));
   });
   mesh.receiveShadow = true;
-  mesh.melolTime = time;
-  mesh.melolSway = sway;
+  mesh.lolstoneTime = time;
+  mesh.lolstoneSway = sway;
   return mesh;
 }
 

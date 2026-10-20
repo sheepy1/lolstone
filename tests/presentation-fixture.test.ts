@@ -17,7 +17,7 @@ function record(): ReplayFixture {
   return recordL0Game(SEED, ['freljord', 'demacia'], [[...PRESET_DECKS.freljord!], [...PRESET_DECKS.demacia!]], 0);
 }
 
-if (process.env.MELOL_RECORD_FIXTURE || !existsSync(FILE)) {
+if (process.env.LOLSTONE_RECORD_FIXTURE || !existsSync(FILE)) {
   writeFileSync(FILE, `${JSON.stringify(record())}\n`);
 }
 

@@ -52,7 +52,7 @@ function specularOnly(m: THREE.MeshStandardMaterial): void {
         .replace('clearcoatRadiance += getIBLRadiance( geometryViewDir, geometryClearcoatNormal, material.clearcoatRoughness );', ''),
     );
   };
-  m.customProgramCacheKey = () => 'melol-card-metal-env';
+  m.customProgramCacheKey = () => 'lolstone-card-metal-env';
 }
 
 function applyReflections(m: THREE.MeshStandardMaterial, intensity = m.userData.envIntensity ?? 0.7): void {

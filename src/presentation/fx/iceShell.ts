@@ -368,7 +368,7 @@ function crystalMaterial(u: IceUniforms): THREE.MeshPhysicalMaterial {
       )
       .replace('#include <opaque_fragment>', `diffuseColor.a = clamp(diffuseColor.a + iceRim * 0.35 + uFlash * 0.3, 0.0, 1.0);\n#include <opaque_fragment>`);
   };
-  m.customProgramCacheKey = () => 'melol-ice-crystal-1';
+  m.customProgramCacheKey = () => 'lolstone-ice-crystal-1';
   return m;
 }
 

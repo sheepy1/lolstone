@@ -82,7 +82,7 @@ export function MainMenu({ app }: { app: GameApp }) {
       <MenuBackdrop />
       <Stage>
         <header className="mm-title">
-          <div className="hx-logo">MeLoL</div>
+          <div className="hx-logo">LoLstone</div>
           <div className="hx-subtitle">峡 谷 战 局</div>
         </header>
 

@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "melol-dev",
+      "name": "lolstone-dev",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev", "--port", "5174"],
       "port": 5174

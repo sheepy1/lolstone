@@ -10,20 +10,20 @@ const dir = path.join(import.meta.dirname, '../public/fonts');
 
 describe('卡面字体子集', () => {
   it('存在，而且不大', () => {
-    const f = path.join(dir, 'melol-serif-sc.woff');
+    const f = path.join(dir, 'lolstone-serif-sc.woff');
     expect(existsSync(f)).toBe(true);
     expect(statSync(f).size).toBeLessThan(2_500_000);
   });
 
   it('卡池里所有卡的名字和文本都在子集里', () => {
-    const chars = new Set(readFileSync(path.join(dir, 'melol-serif-sc.chars.txt'), 'utf8'));
+    const chars = new Set(readFileSync(path.join(dir, 'lolstone-serif-sc.chars.txt'), 'utf8'));
     const missing = new Set<string>();
     for (const c of CARD_POOL) for (const ch of c.name + c.text) if (!chars.has(ch)) missing.add(ch);
     expect([...missing].join(''), '子集里缺这些字，运行 pnpm font:subset 重新生成').toBe('');
   });
 
   it('界面文字（主菜单、加载页、结算面板、对局界面）用到的字都在子集里', () => {
-    const chars = new Set(readFileSync(path.join(dir, 'melol-serif-sc.chars.txt'), 'utf8'));
+    const chars = new Set(readFileSync(path.join(dir, 'lolstone-serif-sc.chars.txt'), 'utf8'));
     const ui = uiTextChars();
     expect(ui.length).toBeGreaterThan(100); // 确实扫到了界面文字
     const missing = [...ui].filter((ch) => !chars.has(ch));

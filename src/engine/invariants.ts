@@ -1,7 +1,7 @@
 // 不变量检查（spec 6.7）：每次 applyAction 之后检查，测试模式下打开，违反时抛错（这是引擎的 bug）。
 import { MAX_BOARD, MAX_HAND, MAX_MANA, type GameState } from './state';
 
-let enabled = typeof process !== 'undefined' && process.env?.MELOL_INVARIANTS === '1';
+let enabled = typeof process !== 'undefined' && process.env?.LOLSTONE_INVARIANTS === '1';
 
 export function setInvariantChecks(on: boolean): void {
   enabled = on;

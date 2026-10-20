@@ -72,20 +72,20 @@ export class BoardView extends THREE.Group {
   }
 
   tick(t: number): void {
-    const g = this.groundMat.melol;
+    const g = this.groundMat.lolstone;
     g.uTime!.value = t;
     g.uEdgeDark!.value = BOARD_ART.edgeDark;
     g.uSat!.value = BOARD_ART.saturation;
     g.uBright!.value = BOARD_ART.brightness;
     g.uCaustics!.value = BOARD_ART.caustics;
-    const w = this.waterMat.melol;
+    const w = this.waterMat.lolstone;
     w.uTime!.value = t;
     w.uSat!.value = BOARD_ART.saturation;
     w.uBright!.value = BOARD_ART.brightness;
     w.uGloss!.value = BOARD_ART.waterGloss;
     w.uCaustics!.value = BOARD_ART.caustics;
     this.waterMat.envMapIntensity = BOARD_ART.waterGloss;
-    this.tufts.melolTime.value = t;
-    this.tufts.melolSway.value = BOARD_ART.sway;
+    this.tufts.lolstoneTime.value = t;
+    this.tufts.lolstoneSway.value = BOARD_ART.sway;
   }
 }

@@ -1,4 +1,4 @@
-// 设置（spec 5.1 设置页）：动画速度和 AI 难度的默认值，存在 localStorage。四条音量由 src/audio 自己存（melol.volumes），
+// 设置（spec 5.1 设置页）：动画速度和 AI 难度的默认值，存在 localStorage。四条音量由 src/audio 自己存（lolstone.volumes），
 // 这里只在"恢复默认"时把它们设回默认值。localStorage 读写都包在 try/catch 里：隐私模式、存储被禁用时只在本次生效。
 import { VOLUME_DEFAULTS, type Channel } from '../audio/defaults';
 import type { Difficulty } from './menuData';
@@ -13,7 +13,9 @@ export type Settings = {
   difficulty: Difficulty; // 主菜单 AI 难度的默认值，和主菜单的选择同步
 };
 
-export const SETTINGS_KEY = 'melol.settings';
+export const SETTINGS_KEY = 'lolstone.settings';
+// 改名前（MeLoL 时期）的键：新键没有时读一次，之后只写新键
+const LEGACY_SETTINGS_KEY = 'melol.settings';
 export const SETTINGS_DEFAULTS: Settings = { animSpeed: 1, difficulty: 'l1' };
 
 export const ANIM_SPEEDS: { id: AnimSpeed; name: string }[] = [
@@ -45,7 +47,7 @@ export function parseSettings(raw: string | null | undefined): Settings {
 
 function load(): Settings {
   try {
-    return parseSettings(storage()?.getItem(SETTINGS_KEY));
+    return parseSettings(storage()?.getItem(SETTINGS_KEY) ?? storage()?.getItem(LEGACY_SETTINGS_KEY));
   } catch {
     return { ...SETTINGS_DEFAULTS };
   }

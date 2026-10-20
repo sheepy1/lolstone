@@ -4,7 +4,9 @@ import { VOLUME_DEFAULTS as DEFAULTS, type Channel, type Volumes } from './defau
 
 export type { Channel, Volumes } from './defaults';
 
-const STORAGE_KEY = 'melol.volumes';
+const STORAGE_KEY = 'lolstone.volumes';
+// 改名前（MeLoL 时期）的键：新键没有时读一次，之后只写新键
+const LEGACY_STORAGE_KEY = 'melol.volumes';
 
 let volumes: Volumes = load();
 
@@ -22,7 +24,7 @@ const listeners = new Set<(v: Volumes) => void>();
 
 function load(): Volumes {
   try {
-    const raw = globalThis.localStorage?.getItem(STORAGE_KEY);
+    const raw = globalThis.localStorage?.getItem(STORAGE_KEY) ?? globalThis.localStorage?.getItem(LEGACY_STORAGE_KEY);
     if (raw) return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Volumes>) };
   } catch {
     // 隐私模式等情况下 localStorage 不可用，用默认值

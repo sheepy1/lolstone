@@ -146,3 +146,15 @@ describe('存档', () => {
     expect(deckForMatch('noxus', null).cards).toEqual(PRESET_DECKS.noxus);
   });
 });
+
+describe('改名兼容', () => {
+  it('改名前的 melol.decks 还能读到，保存后只写新键、旧键不动', () => {
+    const old = serializeDecks([{ id: 'old1', name: '旧档', heroClass: 'demacia', cards: [...PRESET_DECKS.demacia!], updatedAt: 1 }]);
+    store.data.set('melol.decks', old);
+    resetDeckCache();
+    expect(loadDecks().decks.map((d) => d.id)).toEqual(['old1']);
+    renameDeck('old1', '旧档改名');
+    expect(JSON.parse(store.data.get(DECKS_KEY)!).decks[0].name).toBe('旧档改名');
+    expect(store.data.get('melol.decks')).toBe(old);
+  });
+});

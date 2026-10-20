@@ -128,7 +128,7 @@ function page(m: Manifest, voiceCount: number, voices: { key: string; kind: stri
   const total = m.sounds.reduce((n, s) => n + s.files.length, 0);
   return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MeLoL 音效试听</title>
+<title>LoLstone 音效试听</title>
 <style>
 :root{--bg:#f6f5f2;--fg:#1d1d1f;--muted:#6b6b70;--card:#fff;--line:#e3e1dc;--accent:#b8872b;--accent-fg:#fff;--tag:#fdecc8}
 @media (prefers-color-scheme:dark){:root{--bg:#141518;--fg:#ececee;--muted:#9a9aa2;--card:#1e2024;--line:#2e3036;--accent:#d7a645;--accent-fg:#141518;--tag:#4a3a14}}
@@ -162,7 +162,7 @@ button:hover{border-color:var(--accent)}
 .keep{font-size:13px;white-space:nowrap;color:var(--muted);align-self:center}
 #out{width:100%;min-height:120px;font:12px ui-monospace,monospace;display:none;margin-top:8px;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px}
 </style></head><body><div class="wrap">
-<h1>MeLoL 音效试听</h1>
+<h1>LoLstone 音效试听</h1>
 <p class="lead">${m.sounds.length} 个事件或类别，${total} 个候选，全部 CC0。播放的是统一响度之后的成品（ogg，浏览器不支持时用 mp3）。
 每个候选标了处理前后的响度：音效按最大瞬时响度对齐，音乐、收尾、环境音和语音按积分响度对齐。
 起音很尖或很短的音效，增益受峰值上限限制，会比目标轻，标了"峰值卡住"。生成于 ${esc(m.generatedAt.slice(0, 16).replace('T', ' '))}（UTC）。</p>
@@ -174,7 +174,7 @@ ${groups}
 <section class="sound"><p class="spec">语音按积分响度对齐到 ${m.profiles.voice?.target ?? ''} LUFS。全部 ${voiceCount} 条的范围见实现方的汇报。</p><ol>${voiceRows}</ol></section>
 </div>
 <script>
-const KEY='melol.audition.keep';let keep={};try{keep=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+const KEY='lolstone.audition.keep';let keep={};try{keep=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
 const cur={a:null,b:null};
 function stop(){if(cur.a){cur.a.pause();cur.a=null}if(cur.b){cur.b.classList.remove('on');cur.b=null}}
 const canOgg=new Audio().canPlayType('audio/ogg; codecs="vorbis"')!=='';

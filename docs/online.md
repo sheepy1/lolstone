@@ -1,4 +1,4 @@
-# MeLoL 联机对战规格
+# LoLstone 联机对战规格
 
 版本 v0.1 · 2026-10-20
 
@@ -127,7 +127,7 @@ type MatchSeat = {
 - 收到 batch：更新 visible、version、deadline，把 events 交给导演，调 onBatch。导演的队列和今天一样串行播放，对手的动作一批批到，自然就是对手的节奏，不需要 ai_thinking。要验证一条路径：今天 AI 对局里 card_played 之前总有 ai_thinking 先把牌抬起来，联机里没有，card_played 的动画要能从没抬起的状态直接飞出。
 - 收到 rejected：解除在途，控制台记警告。输入来自 listLegalActions，正常情况下不会被拒；会被拒的只有和计时器撞车（4.4）。
 - concede：发 concede，等服务端回带 game_over 的 batch，表现层照常播失败演出。对局菜单里"回主菜单"在联机里等于认输，确认文案要说明。
-- 断线：WebSocket 关闭后指数退避重连（1、2、4、8 秒，之后每 8 秒），连上发 `resume {seatToken, version}`，服务端补发漏掉的批次（4.3），导演接着播。页面刷新后 localStorage 的 melol.seat 里还有座位 token 和 matchId，直接 resume 且 version 为 null，服务端发当前快照，客户端用 `viewFromState(snapshot, side)` 建场景，不回放历史。
+- 断线：WebSocket 关闭后指数退避重连（1、2、4、8 秒，之后每 8 秒），连上发 `resume {seatToken, version}`，服务端补发漏掉的批次（4.3），导演接着播。页面刷新后 localStorage 的 lolstone.seat 里还有座位 token 和 matchId，直接 resume 且 version 为 null，服务端发当前快照，客户端用 `viewFromState(snapshot, side)` 建场景，不回放历史。
 - 对手在线状态：`opponent` 消息更新界面横幅和场景里对手抬起的牌（3.4）。不进导演队列，因为它是瞬时状态，会反复变化。
 
 ### 3.4 界面
@@ -204,7 +204,7 @@ src/server/store.ts     动作日志的存取：先内存，后 JSONL
 src/server/main.ts      入口，pnpm serve
 ```
 
-用 tsx 跑，和命令行对局一样，不需要打包。`.claude/launch.json` 加一条 melol-server。
+用 tsx 跑，和命令行对局一样，不需要打包。`.claude/launch.json` 加一条 lolstone-server。
 
 ### 5.2 Table
 
@@ -257,8 +257,8 @@ concede 和 forfeit 不走引擎：把 state 换成 `{ ...state, phase: 'over', 
 
 ### 5.4 房间与身份
 
-- 身份：客户端第一次打开时生成随机 playerId，和昵称一起存在 localStorage 的 melol.player。服务端不核实身份，playerId 只用来配对重连和写日志。
-- 座位 token：match_start 时服务端给每个座位发一个随机 128 位的 token，客户端存在 localStorage 的 melol.seat（连同 matchId）。重连只认 token，不认 playerId。对局结束后清掉。
+- 身份：客户端第一次打开时生成随机 playerId，和昵称一起存在 localStorage 的 lolstone.player。服务端不核实身份，playerId 只用来配对重连和写日志。
+- 座位 token：match_start 时服务端给每个座位发一个随机 128 位的 token，客户端存在 localStorage 的 lolstone.seat（连同 matchId）。重连只认 token，不认 playerId。对局结束后清掉。
 - 邀请码：6 位，字母数字去掉 0、O、1、I，在未开局的房间里唯一。
 - 开局：双方到齐，服务端先用 `src/cards` 的 validateDeck 校验两套卡组（进房时就校验，不合规当场回 error），再 createGame，seed 是服务端生成的随机 32 位整数。建房的人是 0 号位，先后手由 seed 决定（spec 2.2），和座位号无关。
 - 一个 playerId 同时只能在一局里。

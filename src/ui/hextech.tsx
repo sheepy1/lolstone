@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 // 菜单界面的中文字体：M3 做的思源宋体粗体子集（public/fonts），在 menu.css 里用 @font-face 声明。
 // 子集只带卡池用到的字，缺的字由系统宋体补上。
-export const MENU_FONT = 'MeLoL Serif SC';
+export const MENU_FONT = 'LoLstone Serif SC';
 
 export const STAGE_W = 1920;
 export const STAGE_H = 1080;

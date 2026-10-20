@@ -50,7 +50,7 @@ export function LoadingScreen({ mode }: { mode: 'boot' | 'match' }) {
 function BootTitle() {
   return (
     <div className="ld-boot-title">
-      <div className="hx-logo big">MeLoL</div>
+      <div className="hx-logo big">LoLstone</div>
       <div className="hx-subtitle">峡 谷 战 局</div>
     </div>
   );

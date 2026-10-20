@@ -3,12 +3,7 @@
    页面内容排在 1920×1080 的舞台上（hextech.tsx 的 Stage），整体等比缩放，所以这里的尺寸都按 1080p 写。
    类名用 hx-（共用）、mm-（主菜单）、ld-（加载）、rs-（结算）前缀，和 styles.css 里对局界面的类分开。 */
 
-@font-face {
-  font-family: 'LoLstone Serif SC';
-  src: url('/fonts/lolstone-serif-sc.woff') format('woff');
-  font-weight: 700 900;
-  font-display: swap;
-}
+/* 界面字体 'LoLstone Serif SC' 的 @font-face 在 fontFaces.css（由 pnpm font:subset 生成） */
 
 :root {
   /* M3 以后统一定义界面字体时设 --lolstone-font-cn；没设时用卡面同款子集字体，子集里缺的字由系统宋体补 */
@@ -597,12 +592,38 @@
   clip-path: polygon(17px 0, 100% 0, 100% calc(100% - 17px), calc(100% - 17px) 100%, 0 100%, 0 17px);
 }
 
-/* 原画缺失时（没跑 fetch:art）露出地区色的底 */
+/* 原画到之前（慢网络上主菜单先出来）露出和原画同色调的底：从各自原画上、中、下三段取的平均色。原画缺失时（没跑 fetch:art）也是它 */
 .mm-card-art {
   background-color: var(--region-deep);
+  transition: transform 0.5s var(--hx-ease);
+}
+.mm-card.region-demacia .mm-card-art {
+  background-image: linear-gradient(#604849, #745156 50%, #44332e);
+}
+.mm-card.region-noxus .mm-card-art {
+  background-image: linear-gradient(#43292e, #4b3532 50%, #462d27);
+}
+.mm-card.region-ionia .mm-card-art {
+  background-image: linear-gradient(#4c4f6f, #595284 50%, #595976);
+}
+.mm-card.region-freljord .mm-card-art {
+  background-image: linear-gradient(#778ba3, #4a6499 50%, #465c82);
+}
+
+/* 原画本身：加载好以后才挂上（MainMenu 的 useArtLoaded），挂上时淡入；第一帧就有的不走淡入 */
+.mm-card-art-img {
+  position: absolute;
+  inset: 0;
   background-size: cover;
   background-position: center 8%;
-  transition: transform 0.5s var(--hx-ease);
+}
+.mm-card-art-img.fade-in {
+  animation: mm-art-in 0.2s ease-out;
+}
+@keyframes mm-art-in {
+  from {
+    opacity: 0;
+  }
 }
 
 .mm-card-shade {

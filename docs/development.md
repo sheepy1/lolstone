@@ -18,7 +18,7 @@ pnpm play              # 命令行里和 L1 贪心 AI 打一局（--ai l0 换成
 pnpm arena             # AI 互打统计，例：pnpm arena --a l1 --b l1 --games 250
 pnpm smoke             # L0 对 L0 自动打 200 局
 pnpm fixture:record    # 重录回放夹具 tests/fixtures/l0-replay.json
-pnpm font:subset       # 重做卡面 SDF 字体的子集
+pnpm font:subset       # 重做卡面 SDF 字体和界面字体的子集（要 Python 的 fonttools 和 brotli）
 pnpm audition:audio    # 生成音效试听页（见下面"音效和音乐"）
 ```
 

@@ -5,6 +5,7 @@ import { PRESET_DECKS } from '../cards';
 import { allHeroClasses, type HeroClassDef } from '../engine';
 import type { AppShell } from '../app/shell';
 import { setUi, useUi } from '../app/store';
+import { artImage } from '../assets/loader';
 import { iconUrl, loadingArtUrl } from '../assets/manifest';
 import { initAudio, playMusic, playSfx } from '../audio';
 import { MenuBackdrop, Stage } from './hextech';
@@ -219,12 +220,27 @@ function SectionLabel({ children, top }: { children: string; top: number }) {
   );
 }
 
+// 图加载好了没有。启动时主菜单不等职业原画（main.tsx），慢网络上卡先用同色调的底出来，原画到了再淡入；
+// 已经加载好的（快网络上进主菜单前就到了、从对局回来）第一帧就有，不走淡入。加载失败一直是 null，留着底色。
+function useArtLoaded(url: string): 'ready' | 'fade-in' | null {
+  const [atMount] = useState(() => artImage(url) !== null);
+  const [loaded, setLoaded] = useState(atMount);
+  useEffect(() => {
+    if (!loaded) artImage(url, () => setLoaded(true));
+  }, [url, loaded]);
+  return !loaded ? null : atMount ? 'ready' : 'fade-in';
+}
+
 function ClassCard({ def, checked, index, props }: { def: HeroClassDef; checked: boolean; index: number; props: RadioProps }) {
   const b = CLASS_BLURBS[def.id];
+  const art = loadingArtUrl(def.champion);
+  const artState = useArtLoaded(art);
   return (
     <button className={`mm-card region-${def.id} ${checked ? 'on' : ''}`} style={{ ['--i' as string]: index }} {...props}>
       <span className="mm-card-frame">
-        <span className="mm-card-art" style={{ backgroundImage: `url(${loadingArtUrl(def.champion)})` }} />
+        <span className="mm-card-art">
+          {artState && <span className={`mm-card-art-img ${artState}`} style={{ backgroundImage: `url(${art})` }} />}
+        </span>
         <span className="mm-card-shade" />
         <span className="mm-card-info">
           <span className="mm-card-region">{def.name}</span>

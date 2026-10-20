@@ -1,5 +1,5 @@
 // 加载页（spec 5.1）。两种：
-// - 打开页面时（screen 为 boot）：游戏名、台面远景、进度条。进度来自 main.tsx 的启动步骤（渲染器、主菜单原画、字体）。
+// - 打开页面时（screen 为 boot）：游戏名、台面远景、进度条。进度来自 main.tsx 的启动步骤（渲染器、界面字体）。
 // - 开一局时（screen 为 loading）：双方英雄原画对峙、进度条、随机小提示。进度来自 src/assets 清单的真实预载。
 // 显示的进度追着真实进度走，但每秒最多走 1.6 格（整条约 0.6 秒），资源已经缓存时进度条也看得出在走，不会一跳到底。
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -7,7 +7,8 @@ import { getHeroClass } from '../engine';
 import { useUi } from '../app/store';
 import { loadingArtUrl } from '../assets/manifest';
 import { MenuBackdrop, Stage } from './hextech';
-import { CLASS_BLURBS, difficultyName, randomTip } from './menuData';
+import { randomTip } from './loadingTips';
+import { CLASS_BLURBS, difficultyName } from './menuData';
 import { getDeck } from './decks';
 
 const MAX_RATE = 1.6; // 每秒最多走多少（0 到 1）

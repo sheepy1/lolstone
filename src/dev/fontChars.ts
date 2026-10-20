@@ -1,6 +1,6 @@
 // 卡面 SDF 字体子集要带的字：卡池里所有卡的名字和文本、职业名、界面文字，加上数字和 ASCII。
 // 子集文件旁边的 .chars.txt 记着实际带了哪些字，测试用它核对卡池和界面没有用到子集外的字。
-// 主菜单、加载页、结算面板（src/ui/menu.css 的 @font-face）也用这个子集，缺的字会由系统宋体补，字形不统一。
+// 主菜单、加载页、结算面板（src/ui/fontFaces.css 的 @font-face）也用这个子集，缺的字会由系统宋体补，字形不统一。
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { CARD_POOL, HERO_CLASSES } from '../cards';
@@ -72,15 +72,40 @@ function sourceFiles(dir: string): string[] {
   return files;
 }
 
-// 界面代码里字符串和 JSX 文本用到的非 ASCII 字符（ASCII 子集里本来就全带）。注释不收，免得子集无谓变大。
-export function uiTextChars(): string {
+// 这些文件里字符串和 JSX 文本用到的非 ASCII 字符（ASCII 子集里本来就全带）。注释不收，免得子集无谓变大。
+function textChars(files: readonly string[]): string {
   const set = new Set<string>();
-  for (const dir of UI_TEXT_DIRS) {
-    for (const f of sourceFiles(path.join(ROOT, dir))) {
-      for (const ch of stripComments(readFileSync(f, 'utf8'))) if (ch.codePointAt(0)! > 127 && !/\s/.test(ch)) set.add(ch);
-    }
+  for (const f of files) {
+    for (const ch of stripComments(readFileSync(f, 'utf8'))) if (ch.codePointAt(0)! > 127 && !/\s/.test(ch)) set.add(ch);
   }
   return [...set].sort().join('');
+}
+
+// 界面代码里用到的非 ASCII 字符。
+export function uiTextChars(): string {
+  return textChars(UI_TEXT_DIRS.flatMap((dir) => sourceFiles(path.join(ROOT, dir))));
+}
+
+// 打开页面的加载页和主菜单上的字所在的文件：主菜单组件、职业介绍和难度（menuData）、
+// 共用的标题和单选组、加载页、启动进度的说明、职业名。界面字体按 unicode-range 切成两片（src/ui/fontFaces.css）：
+// 这些字单独一片，打开页面时只等这一片；其余的字在主菜单出来以后后台加载。主菜单上加了别的文件里的文字，要加进这里。
+export const MENU_TEXT_FILES = [
+  'src/ui/MainMenu.tsx',
+  'src/ui/menuData.ts',
+  'src/ui/hextech.tsx',
+  'src/ui/RadioGroup.tsx',
+  'src/ui/LoadingScreen.tsx',
+  'src/app/main.tsx',
+  'src/cards/classes.ts',
+];
+
+// 主菜单那一片要带的字：ASCII 加上 MENU_TEXT_FILES 里的字，只取完整子集里有的。
+export function menuFontChars(): string {
+  const full = new Set(cardFontChars());
+  const set = new Set<string>();
+  for (let i = 32; i < 127; i++) set.add(String.fromCharCode(i));
+  for (const ch of textChars(MENU_TEXT_FILES.map((f) => path.join(ROOT, f)))) set.add(ch);
+  return [...set].filter((ch) => full.has(ch)).sort().join('');
 }
 
 export function cardFontChars(): string {

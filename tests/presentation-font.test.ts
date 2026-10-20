@@ -4,7 +4,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { CARD_POOL } from '../src/cards';
-import { stripComments, uiTextChars } from '../src/dev/fontChars';
+import { menuFontChars, stripComments, uiTextChars } from '../src/dev/fontChars';
 
 const dir = path.join(import.meta.dirname, '../public/fonts');
 
@@ -28,6 +28,22 @@ describe('卡面字体子集', () => {
     expect(ui.length).toBeGreaterThan(100); // 确实扫到了界面文字
     const missing = [...ui].filter((ch) => !chars.has(ch));
     expect(missing.join(''), '子集里缺这些字，运行 pnpm font:subset 重新生成').toBe('');
+  });
+
+  it('主菜单那一片界面字体和现在主菜单上的字对得上', () => {
+    // 不一致时：多出来的字在主菜单上会先用系统字体、等完整子集下完再换过来；少了的字白占主菜单要等的字节
+    const generated = readFileSync(path.join(dir, 'lolstone-serif-sc-menu.chars.txt'), 'utf8');
+    expect(generated, '主菜单上的字变了，运行 pnpm font:subset 重新生成').toBe(menuFontChars());
+    expect(existsSync(path.join(dir, 'lolstone-serif-sc-menu.woff2'))).toBe(true);
+    expect(existsSync(path.join(dir, 'lolstone-serif-sc.woff2'))).toBe(true);
+    // 第一条 @font-face（主菜单那一片）的 unicode-range 正好是这些字
+    const css = readFileSync(path.join(import.meta.dirname, '../src/ui/fontFaces.css'), 'utf8');
+    const points = new Set<number>();
+    for (const part of css.match(/unicode-range: ([^;]+);/)![1]!.split(', ')) {
+      const [a, b = a] = part.slice(2).split('-').map((h) => parseInt(h, 16));
+      for (let p = a!; p <= b!; p++) points.add(p);
+    }
+    expect([...points].sort((x, y) => x - y)).toEqual([...generated].map((ch) => ch.codePointAt(0)!).sort((x, y) => x - y));
   });
 
   it('收界面文字时不收注释', () => {

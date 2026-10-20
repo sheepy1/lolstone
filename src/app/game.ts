@@ -57,7 +57,8 @@ export class GameApp {
 
   async init(host: HTMLElement): Promise<void> {
     this.stage = new Stage(host);
-    setUi((s) => ({ status: { ...s.status, renderer: this.stage!.rendererName } }));
+    // 渲染器版本只在排查画面问题时有用，打到控制台，不放在界面上
+    console.info(`[stage] ${this.stage.rendererName}`);
     // 调试入口：在控制台看显示局面、对局状态
     (window as unknown as { melol: unknown }).melol = this;
     onSettingsChange(() => this.applyBaseSpeed());
@@ -299,7 +300,7 @@ export class GameApp {
     s.interaction.refresh();
     const mulliganOpen = !!match && !director.busy && view.phase === 'mulligan' && match.humanToAct();
     const ui = getUi();
-    const status = { busy: director.busy, myTurn: !!match && match.humanToAct(), speed: player.speed, renderer: ui.status.renderer, replay: !match };
+    const status = { busy: director.busy, myTurn: !!match && match.humanToAct(), speed: player.speed, replay: !match };
     const patch: Partial<typeof ui> = {};
     if (JSON.stringify(status) !== JSON.stringify(ui.status)) patch.status = status;
     if (mulliganOpen !== ui.mulligan.open) patch.mulligan = { open: mulliganOpen, marked: scene.mulliganMarks.size };

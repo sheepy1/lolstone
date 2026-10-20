@@ -29,7 +29,7 @@ export type UiState = {
   hover: HoverCard | null;
   log: string[];
   logOpen: boolean;
-  status: { busy: boolean; myTurn: boolean; speed: number; renderer: string; replay: boolean };
+  status: { busy: boolean; myTurn: boolean; speed: number; replay: boolean };
   panels: Panel[];
   error: string | null;
 };
@@ -43,7 +43,7 @@ let state: UiState = {
   hover: null,
   log: [],
   logOpen: false,
-  status: { busy: false, myTurn: false, speed: 1, renderer: '', replay: false },
+  status: { busy: false, myTurn: false, speed: 1, replay: false },
   panels: [],
   error: null,
 };

@@ -12,3 +12,6 @@ assets-src/
 
 # 逻辑模块的打包结果（pnpm build:logic），交给托管平台的单文件
 dist-logic/
+
+# 本地 runner 的快照和模块缓存
+.medeo/

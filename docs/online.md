@@ -1,11 +1,12 @@
 # LoLstone 联机对战规格
 
-版本 v0.4.1 · 2026-10-20
+版本 v0.4.2 · 2026-10-20
 
 配合 [spec.md](spec.md) 使用。规则、事件、局面模型、表现层以 spec 为准，这里只讲联机：为什么选服务端权威、客户端接缝、逻辑模块的契约、托管、单机的去向、持久化、里程碑、测试。
 
 修订记录：
 
+- v0.4.2：计时规则平台定稿：onTimeout 那一轮某一步带回新 deadline 就停；Step.deadline 是 number、null 或不带，分别是替换、清掉、保留。4.1 相应改。
 - v0.4.1：4.1 注明 onTimeout 那一轮"带回新 deadline 就停"的规则平台还没定稿；5.4 加开局后离开不放座位。
 - v0.4：按平台定稿的协议对齐（逻辑模块的类型定义、声明的 schema、本地 runner，2026-10-20）。4.1 签名按平台的 Logic 接口：setup 返回 Step、onTimeout 按座位依次调、不带 deadline 的步保留计时器、bot 返回 null 表示没事做、result 只放公开字段；4.2 座位 config 去掉昵称；4.3 批次、座位广播、结束广播、拒绝码、重连按协议重写；4.4 version 的计法；3.3 加续局和座位广播；5.1 声明写在构建设置里、模块文件上限；5.3 断线从平台发现断开起算；5.4 一个主体同时只在一局里由平台保证；5.6 bot 的节奏由平台定；5.7 加批次 60 KiB、模块 2 MB、纯 JSON；2.3 加平台的实测；第 8 节本地 runner 的形态；9.6 观众参数。
 - v0.3.2：5.2 的 Table 按 M6a 的实现回写：AI 座位是 { kind: 'ai', choose, rng }，choose 能接 Worker 里的 L2 和测试里的假 AI；真人座位只有 deliver，昵称在座位配置里；apply、mask、result 在 M6a 里叫 applyMatchAction、maskMatch、matchResult，M6b 从 src/logic 原样导出。
@@ -180,7 +181,7 @@ RemoteMatch 包一个平台 SDK 的对局对象（逻辑模式）。建房、进
 
 ## 4. 逻辑模块的契约
 
-逻辑模块是一个 ES 模块（5.1），导出一个满足平台 Logic<State, Event> 接口的对象 `logic`，方法如下。平台的 runner 替每一局调它们：开局调 setup，玩家每发一个动作调一次 apply，每一步成功后对每个座位各调一次 mask 和 maskEvents 再下发，计时到点按座位号依次调 onTimeout，断线宽限到或运营踢人时调 forfeit，每一步之后问每个 bot 座位。每个方法都是纯函数：同样的输入同样的输出，不改入参，对任何输入都不抛。一步的返回值叫 Step：`{ ok: true, state, events, deadline? }` 或 `{ ok: false, reason }`。签名以平台发布的类型定义为准，这里写的是 lolstone 怎么填。
+逻辑模块是一个 ES 模块（5.1），导出一个满足平台 Logic<State, Event> 接口的对象 `logic`，方法如下。平台的 runner 替每一局调它们：开局调 setup，玩家每发一个动作调一次 apply，每一步成功后对每个座位各调一次 mask 和 maskEvents 再下发，计时到点按座位号依次调 onTimeout，断线宽限到或运营踢人时调 forfeit，每一步之后问每个 bot 座位。每个方法都是纯函数：同样的输入同样的输出，不改入参，对任何输入都不抛。一步的返回值叫 Step：`{ ok: true, state, events, deadline? }` 或 `{ ok: false, reason }`。deadline 是 number、null 或不带：数字是替换计时器，null 是清掉，不带是保留；对局结束时计时器自动停，认输和判负那几步不用带。签名以平台发布的类型定义为准，这里写的是 lolstone 怎么填。
 
 ### 4.1 导出的函数
 
@@ -190,7 +191,7 @@ RemoteMatch 包一个平台 SDK 的对局对象（逻辑模式）。建房、进
 | apply(state, seat, action) | 执行一个座位的动作，按 4.2 的顺序校验。返回 Step；不带 deadline 时平台保留正在走的计时器。拒绝的 reason 原样回给发动作的人（最长 256 字）。对任何输入都返回，不抛；抛错按模块缺陷算，连续 10 次平台会关局 | checkAction、applyAction |
 | mask(state, seat) | 这个座位能看到的局面（4.5） | maskHidden，再把 rng 置零 |
 | maskEvents(events, seat) | 这个座位能看到的事件 | maskEvents |
-| onTimeout(state, seat) | 计时到点。平台按座位号依次调，每次传上一次之后的局面：ok:false 跳过，ok:true 生效。"某一步带回新的 deadline 这一轮就停"平台还在定：没有这条时，0 号被替结束回合、轮到 1 号后，同一轮接着调 1 号会把 1 号的回合也结束掉，平台已知；下面的写法两种规则下都不用改。换牌阶段：这个 seat 还没提交就替它提交"一张都不换"，已提交返回 ok:false；对局阶段：game.current 等于 seat 才替它执行 end_turn，否则 ok:false | applyAction |
+| onTimeout(state, seat) | 计时到点。平台按座位号依次调，每次传上一次之后的局面：ok:false 跳过，ok:true 生效，某一步带回新的 deadline 这一轮就停（所以 0 号被替结束回合、带回 75 秒之后，同一轮不会再调 1 号）。换牌阶段：这个 seat 还没提交就替它提交"一张都不换"，已提交返回 ok:false；对局阶段：game.current 等于 seat 才替它执行 end_turn，否则 ok:false | applyAction |
 | forfeit(state, seat, reason) | 平台发起的判负：断线宽限到（abandon）或运营踢人（kicked）。不走引擎，把 game 换成 phase over、对方获胜，reason 照填，合成一条只有 game_over 的事件 | 无 |
 | result(state) | 对局结束了返回 `{ winner, reason }`，没结束返回 null。reason 是 game、concede、timeout、abandon、kicked。返回值会原样广播给所有座位，只放这两样 | state.phase、state.winner |
 | bot(state, seat) | 可选。bot 座位的下一步动作，现在没事做返回 null。每一步之后平台都问一次，出手前等声明里的 botDelayMs（默认 1 秒），再按那个座位走 apply。只用 L0、L1（5.6），等级从 setup 时该座位的 config 来 | l0ChooseAction、l1ChooseAction |

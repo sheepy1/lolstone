@@ -1,11 +1,12 @@
 # LoLstone 联机对战规格
 
-版本 v0.3.1 · 2026-10-20
+版本 v0.3.2 · 2026-10-20
 
 配合 [spec.md](spec.md) 使用。规则、事件、局面模型、表现层以 spec 为准，这里只讲联机：为什么选服务端权威、客户端接缝、逻辑模块的契约、托管、单机的去向、持久化、里程碑、测试。
 
 修订记录：
 
+- v0.3.2：5.2 的 Table 按 M6a 的实现回写：AI 座位是 { kind: 'ai', choose, rng }，choose 能接 Worker 里的 L2 和测试里的假 AI；真人座位只有 deliver，昵称在座位配置里；apply、mask、result 在 M6a 里叫 applyMatchAction、maskMatch、matchResult，M6b 从 src/logic 原样导出。
 - v0.3.1：平台规格定了三件待定的事和座位配置的形状。4.1 加 forfeit 和 setup 的入参形状；4.3 加座位间的瞬时消息；5.3 断线判负和双方都断线定稿；第 7 节回放改成用平台导出的整局记录；3.3、3.4、第 8 节的对手抬牌提示不再待定；第 8 节加平台的本地 runner，9.6 用它；第 10 节第 7 条；第 11 节去掉已定的三条。
 - v0.3：联机的权威进程不自己写，改成把引擎打成"逻辑模块"交给托管平台替每一局跑（2026-10-20 的架构评审定的）。2.1 加两种落地方式的比较和选逻辑托管的理由，2.3 加一次 apply 的耗时，2.4 总图重画；3.3 RemoteMatch 改成接平台 SDK；第 4 节从 WebSocket 协议改成逻辑模块的契约；第 5 节从自建服务端改成逻辑模块与托管，去掉 ws 接入、房间、静态托管、动作日志存取，5.6 改成 bot 座位，5.7 改成 runner 的限制；第 7 节改成平台保存记录、对局跨 runner 重启；第 8 节 M6b、M6c 和"以后"；第 9 节第 1、5、6 条；第 10 节第 2、5、7、8、10 条改、加第 11 条；第 11 节相应增删。
 - v0.2：按托管平台的约束对齐（2026-10-20 的架构评审）。4.1 加生产形态和缓存头；5.1 加静态托管模块和启动方式；5.4 把"玩家是谁"收成一个接口；5.6 加 CPU 预算；新增 5.7 托管环境的约束；第 7 节改成对局不跨服务端重启、回放记录下发客户端；第 8 节 M6c 和"以后"相应改；第 10 节第 2、5 条改、加第 10 条；第 11 节去掉"托管在哪"、加外部数据库和 CPU 预算。
@@ -257,8 +258,8 @@ scripts/build-logic.ts   把 src/logic 打成一个不带依赖的 ES 文件 dis
 
 ```ts
 type Seat =
-  | { kind: 'human'; nickname: string; deliver: (batch: Batch) => void }
-  | { kind: 'ai'; level: 'l0' | 'l1' | 'l2'; rng: RngState };
+  | { kind: 'human'; deliver: (batch: Batch) => void }
+  | { kind: 'ai'; choose: AiChooser; rng: RngState };   // choose 可以是异步的，接 Worker 里的 L2 和测试里的假 AI
 
 class Table {
   state: MatchState;                // 真实局面（4.1）
@@ -271,7 +272,7 @@ class Table {
 }
 ```
 
-submit 做的事就是平台的 runner 做的事：version 不等于自己的拒 'stale'，否则调 apply；成功就 version 加一，给每个座位发 batch（events 是 maskEvents 遮过的，snapshot 是 mask 的，deadlineIn 按 deadline 算），AI 座位的"发"就是按节奏调它的 choose（5.6）；phase 或 current 变了就重置计时器。Table 自己不校验动作、不核对行动方，那些都在 apply 里，这样单机和线上走的是同一段代码。
+submit 做的事就是平台的 runner 做的事：version 不等于自己的拒 'stale'，否则调 apply（M6a 里叫 applyMatchAction，连同 maskMatch、matchResult 放在 table.ts，M6b 从 src/logic 原样导出成 apply、mask、result）；成功就 version 加一，给每个座位发 batch（events 是 maskEvents 遮过的，snapshot 是 mask 的，deadlineIn 按 deadline 算），AI 座位的"发"就是按节奏调它的 choose（5.6）；phase 或 current 变了就重置计时器。Table 自己不校验动作、不核对行动方，那些都在 apply 里，这样单机和线上走的是同一段代码。
 
 ### 5.3 计时与断线
 

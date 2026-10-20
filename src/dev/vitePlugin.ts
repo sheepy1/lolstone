@@ -1,12 +1,14 @@
 // 只在开发服务器里生效的 Vite 插件（apply: 'serve'，不进生产构建）：
 // - /dev/fx 打开动画调试台（src/dev/fx/index.html）；/dev/art 是卡牌配图总览（src/dev/art/index.html）；
 // - POST /__dev/screenshot?name=xxx 把页面传来的 PNG 或 JPEG（data URL）存到 .dev-output/xxx.png|jpg，自动化验证截原尺寸画面用；
-//   dir=a/b 存到 .dev-output/a/b/ 下（录逐帧画面用）。
-import { mkdirSync, writeFileSync } from 'node:fs';
+//   dir=a/b 存到 .dev-output/a/b/ 下（录逐帧画面用）；
+// - /__dev/medeo-sdk.js 代发托管平台 SDK 的单文件脚本，内容从 sdkFile 指的文件（仓库外，vite.config.ts 从 LOLSTONE_SDK_FILE 读）取。
+//   线上页面从应用自己的 host 引它（/_medeo/sdk/v1.js），本地 runner 还不发这个文件，联机入口的探测（src/app/shell.ts）在开发时退到这里。
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Plugin } from 'vite';
 
-export function lolstoneDevPlugin(): Plugin {
+export function lolstoneDevPlugin({ sdkFile }: { sdkFile?: string } = {}): Plugin {
   return {
     name: 'lolstone-dev',
     apply: 'serve',
@@ -20,6 +22,21 @@ export function lolstoneDevPlugin(): Plugin {
         if (url === '/dev/art' || url.startsWith('/dev/art?')) {
           req.url = `/src/dev/art/index.html${url.includes('?') ? url.slice(url.indexOf('?')) : ''}`;
           return next();
+        }
+        if (url === '/__dev/medeo-sdk.js' || url.startsWith('/__dev/medeo-sdk.js?')) {
+          let body: Buffer | null = null;
+          try {
+            if (sdkFile) body = readFileSync(sdkFile);
+          } catch {
+            body = null;
+          }
+          if (!body) {
+            res.statusCode = 404;
+            return res.end();
+          }
+          res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+          res.setHeader('Cache-Control', 'no-store');
+          return res.end(req.method === 'HEAD' ? undefined : body);
         }
         if (url.startsWith('/__dev/screenshot') && req.method === 'POST') {
           const q = new URL(url, 'http://x').searchParams;

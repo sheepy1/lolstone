@@ -1,10 +1,14 @@
 // 客户端和托管平台之间的接口（docs/online.md 3.3、4.3）：RemoteMatch 和联机界面只认这个接口，不认平台的 SDK。
-// 平台的适配写在接口后面（以后接平台时另做）；开发和测试用进程内的假实现 src/net/fakeLink.ts。
+// 两个实现：真平台 src/net/platformLink.ts（包平台 SDK 的对局对象），开发和测试用的进程内假平台 src/net/fakeLink.ts。
 //
 // 消息的形状照 4.3：每一步之后每个座位各收一条批次（各自遮过，version 连续）；座位广播带昵称和在场状态；
 // 结束广播带 result() 的返回值；动作被拒带拒绝码。具体的消息名和字段名以平台 SDK 为准，适配层负责翻译成这里的形状。
 import type { GameEvent, HeroClass, Side } from '../engine';
 import type { BotLevel, MatchAction, MatchResult, Snapshot } from '../logic/state';
+import type { ForfeitReason } from '../logic/types';
+
+// 记当前对局、存房间用的键值存储（浏览器里传 localStorage）
+export type KeyValueStorage = { getItem(key: string): string | null; setItem(key: string, value: string): void; removeItem(key: string): void };
 
 // 人类座位建房、进房时交给平台的座位 config（online.md 4.1、5.4）。只在平台和 runner 里，不发给任何客户端
 export type SeatConfig = { heroClass: HeroClass; deck: string[]; poolHash: string };
@@ -18,10 +22,30 @@ export type Identity = { player: string; nickname: string | null };
 // 这个主体正占着座位的、没打完的局（online.md 3.3 续局、5.4）。started 为 false 时还在等人
 export type CurrentMatch = { key: string; code: string | null; seat: Side; started: boolean };
 
-export type CreateRequest = { nickname: string; seat: SeatConfig; bots?: BotConfig[] };
+// public 为 true 的房间在平台的公开列表里（listOpen），自动驾驶的两个标签页靠它找到对方；默认只凭邀请码进
+export type CreateRequest = { nickname: string; seat: SeatConfig; bots?: BotConfig[]; public?: boolean };
 export type JoinRequest = { nickname: string; seat: SeatConfig };
 export type Created = { key: string; code: string; seat: Side };
 export type Joined = { key: string; seat: Side };
+// 公开列表里还有空位的房间，按建房时间从早到晚排
+export type OpenMatch = { key: string; code: string; createdAt: string };
+
+// 整局记录（online.md 第 7 节）：平台在对局结束后导出，seed 加逐条动作就能重放。每一步的 source 说它从哪来：玩家或 bot 的
+// 动作带 action，计时到点和判负是平台发起的、action 为 null、seat 是被替的那个座位；at 是平台记的时间
+export type RecordStep = {
+  seat: Side | null;
+  action: MatchAction | null;
+  at: string;
+  source: 'action' | 'bot' | 'timeout' | 'forfeit' | 'tick';
+  reason?: ForfeitReason;
+};
+export type MatchRecord = {
+  seed: number;
+  options: unknown;
+  seats: { kind: 'human' | 'bot'; config: unknown }[];
+  actions: RecordStep[];
+  result: MatchResult | null;
+};
 
 // 批次（online.md 4.3）：这一步怎么来的
 export type BatchCause = 'setup' | 'action' | 'timeout' | 'bot' | 'forfeit' | 'resume';
@@ -96,4 +120,8 @@ export interface MatchLink {
   send(type: string, data: unknown, to?: string): void;
   // 订阅消息，返回取消订阅的函数
   on<K extends LinkEventType>(type: K, handler: (msg: LinkEvents[K]) => void): () => void;
+  // 可选：公开列表里还有空位的房间，按建房时间从早到晚排（自动驾驶用）。没有公开列表的平台不实现
+  listOpen?(): Promise<OpenMatch[]>;
+  // 可选：刚结束的这一局的整局记录（online.md 第 7 节）。平台没声明导出、对局没结束时返回 null
+  record?(): Promise<MatchRecord | null>;
 }

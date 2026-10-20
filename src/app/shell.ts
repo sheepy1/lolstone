@@ -1,7 +1,8 @@
 // 应用外壳：文字界面拿到的 app。主菜单只需要它和 React 界面，对局控制（GameApp：Three.js 舞台、导演、动画、特效）
 // 在单独的 chunk 里，首屏不下载。主菜单显示后在后台加载并起好舞台（prefetch），平时点开局时已经就绪，和拆分前一样；
 // 还没加载完就点了开局，加载页先出来，这一局的美术和它同时下载，都到了再开局。回放和自动驾驶在启动时直接 load。
-// 联机的流程（online.ts）和平台接口也按需加载：地址里有联机参数时才载，没有时主菜单不显示联机入口。
+// 联机的流程（online.ts）和平台接口也按需加载：地址带 ?online=fake 时接假平台；没有参数时先探一下这个 host 后面有没有托管平台
+// （findPlatformSdk），有才载联机的代码、显示联机入口，没有就和单机一样。
 import { loadManifest } from '../assets/loader';
 import { matchManifest } from '../assets/manifest';
 import type { HeroClass } from '../engine';
@@ -43,10 +44,14 @@ export class AppShell {
 
   // 载入联机的流程，接上平台，问有没有没打完的局。没有可用的平台时返回 null（主菜单不显示联机入口）
   async loadOnline(params: URLSearchParams): Promise<OnlineClient | null> {
-    const { OnlineClient, initialOnlineUi, openLink } = await import('./online');
-    const link = await openLink(params);
+    const fake = params.get('online') === 'fake';
+    const sdkUrl = fake ? null : await findPlatformSdk();
+    if (!fake && !sdkUrl) return null;
+    const { OnlineClient, initialOnlineUi, openLink, practiceBots } = await import('./online');
+    const link = await openLink(params, sdkUrl);
     if (!link) return null;
     this.online = new OnlineClient(this, link);
+    this.online.bots = practiceBots(params);
     setUi({ online: initialOnlineUi() });
     await this.online.init();
     return this.online;
@@ -107,5 +112,36 @@ export class AppShell {
 
   endTurnAnchor(): { x: number; y: number; width: number } | null {
     return this.game?.endTurnAnchor() ?? null;
+  }
+}
+
+// 托管平台的 SDK 脚本在这个 host 上有没有（docs/online.md 3.3）。先看 /_medeo/me 有没有 JSON 的回答（平台和本地 runner 都答，
+// 开发服务器和静态托管对不存在的路径回首页，答的是 HTML），有再找 SDK 脚本 /_medeo/sdk/v1.js。请求都带上 text/html 的 accept，
+// 没有平台的 host 回的是首页而不是 404，控制台不留报错。本地 runner 还不发 SDK 文件，开发时由开发服务器从仓库外的文件代发
+// （src/dev/vitePlugin.ts 的 /__dev/medeo-sdk.js），开发构建里先试它
+const SDK_URL = '/_medeo/sdk/v1.js';
+const DEV_SDK_URL = '/__dev/medeo-sdk.js';
+
+async function findPlatformSdk(): Promise<string | null> {
+  if (!(await answersJson('/_medeo/me'))) return null;
+  for (const url of import.meta.env.DEV ? [DEV_SDK_URL, SDK_URL] : [SDK_URL]) if (await isScript(url)) return url;
+  return null;
+}
+
+async function isScript(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(url, { method: 'HEAD', headers: { accept: 'text/javascript, text/html' } });
+    return res.ok && (res.headers.get('content-type') ?? '').includes('javascript');
+  } catch {
+    return false;
+  }
+}
+
+async function answersJson(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(url, { headers: { accept: 'application/json, text/html' } });
+    return res.ok && (res.headers.get('content-type') ?? '').includes('json');
+  } catch {
+    return false;
   }
 }

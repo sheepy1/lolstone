@@ -1,11 +1,12 @@
 # LoLstone 联机对战规格
 
-版本 v0.4.4 · 2026-10-20
+版本 v0.4.5 · 2026-10-20
 
 配合 [spec.md](spec.md) 使用。规则、事件、局面模型、表现层以 spec 为准，这里只讲联机：为什么选服务端权威、客户端接缝、逻辑模块的契约、托管、单机的去向、持久化、里程碑、测试。
 
 修订记录：
 
+- v0.4.5：M6b 的最后一步按实现回写。3.3 真平台的适配在 src/net/platformLink.ts，SDK 按需从应用自己的 host 加载，主菜单先探有没有平台再显示入口，续局按主体记对局 key；5.1 模块清单加 sdkTypes.d.ts 和 platformLink.ts；5.6 加冒烟用的 bot 开关；第 8 节 M6b 的完成状态和本地 runner 上验过的项；9.6 自动驾驶的两个标签页怎么找到对方。
 - v0.4.4：M6b 客户端部分按实现回写。3.3 开头说明 RemoteMatch 对着 src/net/link.ts 的 MatchLink 接口写，平台的适配在接口后面；5.1 模块清单加 src/net 的两个文件；5.2 Table 加 forfeit（假平台模拟断线判负用）。
 - v0.4.3：按 M6b 逻辑模块的实现回写。2.3 平台的那次实测换成打包后的模块在隔离环境里自己跑的数；4.1 MatchState 的动作日志不记时间（隔离环境没有时钟）、计时到点替玩家做的也记进去，bots 的形状，bot 座位 config 的形状，setup 先查座位 config 的形状，结束原因加 invalid_deck；5.1 模块清单按实际的文件；5.2 Table 调的是 src/logic/match.ts，计时到点 timeout() 接上；5.7 的量按新的实测。
 - v0.4.2：计时规则平台定稿：onTimeout 那一轮某一步带回新 deadline 就停；Step.deadline 是 number、null 或不带，分别是替换、清掉、保留。4.1 相应改。
@@ -166,7 +167,12 @@ type MatchSeat = {
 
 ### 3.3 RemoteMatch 的行为
 
-RemoteMatch 对着 `src/net/link.ts` 的 MatchLink 接口写，平台的适配在接口后面。接口的消息形状照 4.3，名字和平台无关；开发和测试用进程内的假实现 `src/net/fakeLink.ts`（地址带 `?online=fake` 时主菜单的联机走它）。接口后面的适配包平台 SDK 的对局对象（逻辑模式）：建房、进房、发动作、收批次、重连都是 SDK 的方法，RemoteMatch 不碰 WebSocket，也不管 version 和座位凭据，那两样 SDK 自己带。
+RemoteMatch 对着 `src/net/link.ts` 的 MatchLink 接口写，平台的适配在接口后面。接口的消息形状照 4.3，名字和平台无关；开发和测试用进程内的假实现 `src/net/fakeLink.ts`（地址带 `?online=fake` 时主菜单的联机走它）。真平台的适配是 `src/net/platformLink.ts`，包平台 SDK 的对局对象（逻辑模式）：建房、进房、发动作、收批次、重连都是 SDK 的方法，RemoteMatch 不碰 WebSocket，也不管 version 和座位凭据，那两样 SDK 自己带。SDK 的类型拷了一份在 `src/net/sdkTypes.d.ts`（只放类型，文件头记着拷自哪个版本），仓库不依赖平台的包。
+
+- SDK 是页面从应用自己的 host 加载的单文件脚本，按需插进页面：主菜单出来后先探一下这个 host 后面有没有托管平台（问平台的身份接口，再看 SDK 脚本在不在），有才载联机的代码、显示联机入口；脚本本身到联机面板打开时才插，生产首包不带。没有平台的 host（本机开发服务器、普通静态托管）和单机一样。
+- 身份是 SDK 给的匿名主体；昵称走建局、进局请求。建房、进房时 SDK 收到 already_in_match（这个主体还占着一局，5.4）就问平台是哪一局，提示续上还是离开。
+- 续局：平台没有"我正占着哪一局"的接口，当前对局的 key 按主体记在 localStorage 里（本地 runner 会把同一个浏览器的几个标签页派生成几个主体，它们共用一份 localStorage），主菜单打开时按它重新进局：有座位的主体再进同一局只是换凭据，不改座位。对局结束、离开、进不去时清掉。
+- 对局结束后平台关局：没有先到结束广播的关局（等人超时、空局）当作 abandoned 的结束广播。正常打完的局顺手从平台拿整局记录（第 7 节），先放在控制台能看到的地方，回放的下载是 M6c 的事。
 
 - legalActions：导演在播、不轮到我、或者有一个动作已发出还没收到回包，都返回 null。一次只允许一个在途动作，避免同一个 version 发两次。
 - submit：先在快照上 checkAction，不合法直接返回原因、不发送；合法就调 SDK 的 submit(action)，把自己标成"在途"，不改本地任何东西。收到 batch 或 SDK 报动作被拒后解除在途。
@@ -268,6 +274,8 @@ src/app/localMatch.ts    LocalMatch
 src/app/remoteMatch.ts   RemoteMatch：对着 MatchLink 接口接平台的对局
 src/net/link.ts          MatchLink：客户端和托管平台之间的接口（4.3 的批次、座位广播、结束广播、拒绝码），平台无关；平台的适配写在它后面
 src/net/fakeLink.ts      进程内的假平台：后面接一个 Table，按协议模拟房间、批次、计时、bot、断线判负和恢复，只给测试和开发用，按需加载不进首包
+src/net/sdkTypes.d.ts    平台 SDK 逻辑模式客户端的类型，拷自平台 SDK（文件头记着版本），只放类型，不 import 平台的包
+src/net/platformLink.ts  真平台的 MatchLink：包平台 SDK 的对局对象，翻译成 link.ts 的形状；SDK 脚本按需加载；当前对局的 key 按主体记在 localStorage 里续局；record() 拿整局记录。按需加载不进首包
 scripts/build-logic.ts   把 src/logic 打成一个不带依赖的 ES 文件 dist-logic/logic.js，交给平台
 ```
 
@@ -335,7 +343,7 @@ submit 做的事就是平台的 runner 做的事：version 不等于自己的拒
 
 - 建局时可以指定某些座位是 bot，等级放在那个座位的 config 里。每一步之后平台问每个 bot 座位 `bot(state, seat)`，没事做返回 null；有动作就等声明里的 botDelayMs（默认 1 秒）再走同一个 apply，一次只处理一个 bot 动作；被 apply 拒了这一步之后不再问它。一次调用限 50 ms，L0、L1 可以（L1 一步在桌面机上远小于 1 ms），L2 的搜索跑不了，只留在单机。
 - bot 的对局里没有 ai_thinking：bot 只返回动作，抬牌的演出是今天单机 Match 插进去的。联机里 bot 和真人对手一样，card_played 从没抬起的状态直接飞出（3.3）。单机的 AI 节奏不变。
-- 用处：一个人在线练习。掉线是否由 bot 接管而不是判负，列在待定。
+- 用处：一个人在线练习。练习的入口是 M6c 的事；现在地址带 `?bot`（或 `?bot=L0`）时建房带一个 bot 座位，冒烟用。掉线是否由 bot 接管而不是判负，列在待定。
 
 ### 5.7 runner 的限制
 
@@ -378,6 +386,8 @@ submit 做的事就是平台的 runner 做的事：version 不等于自己的拒
 
 M6b 的逻辑模块和假 runner 测试不依赖平台，可以先做；逻辑模块的类型定义和声明的 schema 平台已经定稿（2026-10-20），按它打包。平台会先给一个本地 runner：本机开发命令在 Vite 前面起代理，同一个进程里跑逻辑模块，限额和云端一样，带一个说长连接协议的本机服务，客户端连本机和连云端是同一份代码，不等云端就能在本机打完一局；本机的开发页能看真实局面和每个座位的快照，还能模拟 runner 重启。平台验收要等第一期的逻辑模式上线，lolstone 是它的验收用例。
 
+M6b 的状态（2026-10-20）：全部做完。真平台的适配（3.3）接上平台 SDK，在本地 runner 上验过 9.6 和平台验收里本地能验的几项：两个标签页凭邀请码打完一局、刷新后从当前快照接着打、断线宽限到点判负（结算显示"对手离开"）、runner 重启后进行中的局接着打、控制台里的快照对手手牌和双方牌库都是占位牌且 rng 为 0、一个人对 bot 座位打完一局、结束后拿到整局记录。数据在 NOTES.md。云端的验收等平台第一期上线后再跑一次。
+
 ## 9. 测试
 
 1. Table 单测：两个假座位，断言行动方核对、stale version、字段类型、onTimeout 替结束回合和替换牌、认输、换牌双方各自提交、AI 座位打完一局。Table 和逻辑模块都是纯模块，这些都在 Node 里跑。
@@ -385,7 +395,7 @@ M6b 的逻辑模块和假 runner 测试不依赖平台，可以先做；逻辑�
 3. 遮蔽：扩 `tests/presentation-mask.test.ts`，断言 mask 的 rng.s 为 0、对手手牌和双方牌库都是占位牌、对手的 mulliganReplace 不出现、MatchState 的 log 不出现在快照里。
 4. 动作模糊测试：handIndex 为字符串、负数、小数、NaN，多余字段，replace 里混字符串，不是对象的动作，都被 apply 拒绝且局面不变，并且 apply 不抛。
 5. 隔离环境加载（`tests/logic-isolate.test.ts`）：用 `node:vm` 造一个只有 ES 内置对象加 structuredClone 的上下文（删掉 Date、console，Math.random 一调就抛），加载打包后的 dist-logic/logic.js，用按协议跑的假 runner（每步后问 bot、到点按座位号依次调 onTimeout、version 递增）让两个 L0 打完一局；中途把 MatchState 序列化再装回重新加载的模块，接着打，结果和不中断的一致（模拟 runner 重启）；断言每次 apply 小于 50 ms、每个座位一条批次小于 60 KiB、State 小于 1 MB。逻辑模块的各个方法另有 `tests/logic.test.ts`。
-6. 浏览器冒烟：两个标签页带 `?autoplay`，再各带本地 runner 要求的不同观众参数（同一个浏览器的标签页共享 cookie，会被当成同一个人），用本地 runner 打完一局，控制台 0 报错；平台上线后用两个浏览器在云端再跑一次。
+6. 浏览器冒烟：两个标签页带 `?autoplay`，再各带本地 runner 要求的不同观众参数（同一个浏览器的标签页共享 cookie，会被当成同一个人），用本地 runner 打完一局，控制台 0 报错；平台上线后用两个浏览器在云端再跑一次。自动驾驶建的房是公开的，另一个标签页从平台的公开列表里找到它进去；两个标签页同时打开、各自建了房时，晚建的那个几秒后放掉自己的、进早建的那个。本地 runner 的开发页能把两个玩家并排放在一页里，后台标签页的动画不走（浏览器不给它渲染帧），要看着打完就用它。
 
 ## 10. 已经定下的选择
 

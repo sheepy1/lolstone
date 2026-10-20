@@ -28,6 +28,7 @@ import type {
   Identity,
   Joined,
   JoinRequest,
+  KeyValueStorage,
   LinkBatch,
   LinkEvents,
   LinkEventType,
@@ -37,9 +38,6 @@ import type {
   SeatsBroadcast,
 } from './link';
 import { LinkError } from './link';
-
-// 存房间用的键值存储（浏览器里传 localStorage）
-export type KeyValueStorage = { getItem(key: string): string | null; setItem(key: string, value: string): void; removeItem(key: string): void };
 
 export type FakeHubOptions = {
   // bot 出手前等多久（平台声明里的 botDelayMs，默认 1 秒）。测试里设 0

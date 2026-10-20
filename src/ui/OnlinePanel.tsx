@@ -23,7 +23,11 @@ export function OnlinePanel({ app }: { app: AppShell }) {
   const root = useRef<HTMLDivElement>(null);
   const nameInput = useRef<HTMLInputElement>(null);
 
-  useEffect(() => nameInput.current?.focus({ preventScroll: true }), []);
+  // 打开面板时顺手把平台的 SDK 载好（真平台的脚本按需加载），建房时就不用等
+  useEffect(() => {
+    nameInput.current?.focus({ preventScroll: true });
+    app.onlineClient?.warm();
+  }, [app]);
 
   const client = app.onlineClient;
   if (!online || !client) return null;

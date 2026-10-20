@@ -4,8 +4,15 @@ import { mkdir, open, readFile, rename, stat, writeFile } from 'node:fs/promises
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 
-/** 仓库根目录下的 public/。 */
+/** 仓库根目录下的 public/：成品，进 git，构建时原样进 dist/。 */
 export const PUBLIC_DIR = path.resolve(import.meta.dirname, '../../public');
+
+/**
+ * 仓库根目录下的 assets-src/：原始素材，不进 git（.gitignore）。fetch-art.ts、fetch-icons.ts 把原图下载到
+ * assets-src/art/，scripts/optimize-art.ts 再按显示尺寸缩放、转 WebP 到 public/art/；音频的原始素材在 assets-src/audio/。
+ * 下面带 root 参数的函数默认在 public/ 下，传 ASSETS_SRC_DIR 就在原始素材目录下。
+ */
+export const ASSETS_SRC_DIR = path.resolve(import.meta.dirname, '../../assets-src');
 
 /** 小于这个大小的文件当作坏文件：正常头像、原画、语音都在 10 KB 以上。 */
 const MIN_BYTES = 1024;
@@ -15,6 +22,7 @@ const MAGIC: Record<string, number[]> = {
   '.png': [0x89, 0x50, 0x4e, 0x47],
   '.jpg': [0xff, 0xd8, 0xff],
   '.ogg': [0x4f, 0x67, 0x67, 0x53], // "OggS"
+  '.webp': [0x52, 0x49, 0x46, 0x46], // "RIFF"
 };
 
 function hasMagic(file: string, head: Uint8Array): boolean {
@@ -22,18 +30,18 @@ function hasMagic(file: string, head: Uint8Array): boolean {
   return !magic || magic.every((b, i) => head[i] === b);
 }
 
-/** 清单里记的路径相对 public/，也就是网页里的 URL 路径。 */
-export function toAbs(publicPath: string): string {
-  return path.join(PUBLIC_DIR, publicPath);
+/** 清单里记的路径相对 root（默认 public/，也就是网页里的 URL 路径；原图相对 assets-src/）。 */
+export function toAbs(publicPath: string, root = PUBLIC_DIR): string {
+  return path.join(root, publicPath);
 }
 
 /**
  * 已下载的文件能不能直接用：存在、不小于 MIN_BYTES、文件头对、大小和上次清单记的一致。
  * 上次清单没有这条记录（比如清单被删了）时不跳过，重下一遍。
  */
-export async function isUsable(publicPath: string, recordedBytes: number | undefined): Promise<boolean> {
+export async function isUsable(publicPath: string, recordedBytes: number | undefined, root = PUBLIC_DIR): Promise<boolean> {
   if (recordedBytes === undefined) return false;
-  const abs = toAbs(publicPath);
+  const abs = toAbs(publicPath, root);
   try {
     const { size } = await stat(abs);
     if (size < MIN_BYTES || size !== recordedBytes) return false;
@@ -51,10 +59,10 @@ export async function isUsable(publicPath: string, recordedBytes: number | undef
 }
 
 /** 先写 .part 再改名，下载中断不会留下半截文件。 */
-export async function saveFile(publicPath: string, data: Uint8Array): Promise<void> {
+export async function saveFile(publicPath: string, data: Uint8Array, root = PUBLIC_DIR): Promise<void> {
   if (data.byteLength < MIN_BYTES) throw new Error(`文件太小（${data.byteLength} B）`);
   if (!hasMagic(publicPath, data)) throw new Error('文件头不对，可能是错误页');
-  const abs = toAbs(publicPath);
+  const abs = toAbs(publicPath, root);
   await mkdir(path.dirname(abs), { recursive: true });
   await writeFile(`${abs}.part`, data);
   await rename(`${abs}.part`, abs);
@@ -74,16 +82,16 @@ export async function runPool<T, R>(items: readonly T[], limit: number, fn: (ite
   return results;
 }
 
-export async function readManifest<T>(publicPath: string): Promise<T | undefined> {
+export async function readManifest<T>(publicPath: string, root = PUBLIC_DIR): Promise<T | undefined> {
   try {
-    return JSON.parse(await readFile(toAbs(publicPath), 'utf8')) as T;
+    return JSON.parse(await readFile(toAbs(publicPath, root), 'utf8')) as T;
   } catch {
     return undefined;
   }
 }
 
-export async function writeManifest(publicPath: string, data: unknown): Promise<void> {
-  const abs = toAbs(publicPath);
+export async function writeManifest(publicPath: string, data: unknown, root = PUBLIC_DIR): Promise<void> {
+  const abs = toAbs(publicPath, root);
   await mkdir(path.dirname(abs), { recursive: true });
   await writeFile(abs, `${JSON.stringify(data, null, 2)}\n`);
 }

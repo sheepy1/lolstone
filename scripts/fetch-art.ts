@@ -1,4 +1,5 @@
-// 拉英雄头像和竖版原画到 public/art/<key 小写>/，见 docs/spec.md 5.9。
+// 拉英雄头像和竖版原画的原图到 assets-src/art/<key 小写>/（不进 git），见 docs/spec.md 5.9。
+// 下完再跑 node scripts/optimize-art.ts，把原图转成 WebP 放到 public/art/（进 git，网页用的就是它）。
 //
 //   node scripts/fetch-art.ts              已有且完整的文件跳过
 //   node scripts/fetch-art.ts --force      全部重下
@@ -10,12 +11,13 @@
 import { CHAMPION_KEYS, assetDir } from './lib/champions.ts';
 import { DDRAGON, exitOnMissing, latestVersion, loadChampions, resolveKeys } from './lib/ddragon.ts';
 import type { ChampionInfo } from './lib/ddragon.ts';
-import { isUsable, newTally, parseCli, printTally, readManifest, runPool, saveFile, writeManifest } from './lib/files.ts';
+import { ASSETS_SRC_DIR, isUsable, newTally, parseCli, printTally, readManifest, runPool, saveFile, writeManifest } from './lib/files.ts';
 import { describeError, fetchBytes } from './lib/http.ts';
 
 const MANIFEST = 'art/manifest.json';
 
 type ArtFile = {
+  /** 相对 assets-src/ 的路径。 */
   path: string;
   url: string;
   bytes: number;
@@ -66,7 +68,7 @@ async function main(): Promise<void> {
   const { found, missing } = resolveKeys(CHAMPION_KEYS, await loadChampions(version));
   exitOnMissing(missing, version);
 
-  const prev = await readManifest<ArtManifest>(MANIFEST);
+  const prev = await readManifest<ArtManifest>(MANIFEST, ASSETS_SRC_DIR);
   const prevByKey = new Map(prev?.champions.map((c) => [c.key, c]));
   const tally = newTally();
   const failed: ArtManifest['failed'] = [];
@@ -76,14 +78,14 @@ async function main(): Promise<void> {
   const results = await runPool(jobs, opts.concurrency, async ({ champ, kind }) => {
     const { url, path, version: fileVersion } = ASSETS[kind](version, champ.key);
     const old = prevByKey.get(champ.key)?.[kind];
-    if (!opts.force && old && old.version === fileVersion && (await isUsable(path, old.bytes))) {
+    if (!opts.force && old && old.version === fileVersion && (await isUsable(path, old.bytes, ASSETS_SRC_DIR))) {
       tally.skipped++;
       tally.totalBytes += old.bytes;
       return { champ, kind, file: old };
     }
     try {
       const data = await fetchBytes(url);
-      await saveFile(path, data);
+      await saveFile(path, data, ASSETS_SRC_DIR);
       tally.downloaded++;
       tally.downloadedBytes += data.byteLength;
       tally.totalBytes += data.byteLength;
@@ -107,16 +109,21 @@ async function main(): Promise<void> {
   };
   for (const r of results) entryFor(r.champ)[r.kind] = r.file;
 
-  await writeManifest(MANIFEST, {
-    generatedAt: new Date().toISOString(),
-    source: 'ddragon',
-    version,
-    champions: [...entries.values()],
-    failed,
-  } satisfies ArtManifest);
+  await writeManifest(
+    MANIFEST,
+    {
+      generatedAt: new Date().toISOString(),
+      source: 'ddragon',
+      version,
+      champions: [...entries.values()],
+      failed,
+    } satisfies ArtManifest,
+    ASSETS_SRC_DIR,
+  );
 
-  printTally(`英雄美术（public/${MANIFEST}）`, tally, failed.length);
+  printTally(`英雄美术原图（assets-src/${MANIFEST}）`, tally, failed.length);
   for (const f of failed) console.log(`  - ${f.key} ${f.asset}：${f.error}`);
+  console.log('  接着跑 node scripts/optimize-art.ts 生成 public/art/ 的成品');
   if (failed.length > 0) process.exitCode = 1;
 }
 

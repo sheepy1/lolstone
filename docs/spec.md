@@ -1,9 +1,10 @@
 # LoLstone 设计规格
 
-版本 v0.7.3 · 2026-10-20
+版本 v0.7.4 · 2026-10-20
 
 修订记录：
 
+- v0.7.4：托管页开一局要等几分钟（预载 13 MB 原画）：5.9 管线加 `optimize-art.ts`，抓取脚本改为下载原图到 assets-src（不进 git），成品按显示尺寸缩放、转 WebP 进 git；5.10 加一局预载不超过 3 MB 的预算（改后最大 1.4 MB），语音改为开局后在后台加载。
 - v0.7.3：项目从 MeLoL 改名 LoLstone：仓名、包名、页面标题、存档键、调试句柄、字体文件名一起换，旧存档键只读兼容。
 - v0.7.2：联机对战另写规格 [online.md](online.md)（v0.1）：服务端权威、客户端接缝、协议、服务端、里程碑 M6a 到 M6c；第 1 节"明确不做"和第 7 节"以后"指向它。
 - v0.7.1：第 7 节进度：首次效果卡帧已修（d346f81），招牌卡去掉重复声音并加测试，潜行盖章重做，测试 636、自动对局累计 24 局；分镜表 E19 同步。
@@ -771,9 +772,10 @@ M4 按这张表逐条做、逐条验收。时长是目标值，调试时可以�
 
 管线：
 
-- `scripts/fetch-art.ts`：按卡池里的 champion 字段拉头像和竖版原画到 `public/art/`。
+- `scripts/fetch-art.ts`：按卡池里的 champion 字段拉头像和竖版原画的原图到 `assets-src/art/`（不进 git）。
 - `scripts/fetch-voice.ts`：拉语音到 `public/audio/voice/`。
-- `scripts/fetch-icons.ts`：按关键词和英雄技能的映射表拉技能、物品、被动图标，按单位列表拉野怪图，到 `public/art/icons/`。
+- `scripts/fetch-icons.ts`：按 `scripts/data/card-art.json` 拉非英雄卡的配图、英雄技能和关键词图标的原图到 `assets-src/art/`。
+- `scripts/optimize-art.ts`：把 `assets-src/art/` 的原图按场景里实际画到的尺寸缩放、转成 WebP 放到 `public/art/`（进 git，网页用的就是它），清单 `public/art/manifest.json`。规则在 `scripts/lib/art-sizes.ts`：卡面原画缩到取景区域是 380×327 原画窗口的 1.5 倍，头像、竖版原画、图标只转格式；原画 1 到 2 MB 一张，成品几十 KB。
 - `scripts/fetch-sfx.ts`：按 `scripts/data/audio-sources.json` 下载原始音效到 `assets-src/`，不进构建。
 - `scripts/normalize-audio.ts`：按 5.7 的响度目标归一音效、语音、音乐，统一格式，输出到 `public/audio/` 并生成清单。
 - `scripts/pack-atlas.ts`：把卡框、徽章、图标、粒子贴图打成图集。
@@ -785,7 +787,7 @@ M4 按这张表逐条做、逐条验收。时长是目标值，调试时可以�
 - 1080p 下稳定 60fps，M1 芯片的 MacBook 为基准机。
 - 场上最多 14 个随从加 20 张手牌同时在屏，加一个群体法术的粒子，不掉帧。
 - 粒子总数上限 2000，超出时新粒子不生成。
-- 对局开始前预载本局两套卡组的美术和语音，其余不载。加载页出现时间不超过 3 秒（本地资源）。
+- 对局开始前预载本局两套卡组的美术，其余不载；一局预载的字节数不超过 3 MB（`pnpm size:preload` 按四个职业两两对局核对），托管在 CDN 后面、几十 KB/s 的网络也能在一分钟上下开局。语音不预载，进对局后在后台加载，还没加载好时触发的台词不播。加载页出现时间不超过 3 秒（本地资源）。
 - 字体做子集，只带卡池用到的字。
 - 阴影贴图尺寸要克制：一盏方向光一张 2048 的阴影贴图，不够再考虑级联。
 - 设备像素比上限 2，更高的屏幕按 2 渲染。

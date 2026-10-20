@@ -2,7 +2,7 @@
 // 卡面上的文字不在这里画，由 cardText.ts 用 SDF 文本叠上去（spec 5.4）。
 // 同一张卡的卡面和头像贴图共用一份缓存；图稍后才加载好时重画并标记 needsUpdate。
 // 用哪张图（spec 5.4、5.9）：
-// - 卡面原画窗口：英雄卡用竖版原画（loading.jpg）；其余卡用 card-art.json 的 art，按 crop 裁。
+// - 卡面原画窗口：英雄卡用竖版原画（loading.webp）；其余卡用 card-art.json 的 art，按 crop 裁。
 // - 方形头像（场上随从、枢纽）：英雄用 Data Dragon 头像；其余用 card-art.json 的 icon，没有 icon 的从 art 裁出方形。
 // 图没加载好或缺失时退一级（原画 → 方图 → 纯色加名字），都没有就是纯色加名字前两个字，不报错。
 import * as THREE from 'three';

@@ -1,15 +1,16 @@
-// 按 scripts/data/card-art.json 拉没有英雄原画的卡、英雄技能、关键词的配图，见 docs/spec.md 5.9。
+// 按 scripts/data/card-art.json 拉没有英雄原画的卡、英雄技能、关键词的配图原图，见 docs/spec.md 5.9。
+// 下完再跑 node scripts/optimize-art.ts，把原图按显示尺寸缩放、转成 WebP 放到 public/art/（进 git，网页用的就是它）。
 //
 //   node scripts/fetch-icons.ts              已有且完整的文件跳过
 //   node scripts/fetch-icons.ts --force      全部重下
 //   node scripts/fetch-icons.ts --concurrency 4
 //
-// 输出：
-//   public/art/cards/<卡牌 id>/icon.<扩展名>   场上头像、小图标用的方图（映射表 icon 为 null 时没有）
-//   public/art/cards/<卡牌 id>/art.<扩展名>    卡面原画窗口用的图；和 icon 同一个来源时不另存，清单里指向 icon
-//   public/art/heropowers/<职业>.png
-//   public/art/keywords/<关键词>.png
-//   public/art/icons-manifest.json            清单（art/manifest.json 是 fetch-art.ts 的，不共用）
+// 输出（原图，assets-src/ 不进 git）：
+//   assets-src/art/cards/<卡牌 id>/icon.<扩展名>   场上头像、小图标用的方图（映射表 icon 为 null 时没有）
+//   assets-src/art/cards/<卡牌 id>/art.<扩展名>    卡面原画窗口用的图；和 icon 同一个来源时不另存，清单里指向 icon
+//   assets-src/art/heropowers/<职业>.png
+//   assets-src/art/keywords/<关键词>.png
+//   assets-src/art/icons-manifest.json            清单（art/manifest.json 是 fetch-art.ts 的，不共用）
 //
 // 跳过的判断：上次清单里同一个位置记的地址和这次一样，文件大小和文件头也对。地址里带 Data Dragon 版本号的图标
 // 在版本号变了时会重下；改了映射表的来源也会重下。
@@ -21,7 +22,7 @@ import path from 'node:path';
 import { latestVersion } from './lib/ddragon.ts';
 import { generateQueue, loadCardArtMap, resolveSource } from './lib/art-sources.ts';
 import type { ArtSource, Crop } from './lib/art-sources.ts';
-import { isUsable, newTally, parseCli, printTally, readManifest, runPool, saveFile, toAbs, writeManifest } from './lib/files.ts';
+import { ASSETS_SRC_DIR, isUsable, newTally, parseCli, printTally, readManifest, runPool, saveFile, toAbs, writeManifest } from './lib/files.ts';
 import { describeError, fetchBytes } from './lib/http.ts';
 
 const MANIFEST = 'art/icons-manifest.json';
@@ -33,7 +34,7 @@ type Group = 'cards' | 'heroPowers' | 'keywords';
 type Slot = 'icon' | 'art';
 
 type IconFile = {
-  /** 相对 public/ 的路径，也就是网页里的 URL 路径。 */
+  /** 相对 assets-src/ 的路径。optimize-art.ts 的成品在 public/ 下同一路径、扩展名 .webp。 */
   path: string;
   url: string;
   bytes: number;
@@ -88,7 +89,7 @@ async function main(): Promise<void> {
       `共 ${jobs.length} 个文件，并发 ${opts.concurrency}`,
   );
 
-  const prev = await readManifest<IconsManifest>(MANIFEST);
+  const prev = await readManifest<IconsManifest>(MANIFEST, ASSETS_SRC_DIR);
   const prevFile = (j: Job): IconFile | null | undefined => {
     if (j.group === 'cards') return prev?.cards[j.id]?.[j.slot];
     return prev?.[j.group][j.id]?.icon;
@@ -99,14 +100,14 @@ async function main(): Promise<void> {
 
   const results = await runPool(jobs, opts.concurrency, async (j) => {
     const old = prevFile(j);
-    if (!opts.force && old && old.url === j.url && old.path === j.path && (await isUsable(j.path, old.bytes))) {
+    if (!opts.force && old && old.url === j.url && old.path === j.path && (await isUsable(j.path, old.bytes, ASSETS_SRC_DIR))) {
       tally.skipped++;
       tally.totalBytes += old.bytes;
       return { job: j, file: old };
     }
     try {
       const data = await fetchBytes(j.url, j.source.type === 'lor' ? { timeoutMs: LOR_TIMEOUT_MS } : undefined);
-      await saveFile(j.path, data);
+      await saveFile(j.path, data, ASSETS_SRC_DIR);
       tally.downloaded++;
       tally.downloadedBytes += data.byteLength;
       tally.totalBytes += data.byteLength;
@@ -144,10 +145,10 @@ async function main(): Promise<void> {
   }
   for (const id of sameAsIcon) manifest.cards[id]!.art = manifest.cards[id]!.icon;
 
-  await writeManifest(MANIFEST, manifest);
+  await writeManifest(MANIFEST, manifest, ASSETS_SRC_DIR);
   const removed = await removeStale(new Set(jobs.map((j) => j.path)));
 
-  printTally(`卡牌配图、英雄技能和关键词图标（public/${MANIFEST}）`, tally, failed.length);
+  printTally(`卡牌配图、英雄技能和关键词图标的原图（assets-src/${MANIFEST}）`, tally, failed.length);
   for (const f of failed) console.log(`  - ${f.group} ${f.id} ${f.slot}：${f.error}`);
   if (removed.length > 0) console.log(`  清理   ${removed.length} 个映射表不再用的旧文件：${removed.join('、')}`);
   const toGenerate = generateQueue(map);
@@ -155,6 +156,7 @@ async function main(): Promise<void> {
     console.log(`\n以后要生成大图的 ${toGenerate.length} 张，按先后排（现在先用映射表里的替代图）：`);
     for (const [id, c] of toGenerate) console.log(`  ${c.generatePriority ?? '-'}. ${id} ${c.name}：${c.generate}`);
   }
+  console.log('\n接着跑 node scripts/optimize-art.ts 生成 public/art/ 的成品');
   if (failed.length > 0) process.exitCode = 1;
 }
 
@@ -164,16 +166,16 @@ async function removeStale(keep: Set<string>): Promise<string[]> {
   for (const dir of OWNED_DIRS) {
     let entries;
     try {
-      entries = await readdir(toAbs(dir), { recursive: true, withFileTypes: true });
+      entries = await readdir(toAbs(dir, ASSETS_SRC_DIR), { recursive: true, withFileTypes: true });
     } catch {
       continue;
     }
     for (const e of entries) {
       if (!e.isFile()) continue;
-      const publicPath = path.relative(toAbs('.'), path.join(e.parentPath, e.name)).split(path.sep).join('/');
-      if (keep.has(publicPath)) continue;
-      await rm(toAbs(publicPath));
-      removed.push(publicPath);
+      const rel = path.relative(ASSETS_SRC_DIR, path.join(e.parentPath, e.name)).split(path.sep).join('/');
+      if (keep.has(rel)) continue;
+      await rm(toAbs(rel, ASSETS_SRC_DIR));
+      removed.push(rel);
     }
   }
   return removed;

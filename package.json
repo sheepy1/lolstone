@@ -14,6 +14,8 @@
     "fetch:voice": "node scripts/fetch-voice.ts",
     "fetch:icons": "node scripts/fetch-icons.ts",
     "fetch:sfx": "node scripts/fetch-sfx.ts",
+    "optimize:art": "node scripts/optimize-art.ts",
+    "size:preload": "tsx scripts/preload-size.ts",
     "normalize:audio": "node scripts/normalize-audio.ts",
     "audition:audio": "node scripts/audio-audition.ts",
     "dev": "vite",

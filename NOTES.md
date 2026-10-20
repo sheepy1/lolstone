@@ -1510,3 +1510,11 @@ M1 的 GPU 大约慢 2.5 到 3 倍，按比例估计 1080p 约 8 到 10ms，像�
   （animations/fatigue.ts），复制出来的材质不带卡面的着色器改动（onBeforeCompile 不跟着复制），是另一组程序。彩排里
   照样复制一份画一次之后为 0。
 - 运行时复制材质（material.clone()）的动画要单独留意：复制品的程序和原材质不同，登记表的测试查不出来，要在 REHEARSAL 里照做。
+
+## 一局预载的体积（2026-10-20）
+
+- 问题：托管到静态站点托管平台之后一局要预载 12 到 13 MB（德玛西亚对艾欧尼亚 12.76 MB），本机到海外 CDN 只有 15 到 135 KB/s，开一局等 3 到 4 分钟；本地开发服务器瞬间加载，所以之前没暴露。大头是卡面原画 10 MB：符文之地传说的原画 2048×1024 的 PNG 一张 1 到 2 MB，而卡面贴图（512×716）里原画窗口只有 380×327，浏览器解码后再缩，白传了 95% 的字节。其次是语音 1.3 MB、竖版原画 1 MB、头像 0.6 MB。
+- 做法：原图挪到 `assets-src/art/`（不进 git，`fetch-art.ts`、`fetch-icons.ts` 改为下载到这里），新加 `scripts/optimize-art.ts` 按 `scripts/lib/art-sizes.ts` 的规则缩放、转 WebP 到 `public/art/`（进 git，一律 `.webp`，`manifest.ts`、`cardArt.ts` 的地址跟着改）。卡面原画按 `card-art.json` 的取景整张等比缩到取景区域是窗口的 1.5 倍（Lanczos，2048×1024 整张取景的缩到 981×491，放大 1.55 倍取景的 1024×1024 缩到 884×884）；头像 128、竖版原画 308×560、图标 64 本来就不比贴图大，只转格式，从不放大。质量原画和竖版原画 85、图标 90。语音不进加载页：`matchManifest` 只剩图，`matchVoiceManifest` 另列，`game.ts` 开局后在后台按登场、死亡台词的顺序两条两条地加载；`voice.ts` 对正在加载的同一条不再重复建 Howl。
+- 结果：最大的一局 1.39 MB（德玛西亚对诺克萨斯），`pnpm size:preload` 核对；`public/art` 从 33 MB 到 3.5 MB，dist 从 55 MB 到 26 MB。画质：卡牌配图总览 8 页整页渲染改前改后 SSIM 0.990 到 0.999、PSNR 42 到 51 dB，拼在一起肉眼看不出差别；竖版原画 jpg 转 webp PSNR 34 到 37 dB，4 倍最近邻放大对比也看不出。
+- 没动的：对局音乐 `match.ogg` 946 KB 加环境音 810 KB、主菜单音乐 1.4 MB、JS 1.6 MB（gzip 470 KB）不在预载清单里，Howler 开局时整段下载（`html5: false`），慢网络上音乐会晚起。以后要压可以降 vorbis 质量或改成流式。
+- 量法：`scripts/preload-size.ts` 把四个职业两两对局（含同职业）的 `matchManifest` 文件大小求和，超过 3 MB 以非 0 退出。

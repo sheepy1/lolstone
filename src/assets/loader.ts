@@ -1,7 +1,8 @@
-// 资源加载器：按清单预载头像、原画和语音，报告进度。单个资源加载失败不算错，记下来，画面用纯色兜底、
-// 声音不播（素材不进 git，没跑 fetch:art / fetch:voice 时全部缺失也能玩）。
-// 图片以 HTMLImageElement 保存，场景用 canvas 把它们合成进卡面、头像贴图。符文之地传说的原画是 2048×1024 的 PNG，
-// 解码后一张 8 MB，加载完先缩到长边 MAX_SIDE 的 canvas 再存（卡面原画窗口 380 像素宽，放大 1.55 倍裁切时也够用）。
+// 资源加载器：按清单加载头像、原画和语音，报告进度。单个资源加载失败不算错，记下来，画面用纯色兜底、
+// 声音不播（美术成品在 git 里；语音没跑 fetch:voice 时全部缺失也能玩）。
+// 图片以 HTMLImageElement 保存，场景用 canvas 把它们合成进卡面、头像贴图。public/art 下的图已经由 scripts/optimize-art.ts
+// 按显示尺寸缩过（卡面原画窗口 380 像素宽，取景区域留到 1.5 倍），解码后一张最多一两 MB；万一哪张比 MAX_SIDE 大
+// （比如本地放了原图），加载完先缩到长边 MAX_SIDE 的 canvas 再存。
 import { preloadVoice } from '../audio/voice';
 import type { AssetEntry } from './manifest';
 import { iconUrl, IMAGE_KINDS } from './manifest';
@@ -57,20 +58,29 @@ function loadImage(url: string): Promise<ArtImage | null> {
 
 export type LoadReport = { total: number; loaded: number; missing: string[] };
 
-// 并发加载清单里的资源，每完成一个调一次 onProgress（0 到 1）。
-export async function loadManifest(entries: readonly AssetEntry[], onProgress: (p: number) => void): Promise<LoadReport> {
+export type LoadOptions = {
+  /** 同时加载几个。加载页默认全部一起发（浏览器自己排队）；后台加载语音时限到两三个，不和对局音乐抢带宽。 */
+  concurrency?: number;
+};
+
+// 加载清单里的资源，每完成一个调一次 onProgress（0 到 1）。
+export async function loadManifest(entries: readonly AssetEntry[], onProgress: (p: number) => void, opts: LoadOptions = {}): Promise<LoadReport> {
   let done = 0;
   const missing: string[] = [];
   onProgress(entries.length === 0 ? 1 : 0);
-  await Promise.all(
-    entries.map(async (e) => {
-      const ok = IMAGE_KINDS.includes(e.kind)
-        ? (await loadImage(e.url)) !== null
-        : await preloadVoice(e.key, e.kind === 'voice_choose' ? 'choose' : 'ban', e.url);
-      if (!ok) missing.push(e.url);
-      onProgress(++done / entries.length);
-    }),
-  );
+  const load = async (e: AssetEntry) => {
+    const ok = IMAGE_KINDS.includes(e.kind)
+      ? (await loadImage(e.url)) !== null
+      : await preloadVoice(e.key, e.kind === 'voice_choose' ? 'choose' : 'ban', e.url);
+    if (!ok) missing.push(e.url);
+    onProgress(++done / entries.length);
+  };
+  const limit = Math.max(1, Math.min(opts.concurrency ?? Infinity, entries.length));
+  let next = 0;
+  const worker = async () => {
+    while (next < entries.length) await load(entries[next++]!);
+  };
+  await Promise.all(Array.from({ length: limit }, worker));
   return { total: entries.length, loaded: entries.length - missing.length, missing };
 }
 

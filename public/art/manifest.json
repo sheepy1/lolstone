@@ -1,996 +1,2782 @@
 {
-  "generatedAt": "2026-10-19T12:48:20.355Z",
-  "source": "ddragon",
-  "version": "16.20.1",
-  "champions": [
-    {
-      "key": "Teemo",
-      "dir": "teemo",
-      "id": 17,
-      "name": "提莫",
-      "title": "迅捷斥候",
-      "icon": {
-        "path": "art/teemo/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Teemo.png",
-        "bytes": 21456,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/teemo/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Teemo_0.jpg",
-        "bytes": 50982,
-        "version": null
-      }
+  "generatedAt": "2026-10-20T04:23:56.670Z",
+  "rules": {
+    "version": 1,
+    "faceWindow": {
+      "w": 380,
+      "h": 327
     },
-    {
-      "key": "Lulu",
-      "dir": "lulu",
-      "id": 117,
-      "name": "璐璐",
-      "title": "仙灵女巫",
-      "icon": {
-        "path": "art/lulu/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Lulu.png",
-        "bytes": 29539,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/lulu/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Lulu_0.jpg",
-        "bytes": 47923,
-        "version": null
-      }
-    },
-    {
-      "key": "Khazix",
-      "dir": "khazix",
-      "id": 121,
-      "name": "卡兹克",
-      "title": "虚空掠夺者",
-      "icon": {
-        "path": "art/khazix/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Khazix.png",
-        "bytes": 23545,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/khazix/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Khazix_0.jpg",
-        "bytes": 41422,
-        "version": null
-      }
-    },
-    {
-      "key": "RekSai",
-      "dir": "reksai",
-      "id": 421,
-      "name": "雷克塞",
-      "title": "虚空遁地兽",
-      "icon": {
-        "path": "art/reksai/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/RekSai.png",
-        "bytes": 27922,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/reksai/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/RekSai_0.jpg",
-        "bytes": 43753,
-        "version": null
-      }
-    },
-    {
-      "key": "Velkoz",
-      "dir": "velkoz",
-      "id": 161,
-      "name": "维克兹",
-      "title": "虚空之眼",
-      "icon": {
-        "path": "art/velkoz/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Velkoz.png",
-        "bytes": 29187,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/velkoz/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Velkoz_0.jpg",
-        "bytes": 39853,
-        "version": null
-      }
-    },
-    {
-      "key": "Chogath",
-      "dir": "chogath",
-      "id": 31,
-      "name": "科加斯",
-      "title": "虚空恐惧",
-      "icon": {
-        "path": "art/chogath/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Chogath.png",
-        "bytes": 32006,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/chogath/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Chogath_0.jpg",
-        "bytes": 45477,
-        "version": null
-      }
-    },
-    {
-      "key": "Lucian",
-      "dir": "lucian",
-      "id": 236,
-      "name": "卢锡安",
-      "title": "圣枪游侠",
-      "icon": {
-        "path": "art/lucian/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Lucian.png",
-        "bytes": 27998,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/lucian/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Lucian_0.jpg",
-        "bytes": 32009,
-        "version": null
-      }
-    },
-    {
-      "key": "Vayne",
-      "dir": "vayne",
-      "id": 67,
-      "name": "薇恩",
-      "title": "暗夜猎手",
-      "icon": {
-        "path": "art/vayne/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Vayne.png",
-        "bytes": 28367,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/vayne/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Vayne_0.jpg",
-        "bytes": 49806,
-        "version": null
-      }
-    },
-    {
-      "key": "Poppy",
-      "dir": "poppy",
-      "id": 78,
-      "name": "波比",
-      "title": "圣锤之毅",
-      "icon": {
-        "path": "art/poppy/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Poppy.png",
-        "bytes": 31447,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/poppy/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Poppy_0.jpg",
-        "bytes": 56845,
-        "version": null
-      }
-    },
-    {
-      "key": "XinZhao",
-      "dir": "xinzhao",
-      "id": 5,
-      "name": "赵信",
-      "title": "德邦总管",
-      "icon": {
-        "path": "art/xinzhao/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/XinZhao.png",
-        "bytes": 35410,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/xinzhao/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/XinZhao_0.jpg",
-        "bytes": 45686,
-        "version": null
-      }
-    },
-    {
-      "key": "Quinn",
-      "dir": "quinn",
-      "id": 133,
-      "name": "奎因",
-      "title": "德玛西亚之翼",
-      "icon": {
-        "path": "art/quinn/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Quinn.png",
-        "bytes": 30154,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/quinn/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Quinn_0.jpg",
-        "bytes": 44618,
-        "version": null
-      }
-    },
-    {
-      "key": "Lux",
-      "dir": "lux",
-      "id": 99,
-      "name": "拉克丝",
-      "title": "光辉女郎",
-      "icon": {
-        "path": "art/lux/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Lux.png",
-        "bytes": 29188,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/lux/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Lux_0.jpg",
-        "bytes": 59727,
-        "version": null
-      }
-    },
-    {
-      "key": "Fiora",
-      "dir": "fiora",
-      "id": 114,
-      "name": "菲奥娜",
-      "title": "无双剑姬",
-      "icon": {
-        "path": "art/fiora/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Fiora.png",
-        "bytes": 28094,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/fiora/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Fiora_0.jpg",
-        "bytes": 46460,
-        "version": null
-      }
-    },
-    {
-      "key": "Sona",
-      "dir": "sona",
-      "id": 37,
-      "name": "娑娜",
-      "title": "琴瑟仙女",
-      "icon": {
-        "path": "art/sona/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Sona.png",
-        "bytes": 26340,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/sona/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Sona_0.jpg",
-        "bytes": 49166,
-        "version": null
-      }
-    },
-    {
-      "key": "JarvanIV",
-      "dir": "jarvaniv",
-      "id": 59,
-      "name": "嘉文四世",
-      "title": "德玛西亚皇子",
-      "icon": {
-        "path": "art/jarvaniv/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/JarvanIV.png",
-        "bytes": 28504,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/jarvaniv/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/JarvanIV_0.jpg",
-        "bytes": 63154,
-        "version": null
-      }
-    },
-    {
-      "key": "Galio",
-      "dir": "galio",
-      "id": 3,
-      "name": "加里奥",
-      "title": "正义巨像",
-      "icon": {
-        "path": "art/galio/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Galio.png",
-        "bytes": 24739,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/galio/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Galio_0.jpg",
-        "bytes": 48214,
-        "version": null
-      }
-    },
-    {
-      "key": "Kayle",
-      "dir": "kayle",
-      "id": 10,
-      "name": "凯尔",
-      "title": "正义天使",
-      "icon": {
-        "path": "art/kayle/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Kayle.png",
-        "bytes": 24103,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/kayle/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Kayle_0.jpg",
-        "bytes": 42596,
-        "version": null
-      }
-    },
-    {
-      "key": "Annie",
-      "dir": "annie",
-      "id": 1,
-      "name": "安妮",
-      "title": "黑暗之女",
-      "icon": {
-        "path": "art/annie/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Annie.png",
-        "bytes": 30267,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/annie/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Annie_0.jpg",
-        "bytes": 51418,
-        "version": null
-      }
-    },
-    {
-      "key": "Kled",
-      "dir": "kled",
-      "id": 240,
-      "name": "克烈",
-      "title": "暴怒骑士",
-      "icon": {
-        "path": "art/kled/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Kled.png",
-        "bytes": 28478,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/kled/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Kled_0.jpg",
-        "bytes": 39174,
-        "version": null
-      }
-    },
-    {
-      "key": "Talon",
-      "dir": "talon",
-      "id": 91,
-      "name": "泰隆",
-      "title": "刀锋之影",
-      "icon": {
-        "path": "art/talon/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Talon.png",
-        "bytes": 26989,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/talon/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Talon_0.jpg",
-        "bytes": 49535,
-        "version": null
-      }
-    },
-    {
-      "key": "Draven",
-      "dir": "draven",
-      "id": 119,
-      "name": "德莱文",
-      "title": "荣耀行刑官",
-      "icon": {
-        "path": "art/draven/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Draven.png",
-        "bytes": 26400,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/draven/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Draven_0.jpg",
-        "bytes": 40963,
-        "version": null
-      }
-    },
-    {
-      "key": "Katarina",
-      "dir": "katarina",
-      "id": 55,
-      "name": "卡特琳娜",
-      "title": "不祥之刃",
-      "icon": {
-        "path": "art/katarina/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Katarina.png",
-        "bytes": 26732,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/katarina/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Katarina_0.jpg",
-        "bytes": 55234,
-        "version": null
-      }
-    },
-    {
-      "key": "Vladimir",
-      "dir": "vladimir",
-      "id": 8,
-      "name": "弗拉基米尔",
-      "title": "猩红收割者",
-      "icon": {
-        "path": "art/vladimir/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Vladimir.png",
-        "bytes": 24626,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/vladimir/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Vladimir_0.jpg",
-        "bytes": 50903,
-        "version": null
-      }
-    },
-    {
-      "key": "Samira",
-      "dir": "samira",
-      "id": 360,
-      "name": "莎弥拉",
-      "title": "沙漠玫瑰",
-      "icon": {
-        "path": "art/samira/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Samira.png",
-        "bytes": 24690,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/samira/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Samira_0.jpg",
-        "bytes": 40937,
-        "version": null
-      }
-    },
-    {
-      "key": "Sion",
-      "dir": "sion",
-      "id": 14,
-      "name": "赛恩",
-      "title": "亡灵战神",
-      "icon": {
-        "path": "art/sion/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Sion.png",
-        "bytes": 26066,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/sion/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Sion_0.jpg",
-        "bytes": 42177,
-        "version": null
-      }
-    },
-    {
-      "key": "Swain",
-      "dir": "swain",
-      "id": 50,
-      "name": "斯维因",
-      "title": "诺克萨斯统领",
-      "icon": {
-        "path": "art/swain/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Swain.png",
-        "bytes": 24066,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/swain/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Swain_0.jpg",
-        "bytes": 31653,
-        "version": null
-      }
-    },
-    {
-      "key": "Kennen",
-      "dir": "kennen",
-      "id": 85,
-      "name": "凯南",
-      "title": "狂暴之心",
-      "icon": {
-        "path": "art/kennen/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Kennen.png",
-        "bytes": 26105,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/kennen/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Kennen_0.jpg",
-        "bytes": 36978,
-        "version": null
-      }
-    },
-    {
-      "key": "Akali",
-      "dir": "akali",
-      "id": 84,
-      "name": "阿卡丽",
-      "title": "离群之刺",
-      "icon": {
-        "path": "art/akali/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Akali.png",
-        "bytes": 27191,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/akali/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Akali_0.jpg",
-        "bytes": 44259,
-        "version": null
-      }
-    },
-    {
-      "key": "Karma",
-      "dir": "karma",
-      "id": 43,
-      "name": "卡尔玛",
-      "title": "天启者",
-      "icon": {
-        "path": "art/karma/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Karma.png",
-        "bytes": 30154,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/karma/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Karma_0.jpg",
-        "bytes": 49169,
-        "version": null
-      }
-    },
-    {
-      "key": "Zed",
-      "dir": "zed",
-      "id": 238,
-      "name": "劫",
-      "title": "影流之主",
-      "icon": {
-        "path": "art/zed/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Zed.png",
-        "bytes": 28879,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/zed/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Zed_0.jpg",
-        "bytes": 44630,
-        "version": null
-      }
-    },
-    {
-      "key": "Yasuo",
-      "dir": "yasuo",
-      "id": 157,
-      "name": "亚索",
-      "title": "疾风剑豪",
-      "icon": {
-        "path": "art/yasuo/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Yasuo.png",
-        "bytes": 28213,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/yasuo/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Yasuo_0.jpg",
-        "bytes": 53646,
-        "version": null
-      }
-    },
-    {
-      "key": "LeeSin",
-      "dir": "leesin",
-      "id": 64,
-      "name": "李青",
-      "title": "盲僧",
-      "icon": {
-        "path": "art/leesin/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/LeeSin.png",
-        "bytes": 24979,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/leesin/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/LeeSin_0.jpg",
-        "bytes": 36736,
-        "version": null
-      }
-    },
-    {
-      "key": "Shen",
-      "dir": "shen",
-      "id": 98,
-      "name": "慎",
-      "title": "暮光之眼",
-      "icon": {
-        "path": "art/shen/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Shen.png",
-        "bytes": 25298,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/shen/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Shen_0.jpg",
-        "bytes": 44277,
-        "version": null
-      }
-    },
-    {
-      "key": "Irelia",
-      "dir": "irelia",
-      "id": 39,
-      "name": "艾瑞莉娅",
-      "title": "刀锋舞者",
-      "icon": {
-        "path": "art/irelia/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Irelia.png",
-        "bytes": 29037,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/irelia/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Irelia_0.jpg",
-        "bytes": 48197,
-        "version": null
-      }
-    },
-    {
-      "key": "MasterYi",
-      "dir": "masteryi",
-      "id": 11,
-      "name": "易",
-      "title": "无极剑圣",
-      "icon": {
-        "path": "art/masteryi/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/MasterYi.png",
-        "bytes": 29421,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/masteryi/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/MasterYi_0.jpg",
-        "bytes": 53949,
-        "version": null
-      }
-    },
-    {
-      "key": "Yone",
-      "dir": "yone",
-      "id": 777,
-      "name": "永恩",
-      "title": "封魔剑魂",
-      "icon": {
-        "path": "art/yone/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Yone.png",
-        "bytes": 26864,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/yone/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Yone_0.jpg",
-        "bytes": 48850,
-        "version": null
-      }
-    },
-    {
-      "key": "Syndra",
-      "dir": "syndra",
-      "id": 134,
-      "name": "辛德拉",
-      "title": "暗黑元首",
-      "icon": {
-        "path": "art/syndra/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Syndra.png",
-        "bytes": 30524,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/syndra/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Syndra_0.jpg",
-        "bytes": 49648,
-        "version": null
-      }
-    },
-    {
-      "key": "Olaf",
-      "dir": "olaf",
-      "id": 2,
-      "name": "奥拉夫",
-      "title": "狂战士",
-      "icon": {
-        "path": "art/olaf/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Olaf.png",
-        "bytes": 30509,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/olaf/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Olaf_0.jpg",
-        "bytes": 49571,
-        "version": null
-      }
-    },
-    {
-      "key": "Udyr",
-      "dir": "udyr",
-      "id": 77,
-      "name": "乌迪尔",
-      "title": "兽灵行者",
-      "icon": {
-        "path": "art/udyr/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Udyr.png",
-        "bytes": 29169,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/udyr/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Udyr_0.jpg",
-        "bytes": 38319,
-        "version": null
-      }
-    },
-    {
-      "key": "Braum",
-      "dir": "braum",
-      "id": 201,
-      "name": "布隆",
-      "title": "弗雷尔卓德之心",
-      "icon": {
-        "path": "art/braum/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Braum.png",
-        "bytes": 23674,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/braum/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Braum_0.jpg",
-        "bytes": 43050,
-        "version": null
-      }
-    },
-    {
-      "key": "Sejuani",
-      "dir": "sejuani",
-      "id": 113,
-      "name": "瑟庄妮",
-      "title": "北地之怒",
-      "icon": {
-        "path": "art/sejuani/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Sejuani.png",
-        "bytes": 31761,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/sejuani/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Sejuani_0.jpg",
-        "bytes": 49439,
-        "version": null
-      }
-    },
-    {
-      "key": "Anivia",
-      "dir": "anivia",
-      "id": 34,
-      "name": "艾尼维亚",
-      "title": "冰晶凤凰",
-      "icon": {
-        "path": "art/anivia/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Anivia.png",
-        "bytes": 27008,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/anivia/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Anivia_0.jpg",
-        "bytes": 60945,
-        "version": null
-      }
-    },
-    {
-      "key": "Nunu",
-      "dir": "nunu",
-      "id": 20,
-      "name": "努努和威朗普",
-      "title": "雪原双子",
-      "icon": {
-        "path": "art/nunu/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Nunu.png",
-        "bytes": 27502,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/nunu/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Nunu_0.jpg",
-        "bytes": 44510,
-        "version": null
-      }
-    },
-    {
-      "key": "Tryndamere",
-      "dir": "tryndamere",
-      "id": 23,
-      "name": "泰达米尔",
-      "title": "蛮族之王",
-      "icon": {
-        "path": "art/tryndamere/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Tryndamere.png",
-        "bytes": 31840,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/tryndamere/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Tryndamere_0.jpg",
-        "bytes": 58086,
-        "version": null
-      }
-    },
-    {
-      "key": "Trundle",
-      "dir": "trundle",
-      "id": 48,
-      "name": "特朗德尔",
-      "title": "巨魔之王",
-      "icon": {
-        "path": "art/trundle/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Trundle.png",
-        "bytes": 28260,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/trundle/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Trundle_0.jpg",
-        "bytes": 42586,
-        "version": null
-      }
-    },
-    {
-      "key": "Ornn",
-      "dir": "ornn",
-      "id": 516,
-      "name": "奥恩",
-      "title": "山隐之焰",
-      "icon": {
-        "path": "art/ornn/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Ornn.png",
-        "bytes": 25086,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/ornn/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Ornn_0.jpg",
-        "bytes": 47365,
-        "version": null
-      }
-    },
-    {
-      "key": "Lissandra",
-      "dir": "lissandra",
-      "id": 127,
-      "name": "丽桑卓",
-      "title": "冰霜女巫",
-      "icon": {
-        "path": "art/lissandra/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Lissandra.png",
-        "bytes": 28806,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/lissandra/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Lissandra_0.jpg",
-        "bytes": 40245,
-        "version": null
-      }
-    },
-    {
-      "key": "Volibear",
-      "dir": "volibear",
-      "id": 106,
-      "name": "沃利贝尔",
-      "title": "不灭狂雷",
-      "icon": {
-        "path": "art/volibear/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Volibear.png",
-        "bytes": 29127,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/volibear/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Volibear_0.jpg",
-        "bytes": 49148,
-        "version": null
-      }
-    },
-    {
-      "key": "Garen",
-      "dir": "garen",
-      "id": 86,
-      "name": "盖伦",
-      "title": "德玛西亚之力",
-      "icon": {
-        "path": "art/garen/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Garen.png",
-        "bytes": 30705,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/garen/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Garen_0.jpg",
-        "bytes": 52371,
-        "version": null
-      }
-    },
-    {
-      "key": "Darius",
-      "dir": "darius",
-      "id": 122,
-      "name": "德莱厄斯",
-      "title": "诺克萨斯之手",
-      "icon": {
-        "path": "art/darius/icon.png",
-        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Darius.png",
-        "bytes": 27666,
-        "version": "16.20.1"
-      },
-      "loading": {
-        "path": "art/darius/loading.jpg",
-        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Darius_0.jpg",
-        "bytes": 42720,
-        "version": null
-      }
-    },
-    {
-      "key": "Ahri",
-      "dir": "ahri",
-      "id": 103,
-      "name": "阿狸",
-      "title": "九尾妖狐",
-      "icon": {
+    "oversample": 1.5,
+    "quality": {
+      "hero_icon": 90,
+      "hero_loading": 85,
+      "card_art": 85,
+      "card_icon": 90,
+      "hero_power": 90,
+      "keyword": 90
+    }
+  },
+  "ddragonVersion": "16.20.1",
+  "lorVersion": "7_10_0",
+  "files": {
+    "art/ahri/icon.webp": {
+      "bytes": 5112,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
         "path": "art/ahri/icon.png",
         "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Ahri.png",
         "bytes": 28511,
-        "version": "16.20.1"
-      },
-      "loading": {
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/ahri/loading.webp": {
+      "bytes": 35510,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
         "path": "art/ahri/loading.jpg",
         "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Ahri_0.jpg",
         "bytes": 57774,
-        "version": null
+        "width": 308,
+        "height": 560
       }
     },
-    {
-      "key": "Ashe",
-      "dir": "ashe",
-      "id": 22,
-      "name": "艾希",
-      "title": "寒冰射手",
-      "icon": {
+    "art/akali/icon.webp": {
+      "bytes": 4480,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/akali/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Akali.png",
+        "bytes": 27191,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/akali/loading.webp": {
+      "bytes": 26046,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/akali/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Akali_0.jpg",
+        "bytes": 44259,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/anivia/icon.webp": {
+      "bytes": 6182,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/anivia/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Anivia.png",
+        "bytes": 27008,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/anivia/loading.webp": {
+      "bytes": 36504,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/anivia/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Anivia_0.jpg",
+        "bytes": 60945,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/annie/icon.webp": {
+      "bytes": 6240,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/annie/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Annie.png",
+        "bytes": 30267,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/annie/loading.webp": {
+      "bytes": 30678,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/annie/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Annie_0.jpg",
+        "bytes": 51418,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/ashe/icon.webp": {
+      "bytes": 6954,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
         "path": "art/ashe/icon.png",
         "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Ashe.png",
         "bytes": 32121,
-        "version": "16.20.1"
-      },
-      "loading": {
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/ashe/loading.webp": {
+      "bytes": 30006,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
         "path": "art/ashe/loading.jpg",
         "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Ashe_0.jpg",
         "bytes": 48832,
-        "version": null
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/braum/icon.webp": {
+      "bytes": 4938,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/braum/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Braum.png",
+        "bytes": 23674,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/braum/loading.webp": {
+      "bytes": 24510,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/braum/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Braum_0.jpg",
+        "bytes": 43050,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/cards/demacia.demacian_justice/art.webp": {
+      "bytes": 63604,
+      "width": 831,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/demacia.demacian_justice/art.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Garen_13.jpg",
+        "bytes": 193213,
+        "width": 1215,
+        "height": 717
+      }
+    },
+    "art/cards/demacia.demacian_justice/icon.webp": {
+      "bytes": 1904,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/demacia.demacian_justice/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/GarenR.png",
+        "bytes": 5230,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/demacia.iron_oath/art.webp": {
+      "bytes": 44844,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/demacia.iron_oath/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01DE044-full.png",
+        "bytes": 711168,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/demacia.iron_oath/icon.webp": {
+      "bytes": 2020,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/demacia.iron_oath/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/passive/Poppy_Passive.png",
+        "bytes": 5975,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/demacia.judgment/art.webp": {
+      "bytes": 41510,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/demacia.judgment/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01DE007-full.png",
+        "bytes": 682066,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/demacia.judgment/icon.webp": {
+      "bytes": 2324,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/demacia.judgment/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/GarenE.png",
+        "bytes": 6473,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/demacia.light_shield/art.webp": {
+      "bytes": 43222,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/demacia.light_shield/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01DE032-full.png",
+        "bytes": 694554,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/demacia.light_shield/icon.webp": {
+      "bytes": 2446,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/demacia.light_shield/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/LuxPrismaticWave.png",
+        "bytes": 6679,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/demacia.rally/art.webp": {
+      "bytes": 74754,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/demacia.rally/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01DE035-full.png",
+        "bytes": 774996,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/demacia.rally/icon.webp": {
+      "bytes": 2810,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/demacia.rally/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/JarvanIVDemacianStandard.png",
+        "bytes": 6775,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/freljord.blizzard/art.webp": {
+      "bytes": 68550,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/freljord.blizzard/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01FR024T5-full.png",
+        "bytes": 787705,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/freljord.blizzard/icon.webp": {
+      "bytes": 2540,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/freljord.blizzard/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/GlacialStorm.png",
+        "bytes": 6999,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/freljord.crystal_arrow/art.webp": {
+      "bytes": 52486,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/freljord.crystal_arrow/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01FR038T3-full.png",
+        "bytes": 635153,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/freljord.crystal_arrow/icon.webp": {
+      "bytes": 2926,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/freljord.crystal_arrow/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/EnchantedCrystalArrow.png",
+        "bytes": 6449,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/freljord.glacial_fissure/art.webp": {
+      "bytes": 55894,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/freljord.glacial_fissure/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01FR001-full.png",
+        "bytes": 668286,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/freljord.glacial_fissure/icon.webp": {
+      "bytes": 2312,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/freljord.glacial_fissure/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/BraumRWrapper.png",
+        "bytes": 6098,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/freljord.hawkshot/art.webp": {
+      "bytes": 83436,
+      "width": 981,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/freljord.hawkshot/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01FR022-full.png",
+        "bytes": 1875303,
+        "width": 2048,
+        "height": 1024
+      }
+    },
+    "art/cards/freljord.hawkshot/icon.webp": {
+      "bytes": 2418,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/freljord.hawkshot/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/AsheSpiritOfTheHawk.png",
+        "bytes": 5806,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/freljord.winters_approach/art.webp": {
+      "bytes": 46356,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/freljord.winters_approach/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set6cde/en_us/img/cards/06FR041-full.png",
+        "bytes": 675521,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/freljord.winters_approach/icon.webp": {
+      "bytes": 2502,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/freljord.winters_approach/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/SejuaniW.png",
+        "bytes": 6066,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/ionia.ghostblade/art.webp": {
+      "bytes": 40968,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/ionia.ghostblade/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01IO022-full.png",
+        "bytes": 598925,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/ionia.ghostblade/icon.webp": {
+      "bytes": 2390,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/ionia.ghostblade/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/item/3142.png",
+        "bytes": 6554,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/ionia.last_breath/art.webp": {
+      "bytes": 71706,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/ionia.last_breath/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01IO015T2-full.png",
+        "bytes": 717612,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/ionia.last_breath/icon.webp": {
+      "bytes": 2286,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/ionia.last_breath/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/YasuoR.png",
+        "bytes": 6308,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/ionia.meditate/art.webp": {
+      "bytes": 54374,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/ionia.meditate/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set2/en_us/img/cards/02IO009-full.png",
+        "bytes": 682871,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/ionia.meditate/icon.webp": {
+      "bytes": 2452,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/ionia.meditate/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/Meditate.png",
+        "bytes": 6124,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/ionia.recall/art.webp": {
+      "bytes": 49120,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/ionia.recall/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01IO011-full.png",
+        "bytes": 679284,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/ionia.recall/icon.webp": {
+      "bytes": 1836,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/ionia.recall/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/spells/icons2d/recallhome.png",
+        "bytes": 4103,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/ionia.spirit_rush/art.webp": {
+      "bytes": 49094,
+      "width": 831,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/ionia.spirit_rush/art.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Ahri_27.jpg",
+        "bytes": 157408,
+        "width": 1215,
+        "height": 717
+      }
+    },
+    "art/cards/ionia.spirit_rush/icon.webp": {
+      "bytes": 2688,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/ionia.spirit_rush/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/AhriR.png",
+        "bytes": 6639,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/neutral.ancient_krug/icon.webp": {
+      "bytes": 4672,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.ancient_krug/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_krug/hud/ancientkrug_square.png",
+        "bytes": 14690,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.baron_nashor/icon.webp": {
+      "bytes": 7066,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.baron_nashor/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_baron/hud/baron_square.png",
+        "bytes": 16835,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.blue_sentinel/art.webp": {
+      "bytes": 47400,
+      "width": 981,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/neutral.blue_sentinel/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set4/en_us/img/cards/04MT004-full.png",
+        "bytes": 1463490,
+        "width": 2048,
+        "height": 1024
+      }
+    },
+    "art/cards/neutral.blue_sentinel/icon.webp": {
+      "bytes": 6544,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.blue_sentinel/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_blue/hud/bluesentinel_square.png",
+        "bytes": 16097,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.caster_minion/icon.webp": {
+      "bytes": 6058,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.caster_minion/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_orderminionranged/hud/bluerange_square.png",
+        "bytes": 17303,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.cloud_drake/art.webp": {
+      "bytes": 65238,
+      "width": 1570,
+      "height": 785,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/neutral.cloud_drake/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set8/en_us/img/cards/08DE025-full.png",
+        "bytes": 1483963,
+        "width": 2048,
+        "height": 1024
+      }
+    },
+    "art/cards/neutral.cloud_drake/icon.webp": {
+      "bytes": 5946,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.cloud_drake/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_dragon_air/hud/dragon_air_square.png",
+        "bytes": 16833,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.elder_dragon/art.webp": {
+      "bytes": 28156,
+      "width": 981,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/neutral.elder_dragon/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set8/en_us/img/cards/08RU014-full.png",
+        "bytes": 1273167,
+        "width": 2048,
+        "height": 1024
+      }
+    },
+    "art/cards/neutral.elder_dragon/icon.webp": {
+      "bytes": 6486,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.elder_dragon/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_dragon_elder/hud/dragon_square_elder.png",
+        "bytes": 17578,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.gromp/icon.webp": {
+      "bytes": 4564,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.gromp/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_gromp/hud/gromp_square.png",
+        "bytes": 15952,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.infernal_drake/icon.webp": {
+      "bytes": 6018,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.infernal_drake/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_dragon_fire/hud/dragon_square_fire.png",
+        "bytes": 15143,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.melee_minion/icon.webp": {
+      "bytes": 5714,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.melee_minion/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_orderminionmelee/hud/bluemelee_square.png",
+        "bytes": 17317,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.mountain_drake/art.webp": {
+      "bytes": 69224,
+      "width": 981,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/neutral.mountain_drake/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set5/en_us/img/cards/05DE015-full.png",
+        "bytes": 1872991,
+        "width": 2048,
+        "height": 1024
+      }
+    },
+    "art/cards/neutral.mountain_drake/icon.webp": {
+      "bytes": 4618,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.mountain_drake/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_dragon_earth/hud/dragon_square_earth.png",
+        "bytes": 13947,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.murk_wolf/icon.webp": {
+      "bytes": 6014,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.murk_wolf/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_murkwolf/hud/greatermurkwolf_square.png",
+        "bytes": 16418,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.ocean_drake/art.webp": {
+      "bytes": 55910,
+      "width": 981,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/neutral.ocean_drake/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set8/en_us/img/cards/08IO012-full.png",
+        "bytes": 1452595,
+        "width": 2048,
+        "height": 1024
+      }
+    },
+    "art/cards/neutral.ocean_drake/icon.webp": {
+      "bytes": 5762,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.ocean_drake/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_dragon_water/hud/dragon_square_water.png",
+        "bytes": 16057,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.red_brambleback/icon.webp": {
+      "bytes": 6422,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.red_brambleback/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_red/hud/brambleback_square.png",
+        "bytes": 15857,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.rift_herald/icon.webp": {
+      "bytes": 6190,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.rift_herald/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_riftherald/hud/sruriftherald_square.png",
+        "bytes": 16466,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.rift_scuttler/icon.webp": {
+      "bytes": 5398,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.rift_scuttler/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_crab/hud/crab_square_0.png",
+        "bytes": 14872,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.siege_minion/icon.webp": {
+      "bytes": 5338,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.siege_minion/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_orderminionsiege/hud/bluemechcannon_square.png",
+        "bytes": 15800,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.super_minion/icon.webp": {
+      "bytes": 6210,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.super_minion/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_orderminionsuper/hud/bluemechmelee_square.png",
+        "bytes": 17059,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/neutral.void_larva/icon.webp": {
+      "bytes": 5982,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/neutral.void_larva/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_horde/hud/sru_voidgrub_square.png",
+        "bytes": 15549,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/noxus.blood_rage/art.webp": {
+      "bytes": 47266,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/noxus.blood_rage/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01NX019-full.png",
+        "bytes": 657453,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/noxus.blood_rage/icon.webp": {
+      "bytes": 2464,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/noxus.blood_rage/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/DravenFury.png",
+        "bytes": 6136,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/noxus.decimate/art.webp": {
+      "bytes": 72892,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/noxus.decimate/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01NX002-full.png",
+        "bytes": 678627,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/noxus.decimate/icon.webp": {
+      "bytes": 1898,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/noxus.decimate/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/DariusCleave.png",
+        "bytes": 4978,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/noxus.execute/art.webp": {
+      "bytes": 63820,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/noxus.execute/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01NX022-full.png",
+        "bytes": 739827,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/noxus.execute/icon.webp": {
+      "bytes": 2090,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/noxus.execute/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/DariusExecute.png",
+        "bytes": 5705,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/noxus.flying_axe/art.webp": {
+      "bytes": 45768,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/noxus.flying_axe/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01NX020T1-full.png",
+        "bytes": 611096,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/noxus.flying_axe/icon.webp": {
+      "bytes": 2668,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/noxus.flying_axe/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/DravenSpinning.png",
+        "bytes": 7239,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/noxus.might_of_noxus/art.webp": {
+      "bytes": 41568,
+      "width": 884,
+      "height": 884,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/noxus.might_of_noxus/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set2/en_us/img/cards/02NX003-full.png",
+        "bytes": 605018,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "art/cards/noxus.might_of_noxus/icon.webp": {
+      "bytes": 1238,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/noxus.might_of_noxus/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/passive/Darius_Icon_Hemorrhage.png",
+        "bytes": 3617,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/token.anivia_egg/art.webp": {
+      "bytes": 52862,
+      "width": 981,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/token.anivia_egg/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01FR024T4-full.png",
+        "bytes": 1378462,
+        "width": 2048,
+        "height": 1024
+      }
+    },
+    "art/cards/token.anivia_egg/icon.webp": {
+      "bytes": 1846,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/token.anivia_egg/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/passive/Anivia_P.png",
+        "bytes": 5150,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/token.demacian_soldier/art.webp": {
+      "bytes": 43350,
+      "width": 981,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/token.demacian_soldier/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01DE006-full.png",
+        "bytes": 1424606,
+        "width": 2048,
+        "height": 1024
+      }
+    },
+    "art/cards/token.kled_dismounted/art.webp": {
+      "bytes": 83678,
+      "width": 831,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/token.kled_dismounted/art.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Kled_1.jpg",
+        "bytes": 237903,
+        "width": 1215,
+        "height": 717
+      }
+    },
+    "art/cards/token.kled_dismounted/icon.webp": {
+      "bytes": 2706,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/token.kled_dismounted/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/passive/Kled_P.png",
+        "bytes": 7262,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/token.mana_potion/icon.webp": {
+      "bytes": 2528,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/token.mana_potion/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/item/772004.png",
+        "bytes": 6067,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/token.sion_undead/art.webp": {
+      "bytes": 53376,
+      "width": 981,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/token.sion_undead/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set5/en_us/img/cards/05NX001T1-full.png",
+        "bytes": 1429715,
+        "width": 2048,
+        "height": 1024
+      }
+    },
+    "art/cards/token.sion_undead/icon.webp": {
+      "bytes": 1898,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/token.sion_undead/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/passive/Sion_Passive1.png",
+        "bytes": 6204,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/token.squirrel/art.webp": {
+      "bytes": 51702,
+      "width": 981,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/token.squirrel/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set3/en_us/img/cards/03IO008T1-full.png",
+        "bytes": 1680332,
+        "width": 2048,
+        "height": 1024
+      }
+    },
+    "art/cards/token.squirrel/icon.webp": {
+      "bytes": 2362,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/token.squirrel/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/LuluW.png",
+        "bytes": 6755,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/token.valor/art.webp": {
+      "bytes": 50476,
+      "width": 981,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/token.valor/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set2/en_us/img/cards/02DE006T2-full.png",
+        "bytes": 1460622,
+        "width": 2048,
+        "height": 1024
+      }
+    },
+    "art/cards/token.valor/icon.webp": {
+      "bytes": 2346,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/token.valor/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/passive/Quinn_Passive.png",
+        "bytes": 5807,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/cards/token.void_worm/icon.webp": {
+      "bytes": 5290,
+      "width": 128,
+      "height": 128,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/token.void_worm/icon.png",
+        "url": "https://raw.communitydragon.org/latest/game/assets/characters/sru_horde_mini/hud/sru_voidmite_square.png",
+        "bytes": 13386,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/cards/token.zed_shadow/art.webp": {
+      "bytes": 35864,
+      "width": 981,
+      "height": 491,
+      "role": "card_art",
+      "quality": 85,
+      "source": {
+        "path": "art/cards/token.zed_shadow/art.png",
+        "url": "https://dd.b.pvp.net/7_10_0/set1/en_us/img/cards/01IO009T1-full.png",
+        "bytes": 1246483,
+        "width": 2048,
+        "height": 1024
+      }
+    },
+    "art/cards/token.zed_shadow/icon.webp": {
+      "bytes": 1468,
+      "width": 64,
+      "height": 64,
+      "role": "card_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/cards/token.zed_shadow/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/ZedW.png",
+        "bytes": 5820,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/chogath/icon.webp": {
+      "bytes": 7280,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/chogath/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Chogath.png",
+        "bytes": 32006,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/chogath/loading.webp": {
+      "bytes": 27890,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/chogath/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Chogath_0.jpg",
+        "bytes": 45477,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/darius/icon.webp": {
+      "bytes": 5026,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/darius/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Darius.png",
+        "bytes": 27666,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/darius/loading.webp": {
+      "bytes": 25814,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/darius/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Darius_0.jpg",
+        "bytes": 42720,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/draven/icon.webp": {
+      "bytes": 4812,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/draven/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Draven.png",
+        "bytes": 26400,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/draven/loading.webp": {
+      "bytes": 22394,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/draven/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Draven_0.jpg",
+        "bytes": 40963,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/fiora/icon.webp": {
+      "bytes": 5086,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/fiora/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Fiora.png",
+        "bytes": 28094,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/fiora/loading.webp": {
+      "bytes": 27000,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/fiora/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Fiora_0.jpg",
+        "bytes": 46460,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/galio/icon.webp": {
+      "bytes": 5012,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/galio/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Galio.png",
+        "bytes": 24739,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/galio/loading.webp": {
+      "bytes": 29724,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/galio/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Galio_0.jpg",
+        "bytes": 48214,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/garen/icon.webp": {
+      "bytes": 6424,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/garen/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Garen.png",
+        "bytes": 30705,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/garen/loading.webp": {
+      "bytes": 32298,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/garen/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Garen_0.jpg",
+        "bytes": 52371,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/heropowers/demacia.webp": {
+      "bytes": 2104,
+      "width": 64,
+      "height": 64,
+      "role": "hero_power",
+      "quality": 90,
+      "source": {
+        "path": "art/heropowers/demacia.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/GarenW.png",
+        "bytes": 5947,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/heropowers/freljord.webp": {
+      "bytes": 2266,
+      "width": 64,
+      "height": 64,
+      "role": "hero_power",
+      "quality": 90,
+      "source": {
+        "path": "art/heropowers/freljord.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/Volley.png",
+        "bytes": 6241,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/heropowers/ionia.webp": {
+      "bytes": 2346,
+      "width": 64,
+      "height": 64,
+      "role": "hero_power",
+      "quality": 90,
+      "source": {
+        "path": "art/heropowers/ionia.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/AhriQ.png",
+        "bytes": 5817,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/heropowers/noxus.webp": {
+      "bytes": 2616,
+      "width": 64,
+      "height": 64,
+      "role": "hero_power",
+      "quality": 90,
+      "source": {
+        "path": "art/heropowers/noxus.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/DariusNoxianTacticsONH.png",
+        "bytes": 7010,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/irelia/icon.webp": {
+      "bytes": 6098,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/irelia/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Irelia.png",
+        "bytes": 29037,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/irelia/loading.webp": {
+      "bytes": 27716,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/irelia/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Irelia_0.jpg",
+        "bytes": 48197,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/jarvaniv/icon.webp": {
+      "bytes": 6840,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/jarvaniv/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/JarvanIV.png",
+        "bytes": 28504,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/jarvaniv/loading.webp": {
+      "bytes": 38448,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/jarvaniv/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/JarvanIV_0.jpg",
+        "bytes": 63154,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/karma/icon.webp": {
+      "bytes": 6406,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/karma/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Karma.png",
+        "bytes": 30154,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/karma/loading.webp": {
+      "bytes": 29042,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/karma/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Karma_0.jpg",
+        "bytes": 49169,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/katarina/icon.webp": {
+      "bytes": 4786,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/katarina/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Katarina.png",
+        "bytes": 26732,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/katarina/loading.webp": {
+      "bytes": 34796,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/katarina/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Katarina_0.jpg",
+        "bytes": 55234,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/kayle/icon.webp": {
+      "bytes": 4478,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/kayle/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Kayle.png",
+        "bytes": 24103,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/kayle/loading.webp": {
+      "bytes": 23964,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/kayle/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Kayle_0.jpg",
+        "bytes": 42596,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/kennen/icon.webp": {
+      "bytes": 5184,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/kennen/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Kennen.png",
+        "bytes": 26105,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/kennen/loading.webp": {
+      "bytes": 20026,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/kennen/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Kennen_0.jpg",
+        "bytes": 36978,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/keywords/charge.webp": {
+      "bytes": 2146,
+      "width": 64,
+      "height": 64,
+      "role": "keyword",
+      "quality": 90,
+      "source": {
+        "path": "art/keywords/charge.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/SummonerHaste.png",
+        "bytes": 5066,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/keywords/divine_shield.webp": {
+      "bytes": 2462,
+      "width": 64,
+      "height": 64,
+      "role": "keyword",
+      "quality": 90,
+      "source": {
+        "path": "art/keywords/divine_shield.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/SummonerBarrier.png",
+        "bytes": 6401,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/keywords/freeze.webp": {
+      "bytes": 2000,
+      "width": 64,
+      "height": 64,
+      "role": "keyword",
+      "quality": 90,
+      "source": {
+        "path": "art/keywords/freeze.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/LissandraR.png",
+        "bytes": 5659,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/keywords/lifesteal.webp": {
+      "bytes": 2132,
+      "width": 64,
+      "height": 64,
+      "role": "keyword",
+      "quality": 90,
+      "source": {
+        "path": "art/keywords/lifesteal.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/item/1053.png",
+        "bytes": 5406,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/keywords/poisonous.webp": {
+      "bytes": 1672,
+      "width": 64,
+      "height": 64,
+      "role": "keyword",
+      "quality": 90,
+      "source": {
+        "path": "art/keywords/poisonous.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/passive/Twitch_Passive.png",
+        "bytes": 5091,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/keywords/rush.webp": {
+      "bytes": 2582,
+      "width": 64,
+      "height": 64,
+      "role": "keyword",
+      "quality": 90,
+      "source": {
+        "path": "art/keywords/rush.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/SummonerFlash.png",
+        "bytes": 6403,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/keywords/silence.webp": {
+      "bytes": 2012,
+      "width": 64,
+      "height": 64,
+      "role": "keyword",
+      "quality": 90,
+      "source": {
+        "path": "art/keywords/silence.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/SorakaE.png",
+        "bytes": 5417,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/keywords/spell_damage.webp": {
+      "bytes": 2740,
+      "width": 64,
+      "height": 64,
+      "role": "keyword",
+      "quality": 90,
+      "source": {
+        "path": "art/keywords/spell_damage.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/item/3089.png",
+        "bytes": 6981,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/keywords/stealth.webp": {
+      "bytes": 1918,
+      "width": 64,
+      "height": 64,
+      "role": "keyword",
+      "quality": 90,
+      "source": {
+        "path": "art/keywords/stealth.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/TwitchHideInShadows.png",
+        "bytes": 6169,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/keywords/taunt.webp": {
+      "bytes": 2192,
+      "width": 64,
+      "height": 64,
+      "role": "keyword",
+      "quality": 90,
+      "source": {
+        "path": "art/keywords/taunt.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/PuncturingTaunt.png",
+        "bytes": 6637,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/keywords/windfury.webp": {
+      "bytes": 1834,
+      "width": 64,
+      "height": 64,
+      "role": "keyword",
+      "quality": 90,
+      "source": {
+        "path": "art/keywords/windfury.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/passive/MasterYi_Passive1.png",
+        "bytes": 4477,
+        "width": 64,
+        "height": 64
+      }
+    },
+    "art/khazix/icon.webp": {
+      "bytes": 4522,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/khazix/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Khazix.png",
+        "bytes": 23545,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/khazix/loading.webp": {
+      "bytes": 23838,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/khazix/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Khazix_0.jpg",
+        "bytes": 41422,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/kled/icon.webp": {
+      "bytes": 5626,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/kled/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Kled.png",
+        "bytes": 28478,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/kled/loading.webp": {
+      "bytes": 22776,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/kled/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Kled_0.jpg",
+        "bytes": 39174,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/leesin/icon.webp": {
+      "bytes": 4568,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/leesin/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/LeeSin.png",
+        "bytes": 24979,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/leesin/loading.webp": {
+      "bytes": 20062,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/leesin/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/LeeSin_0.jpg",
+        "bytes": 36736,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/lissandra/icon.webp": {
+      "bytes": 5344,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/lissandra/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Lissandra.png",
+        "bytes": 28806,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/lissandra/loading.webp": {
+      "bytes": 24054,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/lissandra/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Lissandra_0.jpg",
+        "bytes": 40245,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/lucian/icon.webp": {
+      "bytes": 4852,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/lucian/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Lucian.png",
+        "bytes": 27998,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/lucian/loading.webp": {
+      "bytes": 17600,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/lucian/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Lucian_0.jpg",
+        "bytes": 32009,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/lulu/icon.webp": {
+      "bytes": 6186,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/lulu/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Lulu.png",
+        "bytes": 29539,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/lulu/loading.webp": {
+      "bytes": 27960,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/lulu/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Lulu_0.jpg",
+        "bytes": 47923,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/lux/icon.webp": {
+      "bytes": 5844,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/lux/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Lux.png",
+        "bytes": 29188,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/lux/loading.webp": {
+      "bytes": 38870,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/lux/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Lux_0.jpg",
+        "bytes": 59727,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/masteryi/icon.webp": {
+      "bytes": 6250,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/masteryi/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/MasterYi.png",
+        "bytes": 29421,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/masteryi/loading.webp": {
+      "bytes": 33726,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/masteryi/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/MasterYi_0.jpg",
+        "bytes": 53949,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/nunu/icon.webp": {
+      "bytes": 5936,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/nunu/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Nunu.png",
+        "bytes": 27502,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/nunu/loading.webp": {
+      "bytes": 26170,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/nunu/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Nunu_0.jpg",
+        "bytes": 44510,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/olaf/icon.webp": {
+      "bytes": 6838,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/olaf/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Olaf.png",
+        "bytes": 30509,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/olaf/loading.webp": {
+      "bytes": 31310,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/olaf/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Olaf_0.jpg",
+        "bytes": 49571,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/ornn/icon.webp": {
+      "bytes": 3820,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/ornn/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Ornn.png",
+        "bytes": 25086,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/ornn/loading.webp": {
+      "bytes": 28098,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/ornn/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Ornn_0.jpg",
+        "bytes": 47365,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/poppy/icon.webp": {
+      "bytes": 6266,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/poppy/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Poppy.png",
+        "bytes": 31447,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/poppy/loading.webp": {
+      "bytes": 35604,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/poppy/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Poppy_0.jpg",
+        "bytes": 56845,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/quinn/icon.webp": {
+      "bytes": 6058,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/quinn/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Quinn.png",
+        "bytes": 30154,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/quinn/loading.webp": {
+      "bytes": 27288,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/quinn/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Quinn_0.jpg",
+        "bytes": 44618,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/reksai/icon.webp": {
+      "bytes": 5582,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/reksai/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/RekSai.png",
+        "bytes": 27922,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/reksai/loading.webp": {
+      "bytes": 24490,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/reksai/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/RekSai_0.jpg",
+        "bytes": 43753,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/samira/icon.webp": {
+      "bytes": 4488,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/samira/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Samira.png",
+        "bytes": 24690,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/samira/loading.webp": {
+      "bytes": 24176,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/samira/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Samira_0.jpg",
+        "bytes": 40937,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/sejuani/icon.webp": {
+      "bytes": 6926,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/sejuani/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Sejuani.png",
+        "bytes": 31761,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/sejuani/loading.webp": {
+      "bytes": 30350,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/sejuani/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Sejuani_0.jpg",
+        "bytes": 49439,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/shen/icon.webp": {
+      "bytes": 4710,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/shen/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Shen.png",
+        "bytes": 25298,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/shen/loading.webp": {
+      "bytes": 27376,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/shen/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Shen_0.jpg",
+        "bytes": 44277,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/sion/icon.webp": {
+      "bytes": 4860,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/sion/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Sion.png",
+        "bytes": 26066,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/sion/loading.webp": {
+      "bytes": 26136,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/sion/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Sion_0.jpg",
+        "bytes": 42177,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/sona/icon.webp": {
+      "bytes": 4802,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/sona/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Sona.png",
+        "bytes": 26340,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/sona/loading.webp": {
+      "bytes": 31366,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/sona/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Sona_0.jpg",
+        "bytes": 49166,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/swain/icon.webp": {
+      "bytes": 3796,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/swain/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Swain.png",
+        "bytes": 24066,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/swain/loading.webp": {
+      "bytes": 16392,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/swain/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Swain_0.jpg",
+        "bytes": 31653,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/syndra/icon.webp": {
+      "bytes": 5796,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/syndra/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Syndra.png",
+        "bytes": 30524,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/syndra/loading.webp": {
+      "bytes": 30666,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/syndra/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Syndra_0.jpg",
+        "bytes": 49648,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/talon/icon.webp": {
+      "bytes": 5436,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/talon/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Talon.png",
+        "bytes": 26989,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/talon/loading.webp": {
+      "bytes": 29870,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/talon/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Talon_0.jpg",
+        "bytes": 49535,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/teemo/icon.webp": {
+      "bytes": 6094,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/teemo/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Teemo.png",
+        "bytes": 21456,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/teemo/loading.webp": {
+      "bytes": 30758,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/teemo/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Teemo_0.jpg",
+        "bytes": 50982,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/trundle/icon.webp": {
+      "bytes": 5958,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/trundle/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Trundle.png",
+        "bytes": 28260,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/trundle/loading.webp": {
+      "bytes": 24716,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/trundle/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Trundle_0.jpg",
+        "bytes": 42586,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/tryndamere/icon.webp": {
+      "bytes": 6192,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/tryndamere/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Tryndamere.png",
+        "bytes": 31840,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/tryndamere/loading.webp": {
+      "bytes": 43668,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/tryndamere/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Tryndamere_0.jpg",
+        "bytes": 58086,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/udyr/icon.webp": {
+      "bytes": 5632,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/udyr/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Udyr.png",
+        "bytes": 29169,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/udyr/loading.webp": {
+      "bytes": 22056,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/udyr/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Udyr_0.jpg",
+        "bytes": 38319,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/vayne/icon.webp": {
+      "bytes": 5568,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/vayne/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Vayne.png",
+        "bytes": 28367,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/vayne/loading.webp": {
+      "bytes": 29182,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/vayne/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Vayne_0.jpg",
+        "bytes": 49806,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/velkoz/icon.webp": {
+      "bytes": 6568,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/velkoz/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Velkoz.png",
+        "bytes": 29187,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/velkoz/loading.webp": {
+      "bytes": 21456,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/velkoz/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Velkoz_0.jpg",
+        "bytes": 39853,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/vladimir/icon.webp": {
+      "bytes": 5198,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/vladimir/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Vladimir.png",
+        "bytes": 24626,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/vladimir/loading.webp": {
+      "bytes": 30406,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/vladimir/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Vladimir_0.jpg",
+        "bytes": 50903,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/volibear/icon.webp": {
+      "bytes": 5368,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/volibear/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Volibear.png",
+        "bytes": 29127,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/volibear/loading.webp": {
+      "bytes": 30342,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/volibear/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Volibear_0.jpg",
+        "bytes": 49148,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/xinzhao/icon.webp": {
+      "bytes": 4252,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/xinzhao/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/XinZhao.png",
+        "bytes": 35410,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/xinzhao/loading.webp": {
+      "bytes": 25126,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/xinzhao/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/XinZhao_0.jpg",
+        "bytes": 45686,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/yasuo/icon.webp": {
+      "bytes": 5124,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/yasuo/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Yasuo.png",
+        "bytes": 28213,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/yasuo/loading.webp": {
+      "bytes": 33672,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/yasuo/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Yasuo_0.jpg",
+        "bytes": 53646,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/yone/icon.webp": {
+      "bytes": 5852,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/yone/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Yone.png",
+        "bytes": 26864,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/yone/loading.webp": {
+      "bytes": 26876,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/yone/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Yone_0.jpg",
+        "bytes": 48850,
+        "width": 308,
+        "height": 560
+      }
+    },
+    "art/zed/icon.webp": {
+      "bytes": 6484,
+      "width": 128,
+      "height": 128,
+      "role": "hero_icon",
+      "quality": 90,
+      "source": {
+        "path": "art/zed/icon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.20.1/img/champion/Zed.png",
+        "bytes": 28879,
+        "width": 128,
+        "height": 128
+      }
+    },
+    "art/zed/loading.webp": {
+      "bytes": 26548,
+      "width": 308,
+      "height": 560,
+      "role": "hero_loading",
+      "quality": 85,
+      "source": {
+        "path": "art/zed/loading.jpg",
+        "url": "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Zed_0.jpg",
+        "bytes": 44630,
+        "width": 308,
+        "height": 560
       }
     }
-  ],
+  },
   "failed": []
 }

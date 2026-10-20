@@ -1,7 +1,8 @@
-// 资源清单（spec 5.9）。英雄美术和语音由 scripts/fetch-art.ts、fetch-voice.ts 拉到 public/，
-// 路径按英雄 key 的小写目录名排：art/<key>/icon.png、art/<key>/loading.jpg、audio/voice/<key>/choose.ogg。
-// 非英雄卡、英雄技能、关键词的配图路径见 cardArt.ts。
-// 加载页按这里的清单预载本局两套卡组用到的资源（spec 5.10）。
+// 资源清单（spec 5.9）。英雄美术由 scripts/fetch-art.ts 拉原图、scripts/optimize-art.ts 转成 WebP 放到 public/，
+// 路径按英雄 key 的小写目录名排：art/<key>/icon.webp、art/<key>/loading.webp；语音由 fetch-voice.ts 拉到
+// audio/voice/<key>/choose.ogg。非英雄卡、英雄技能、关键词的配图路径见 cardArt.ts。
+// 加载页按这里的清单预载本局两套卡组用到的图（spec 5.10，一局不超过 3 MB，pnpm size:preload 核对）；
+// 语音不预载，进对局后在后台加载（matchVoiceManifest）。
 import { findCard, getCard, getHeroClass, MANA_POTION_ID, type HeroClass } from '../engine';
 import { cardArtOf, heroPowerIconUrl, keywordIconUrl, mappedKeywords } from './cardArt';
 
@@ -21,12 +22,14 @@ export function assetDir(championKey: string): string {
   return championKey.toLowerCase();
 }
 
+/** 英雄头像，128×128。 */
 export function iconUrl(championKey: string): string {
-  return `${base()}art/${assetDir(championKey)}/icon.png`;
+  return `${base()}art/${assetDir(championKey)}/icon.webp`;
 }
 
+/** 竖版原画，308×560。 */
 export function loadingArtUrl(championKey: string): string {
-  return `${base()}art/${assetDir(championKey)}/loading.jpg`;
+  return `${base()}art/${assetDir(championKey)}/loading.webp`;
 }
 
 // 卡面文字用的字体：思源宋体粗体按卡池用到的字做的子集
@@ -71,9 +74,9 @@ function collectIds(v: unknown, visit: (id: string) => void): void {
   }
 }
 
-// 本局要预载的资源：双方卡组里卡牌的英雄美术和语音、双方职业英雄；卡组里的卡、它们能召唤或变形出来的衍生物、
-// 后手拿到的法力药水、两个英雄技能召唤的衍生物的配图（cardArt.ts）；两个英雄技能的图标；全部关键词图标（一共 11 个小图）。
-export function matchManifest(decks: readonly (readonly string[])[], classes: readonly HeroClass[]): AssetEntry[] {
+// 本局用到的卡（卡组里的卡、它们能召唤或变形出来的衍生物、后手拿到的法力药水、两个英雄技能召唤的衍生物）
+// 和英雄（双方职业英雄，加这些卡对应的英雄），按出现顺序。
+function matchContents(decks: readonly (readonly string[])[], classes: readonly HeroClass[]): { cards: Set<string>; champions: string[] } {
   const keys = new Set<string>();
   for (const cls of classes) keys.add(heroChampion(cls));
   const cards = withReferencedCards([...decks.flat(), MANA_POTION_ID, ...classes.map((c) => getHeroClass(c).heroPower)]);
@@ -81,12 +84,17 @@ export function matchManifest(decks: readonly (readonly string[])[], classes: re
     const key = championOf(id);
     if (key) keys.add(key);
   }
+  return { cards, champions: [...keys] };
+}
+
+// 本局要预载的图：双方卡组里卡牌的英雄头像和竖版原画、双方职业英雄的；本局用到的非英雄卡的配图（cardArt.ts）；
+// 两个英雄技能的图标；全部关键词图标（一共 11 个小图）。语音不在这里，见 matchVoiceManifest。
+export function matchManifest(decks: readonly (readonly string[])[], classes: readonly HeroClass[]): AssetEntry[] {
+  const { cards, champions } = matchContents(decks, classes);
   const out: AssetEntry[] = [];
-  for (const key of keys) {
+  for (const key of champions) {
     out.push({ kind: 'icon', key, url: iconUrl(key) });
     out.push({ kind: 'loading', key, url: loadingArtUrl(key) });
-    out.push({ kind: 'voice_choose', key, url: voiceUrl(key, 'choose') });
-    out.push({ kind: 'voice_ban', key, url: voiceUrl(key, 'ban') });
   }
   const urls = new Set<string>();
   const add = (kind: AssetKind, key: string, url: string | null) => {
@@ -103,4 +111,14 @@ export function matchManifest(decks: readonly (readonly string[])[], classes: re
   for (const cls of classes) add('hero_power', cls, heroPowerIconUrl(cls));
   for (const kw of mappedKeywords()) add('keyword', kw, keywordIconUrl(kw));
   return out;
+}
+
+// 本局会说到的语音：登场台词（选用语音）在前、死亡台词（禁用语音）在后，每种按英雄顺序。一局 40 条上下、1 MB 出头，
+// 不进加载页，开局后在后台按这个顺序加载（game.ts）；还没加载好时触发的台词不播（voice.ts）。
+export function matchVoiceManifest(decks: readonly (readonly string[])[], classes: readonly HeroClass[]): AssetEntry[] {
+  const { champions } = matchContents(decks, classes);
+  return [
+    ...champions.map((key) => ({ kind: 'voice_choose' as const, key, url: voiceUrl(key, 'choose') })),
+    ...champions.map((key) => ({ kind: 'voice_ban' as const, key, url: voiceUrl(key, 'ban') })),
+  ];
 }

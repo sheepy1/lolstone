@@ -1,20 +1,14 @@
-// 非英雄卡、英雄技能、关键词的配图地址（spec 5.9）。映射表是 scripts/data/card-art.json，图由 scripts/fetch-icons.ts
-// 下载到 public/art/cards、public/art/heropowers、public/art/keywords（不进 git）。这里按映射表算出下载后的本地路径，
-// 规则和 fetch-icons.ts 一致：
-//   art/cards/<卡牌 id>/icon.<扩展名>  场上头像用的方图；映射表 icon 为 null 时没有
-//   art/cards/<卡牌 id>/art.<扩展名>   卡面原画窗口用的图；和 icon 同一个来源时不另存，指向 icon 那个文件
-//   art/heropowers/<职业>.png、art/keywords/<关键词>.png
-// tests/presentation-card-art.test.ts 拿 scripts/lib/art-sources.ts 的 resolveSource 核对扩展名，两边改了一边会报错。
+// 非英雄卡、英雄技能、关键词的配图地址（spec 5.9）。映射表是 scripts/data/card-art.json，原图由 scripts/fetch-icons.ts
+// 下载到 assets-src/art/（不进 git），scripts/optimize-art.ts 再按显示尺寸缩放、转成 WebP 放到 public/art/（进 git）。
+// 这里按映射表算出成品的本地路径，规则和 optimize-art.ts 一致：
+//   art/cards/<卡牌 id>/icon.webp  场上头像用的方图；映射表 icon 为 null 时没有
+//   art/cards/<卡牌 id>/art.webp   卡面原画窗口用的图；和 icon 同一个来源时不另存，指向 icon 那个文件
+//   art/heropowers/<职业>.webp、art/keywords/<关键词>.webp
+// tests/presentation-card-art.test.ts 拿 public/art/manifest.json 核对每条地址都有成品。
 import map from '../../scripts/data/card-art.json';
 import type { HeroClass } from '../engine';
 
-type Source =
-  | { type: 'ddragon-spell'; key: string }
-  | { type: 'ddragon-passive'; file: string }
-  | { type: 'ddragon-item'; id: string }
-  | { type: 'ddragon-splash'; champion: string; skin: number }
-  | { type: 'cdragon'; path: string }
-  | { type: 'lor'; set: string; code: string };
+type Source = { type: string } & Record<string, unknown>;
 
 type RawCard = { icon: Source | null; art: Source & { crop: unknown }; generate?: string };
 
@@ -38,25 +32,7 @@ const base = (): string => {
   return b.endsWith('/') ? b : `${b}/`;
 };
 
-const extname = (p: string): string => {
-  const m = /\.[^./]+$/.exec(p);
-  return m ? m[0] : '';
-};
-
-/** 来源下载后的文件扩展名，和 scripts/lib/art-sources.ts 的 resolveSource 一致。 */
-export function sourceExt(src: Source): string {
-  switch (src.type) {
-    case 'ddragon-passive':
-      return extname(src.file);
-    case 'ddragon-splash':
-      return '.jpg';
-    case 'cdragon':
-      return extname(src.path);
-    default:
-      return '.png';
-  }
-}
-
+/** 两个来源是不是同一张图（不看 crop）。 */
 const sameSource = (a: Source, b: Source): boolean => {
   const { crop: _a, ...ra } = a as Source & { crop?: unknown };
   const { crop: _b, ...rb } = b as Source & { crop?: unknown };
@@ -81,8 +57,8 @@ export function cardArtOf(cardId: string): CardArtEntry | null {
   const raw = cards[cardId];
   if (!raw) return null;
   const dir = `${base()}art/cards/${cardId}`;
-  const icon = raw.icon ? `${dir}/icon${sourceExt(raw.icon)}` : null;
-  const art = raw.icon && sameSource(raw.icon, raw.art) ? icon! : `${dir}/art${sourceExt(raw.art)}`;
+  const icon = raw.icon ? `${dir}/icon.webp` : null;
+  const art = raw.icon && sameSource(raw.icon, raw.art) ? icon! : `${dir}/art.webp`;
   const e: CardArtEntry = { art, icon, crop: parseCrop(raw.art.crop), generate: !!raw.generate };
   entries.set(cardId, e);
   return e;
@@ -94,14 +70,12 @@ export function mappedCardIds(): string[] {
 
 /** 英雄技能按钮的图标。 */
 export function heroPowerIconUrl(cls: HeroClass): string | null {
-  const hp = (map.heroPowers as Record<string, { icon: Source }>)[`${cls}.hero_power`];
-  return hp ? `${base()}art/heropowers/${cls}${sourceExt(hp.icon)}` : null;
+  return `${cls}.hero_power` in map.heroPowers ? `${base()}art/heropowers/${cls}.webp` : null;
 }
 
 /** 关键词 buff 小图标（嘲讽、剧毒、沉默……）。 */
 export function keywordIconUrl(keyword: string): string | null {
-  const kw = (map.keywords as Record<string, { icon: Source }>)[keyword];
-  return kw ? `${base()}art/keywords/${keyword}${sourceExt(kw.icon)}` : null;
+  return keyword in map.keywords ? `${base()}art/keywords/${keyword}.webp` : null;
 }
 
 export function mappedKeywords(): string[] {

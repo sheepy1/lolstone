@@ -2,14 +2,14 @@
 //
 //   node scripts/art-review.ts <输出的 html 路径>
 //
-// 先跑 fetch-icons.ts。主选图读本地 public/art/ 下的文件（页面里写相对路径，输出位置变了也能打开）；
+// 先跑 fetch-icons.ts。主选图读本地 assets-src/art/ 下的原图（页面里写相对路径，输出位置变了也能打开）；
 // 备选图直接引用远程地址，不下载。
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { generateQueue, loadCardArtMap, resolveSource } from './lib/art-sources.ts';
 import type { Alt, ArtSource, Crop } from './lib/art-sources.ts';
-import { PUBLIC_DIR, readManifest } from './lib/files.ts';
+import { ASSETS_SRC_DIR, readManifest } from './lib/files.ts';
 
 type ManifestFile = { path: string; bytes: number } | null;
 type Manifest = {
@@ -67,13 +67,13 @@ async function main(): Promise<void> {
   }
   const outPath = path.resolve(out);
   const map = await loadCardArtMap();
-  const manifest = await readManifest<Manifest>('art/icons-manifest.json');
+  const manifest = await readManifest<Manifest>('art/icons-manifest.json', ASSETS_SRC_DIR);
   if (!manifest) {
-    console.error('找不到 public/art/icons-manifest.json，先跑 node scripts/fetch-icons.ts');
+    console.error('找不到 assets-src/art/icons-manifest.json，先跑 node scripts/fetch-icons.ts');
     process.exit(1);
   }
   const local = (f: ManifestFile) =>
-    f ? path.relative(path.dirname(outPath), path.join(PUBLIC_DIR, f.path)).split(path.sep).join('/') : null;
+    f ? path.relative(path.dirname(outPath), path.join(ASSETS_SRC_DIR, f.path)).split(path.sep).join('/') : null;
   const remote = (src: ArtSource) => resolveSource(src, manifest.ddragonVersion, map.lorVersion).url;
 
   const img = (src: string | null, cls: string, style = '') =>

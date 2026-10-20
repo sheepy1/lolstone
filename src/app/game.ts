@@ -1,6 +1,6 @@
 // 对局控制：把对局层、导演、场景、输入、界面状态接起来。一局一套，回主菜单时整套销毁。
 import gsap from 'gsap';
-import { matchManifest } from '../assets/manifest';
+import { matchManifest, matchVoiceManifest } from '../assets/manifest';
 import { loadManifest } from '../assets/loader';
 import { initAudio, playMusic, playSfx, stopAmbience } from '../audio';
 import { PRESET_DECKS } from '../cards';
@@ -129,7 +129,7 @@ export class GameApp {
     return gsap;
   }
 
-  // 开一局：先在加载页预载两套卡组的美术和语音，再进对局。
+  // 开一局：先在加载页预载两套卡组的美术，再进对局；语音进对局后在后台加载。
   // seed 不给时随机；给了就能复现同一局（调试、自动化验证用，自动驾驶的随机数也从头开始）。
   // difficulty 是 AI 难度（spec 4.1）：l0 随机，l1 贪心，l2 回合内搜索。humanDeck 是我方的自组卡组 id，null 或不能用时用预组。
   async startMatch(humanClass: HeroClass, aiClass: HeroClass, seed?: number, difficulty: Difficulty = 'l1', humanDeck: string | null = null): Promise<void> {
@@ -141,13 +141,13 @@ export class GameApp {
     const decks: [string[], string[]] = [[...mine.cards], [...(PRESET_DECKS[aiClass] ?? [])]];
     setUi((s) => ({
       screen: 'loading',
-      loading: { progress: 0, label: '载入英雄美术和语音' },
+      loading: { progress: 0, label: '载入英雄美术' },
       menu: { ...s.menu, humanClass, aiClass, difficulty, humanDeck: isPreset(mine.id) ? null : mine.id },
       result: null,
       log: [],
       error: null,
     }));
-    // 进度条：美术和语音占前 90%，卡面字体占最后 10%
+    // 进度条：美术占前 90%，卡面字体占最后 10%
     const report = await loadManifest(matchManifest(decks, [humanClass, aiClass]), (p) =>
       setUi((s) => ({ loading: { ...s.loading, progress: p * 0.9 } })),
     );
@@ -172,6 +172,9 @@ export class GameApp {
     match.onBatch = (events) => this.log(events, 0);
     this.open(match.initial, match);
     match.start(this.session!.director);
+    // 语音不占加载页：进对局后在后台加载，登场台词先、死亡台词后，两条两条地来，不和对局音乐抢带宽（spec 5.10）。
+    // 还没加载好时触发的台词不播（voice.ts）。
+    void loadManifest(matchVoiceManifest(decks, [humanClass, aiClass]), () => {}, { concurrency: 2 });
   }
 
   // 回放夹具：观战视角，不接受输入。

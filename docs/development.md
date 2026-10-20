@@ -33,20 +33,25 @@ pnpm audition:audio    # 生成音效试听页（见下面"音效和音乐"）
 
 ## 拉取素材
 
-英雄头像、竖版原画、语音、音效和音乐的成品都在 git 里（`public/art`、`public/audio`），clone 下来就能玩，部署时也不用再跑脚本。要换版本或刷新素材时在仓库根目录跑下面的脚本（`fetch:sfx` 和 `normalize:audio` 要先装 ffmpeg）。开发环境默认有声，地址带 `?mute=1` 静音。
+英雄头像、竖版原画、语音、音效和音乐的成品都在 git 里（`public/art`、`public/audio`），clone 下来就能玩，部署时也不用再跑脚本。要换版本或刷新素材时在仓库根目录跑下面的脚本（`optimize:art`、`fetch:sfx` 和 `normalize:audio` 要先装 ffmpeg）。开发环境默认有声，地址带 `?mute=1` 静音。
 
 ```bash
-pnpm fetch:art         # 等于 node scripts/fetch-art.ts
+pnpm fetch:art         # 等于 node scripts/fetch-art.ts，原图到 assets-src/art/
+pnpm fetch:icons       # 等于 node scripts/fetch-icons.ts，原图到 assets-src/art/
+pnpm optimize:art      # 等于 node scripts/optimize-art.ts，原图缩放、转 WebP 到 public/art/，要先装 ffmpeg
+pnpm size:preload      # 算一局要预载多少字节，四个职业两两对局都算，预算 3 MB
 pnpm fetch:voice       # 等于 node scripts/fetch-voice.ts
-pnpm fetch:icons       # 等于 node scripts/fetch-icons.ts
 pnpm fetch:sfx         # 等于 node scripts/fetch-sfx.ts
 pnpm normalize:audio   # 等于 node scripts/normalize-audio.ts，要先装 ffmpeg
 ```
 
-- 需要 Node 22.18 以上（直接运行 .ts），不需要先装依赖。
-- `fetch-art.ts` 从 Data Dragon 取最新版本，拉头像（`icon.png`）和竖版原画（`loading.jpg`）到 `public/art/<key 小写>/`，清单在 `public/art/manifest.json`。
-- `fetch-voice.ts` 从 CommunityDragon 拉选用语音（`choose.ogg`，登场台词）和禁用语音（`ban.ogg`，死亡台词）到 `public/audio/voice/<key 小写>/`，清单在 `public/audio/voice/manifest.json`。中文语音拿不到时用英文，清单的 `englishFallback` 列出这些英雄。
-- `fetch-icons.ts` 按 `scripts/data/card-art.json` 给没有英雄原画的卡（小兵、野怪、法术、衍生物）、英雄技能和关键词拉配图，到 `public/art/cards/<卡牌 id>/`（`art.*` 卡面原画、`icon.png` 方图）、`public/art/heropowers/`、`public/art/keywords/`，清单在 `public/art/icons-manifest.json`。来源有 Data Dragon 的技能、物品、被动图标和皮肤原画，CommunityDragon 的峡谷单位头像，符文之地传说的卡牌原画（服务器慢，第一次约 1 分钟）。`node scripts/art-review.ts <输出.html>` 生成逐张对照页。
+- 需要 Node 22.18 以上（直接运行 .ts），抓取脚本不需要先装依赖；`size:preload` 用 tsx，要先 `pnpm install`。
+- 美术分两步：抓取脚本把原图下载到 `assets-src/art/`（不进 git），`optimize-art.ts` 再按场景里实际画到的尺寸缩放、转成 WebP 放到 `public/art/`（进 git，网页用的就是它）。分开的原因：符文之地传说的原画 2048×1024、一张 1 到 2 MB，而卡面贴图里原画窗口只有 380×327 像素，一局预载十几张就是 10 MB，托管在 CDN 后面、几十 KB/s 的网络上要等几分钟；缩过之后最大的一局 1.4 MB（改前 12.8 MB）。
+  - 尺寸和质量规则在 `scripts/lib/art-sizes.ts`：卡面原画按 `card-art.json` 的取景算，整张等比缩到取景区域是窗口的 1.5 倍（2048×1024 整张取景的缩到 981×491，1024×1024 放大 1.55 倍取景的缩到 884×884）；英雄头像 128×128、竖版原画 308×560、技能和关键词图标 64×64 本来就不比贴图大，只转格式。从不放大。WebP 质量原画和竖版原画 85、图标 90，和原图肉眼看不出差别（卡牌配图总览整页渲染对比 SSIM 0.99 以上）。
+  - 成品清单 `public/art/manifest.json` 记每张的尺寸、字节数、质量和原图的路径、尺寸、字节数、下载地址。原图和规则都没变的成品跳过，`--force` 全部重做；改了规则要把 `RULES_VERSION` 加一。`public/art/` 整个目录归它管，清单里没有的文件会删掉。
+- `fetch-art.ts` 从 Data Dragon 取最新版本，拉头像（`icon.png`，128×128）和竖版原画（`loading.jpg`，308×560）到 `assets-src/art/<key 小写>/`，清单在 `assets-src/art/manifest.json`。
+- `fetch-voice.ts` 从 CommunityDragon 拉选用语音（`choose.ogg`，登场台词）和禁用语音（`ban.ogg`，死亡台词）到 `public/audio/voice/<key 小写>/`，清单在 `public/audio/voice/manifest.json`。中文语音拿不到时用英文，清单的 `englishFallback` 列出这些英雄。语音不进加载页：开局后在后台按登场台词、死亡台词的顺序加载，还没加载好时触发的台词不播。
+- `fetch-icons.ts` 按 `scripts/data/card-art.json` 给没有英雄原画的卡（小兵、野怪、法术、衍生物）、英雄技能和关键词拉配图，到 `assets-src/art/cards/<卡牌 id>/`（`art.*` 卡面原画、`icon.*` 方图）、`assets-src/art/heropowers/`、`assets-src/art/keywords/`，清单在 `assets-src/art/icons-manifest.json`。来源有 Data Dragon 的技能、物品、被动图标和皮肤原画，CommunityDragon 的峡谷单位头像，符文之地传说的卡牌原画（服务器慢，第一次约 1 分钟）。`node scripts/art-review.ts <输出.html>` 用原图生成逐张对照页。
 - 已经下载且完整的文件会跳过。加 `--force` 全部重下，`--concurrency <1-6>` 调并发（默认 5）。删掉清单也会全部重下，因为脚本靠清单记的大小判断文件是否完整。
 - 有文件下载失败时脚本以非 0 退出，失败的文件记在清单的 `failed` 里，再跑一次会重试。
 - 要拉哪些英雄写在 `scripts/lib/champions.ts`，和 [初始卡池](docs/cards-v1.md) 的 key 列保持一致。key 在 Data Dragon 里找不到时脚本会列出来并退出，不下载任何东西。

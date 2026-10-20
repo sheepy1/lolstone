@@ -5,7 +5,8 @@
 // Node、Web API。每个方法都是纯函数：同样的输入同样的输出，不改入参，对任何输入都不抛（抛错算模块缺陷，
 // 同一局连续 10 次平台关局）。State 和 Event 必须是纯 JSON：平台每一步之后序列化存起来，runner 重启后装回。
 
-// 一步的结果。deadline 是距现在多少毫秒：带数字就替换正在走的计时器，带 null 清掉，不带就保留
+// 一步的结果。deadline 是距现在多少毫秒：带数字就替换正在走的计时器，带 null 清掉，不带就保留。
+// 对局结束时平台自动停计时器，结束的那一步带不带都行（lolstone 带 null）
 export type Step<State, Event> =
   | { ok: true; state: State; events: Event[]; deadline?: number | null }
   | { ok: false; reason: string };

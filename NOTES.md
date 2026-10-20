@@ -1678,7 +1678,7 @@ main 合进了联机客户端（`ae2f864`），界面多了 33 个字，首屏 J
 ## 联机 M6b 最后一步：MatchLink 接真平台，本地 runner 上打完一局（2026-10-20）
 
 `docs/online.md` v0.4.5。真平台的适配在 `src/net/platformLink.ts`，包平台 SDK 逻辑模式的对局对象，翻译成 `src/net/link.ts` 的形状；
-SDK 的类型拷了一份在 `src/net/sdkTypes.d.ts`。RemoteMatch、联机界面、假平台一行没改接口。本地 runner 的命令和参数在仓库外的共享笔记里。
+SDK 的类型拷了一份在 `src/net/sdkTypes.d.ts`。RemoteMatch、联机界面、假平台一行没改接口。本地 runner 读仓库根的声明文件；它的命令和参数在仓库外的共享笔记里。
 
 ### 接法上定下的几件事
 
@@ -1710,6 +1710,10 @@ SDK 的类型拷了一份在 `src/net/sdkTypes.d.ts`。RemoteMatch、联机界�
 | 控制台看快照 | `rng` 是 `{ s: 0 }`，对手手牌和双方牌库每张都是 `cardId: 'hidden'` 只带 instanceId，自己的手牌是真 id；快照只有 game 和 reason 两个字段 |
 | 开发页"重启 runner" | 第 80 步时重启，两边连接不断、版本接着 86、92……到 119 结算，接着开下一局 |
 | 人对 bot 座位 | 建房带一个 L1 bot，连打几局都到结算（bot 赢，47 步左右）；结束后拿到整局记录（seed、47 步、source 有 action 和 bot、result），在 `window.lolstoneRecord` |
+| 双方都不换牌等 60 秒 | 开局批次 deadlineIn 59999；60 秒后连来两条 cause 为 timeout 的批次：第 1 步替 0 号位保留手牌（不带新计时），第 2 步替 1 号位，进对局阶段、deadlineIn 74999。两边界面从换牌画面进对局 |
+| 回合 75 秒不动 | 再过 75 秒来一条 cause 为 timeout 的批次，行动方从 1 号位换到 0 号位、新计时 75 秒；到点前两边的回合倒计时都在走，最后几秒是红的 |
+| 卡池哈希不一致 | 建房的人把 poolHash 改成假的再建房，对手进房后两边都收到 setup_rejected、detail version_mismatch，联机面板提示"游戏版本和对手不一致，刷新页面后再试" |
+| 已在一局里再建局 | 同一个主体在另一个页面建了房、这个页面再点建房：平台拒 already_in_match，页面问出是哪一局，弹"房间 XXXX 还在等对手进来"的续上或离开提示；点离开后再建房成功 |
 | 控制台报错 | 我们的页面 0 条。见过的只有两类都不是页面的问题：runner 进程重启期间开发页自己的轮询报连不上；记的 key 指向已经关掉的局时续局那一次请求回 404 或 410，浏览器把它记成资源加载失败，页面按"没有没打完的局"处理 |
 
 ### 体积和检查

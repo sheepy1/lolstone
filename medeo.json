@@ -1,0 +1,11 @@
+{
+  "games": {
+    "logic": {
+      "entry": "src/logic/index.ts",
+      "record": "after_end",
+      "seats": { "min": 2, "max": 2 },
+      "disconnectGraceSeconds": 60,
+      "emptyCloseMinutes": 10
+    }
+  }
+}

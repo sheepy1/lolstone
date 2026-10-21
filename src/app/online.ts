@@ -421,6 +421,7 @@ export class OnlineClient {
       opponent: opp?.nickname ?? '对手',
       phase: match.visible.phase,
       deadline: match.deadline,
+      opponentOffline: !!opp && !opp.connected && !opp.out,
       graceUntil: opp && !opp.out ? opp.graceUntil : null,
     };
   }

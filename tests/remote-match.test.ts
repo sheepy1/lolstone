@@ -1,12 +1,12 @@
-// RemoteMatch（docs/online.md 3.3）接假平台跑：在途锁、批次交给导演、stale 被拒后解锁、刷新页面后从当前快照建场景、
-// 认输和对手被判负时结果的原因。导演是假的，只记下交给它的事件。
+// RemoteMatch（docs/online.md 3.3）接假平台跑：在途锁、批次交给导演、stale 被拒后解锁、换牌撞车后自动重发、
+// 刷新页面后从当前快照建场景、认输和对手被判负时结果的原因、对手断线的宽限。导演是假的，只记下交给它的事件。
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RemoteMatch } from '../src/app/remoteMatch';
 import { PRESET_DECKS } from '../src/cards';
 import { poolHash } from '../src/cards/poolHash';
 import type { HeroClass } from '../src/engine';
 import { FakeHub, type FakeLink } from '../src/net/fakeLink';
-import type { BotConfig, SeatConfig, SeatsBroadcast } from '../src/net/link';
+import type { BotConfig, LinkBatch, MatchLink, SeatConfig, SeatsBroadcast } from '../src/net/link';
 import type { Director } from '../src/presentation/director';
 import type { PresentationEvent } from '../src/presentation/events';
 import { viewFromState } from '../src/presentation/viewState';
@@ -25,7 +25,7 @@ function fakeDirector(): FakeDirector {
 }
 
 // 收到第一条批次时就建 RemoteMatch（和联机界面的做法一样），之后的批次由它自己订阅，一条不漏
-function openMatch(link: FakeLink): Promise<RemoteMatch> {
+function openMatch(link: MatchLink): Promise<RemoteMatch> {
   return new Promise((resolve) => {
     let seats: SeatsBroadcast | null = null;
     const offSeats = link.on('seats', (s) => (seats = s));
@@ -48,6 +48,55 @@ async function vsBot(bot: BotConfig = { level: 'L1', heroClass: 'noxus' }) {
   await settle();
   return { hub, link, match, director, room: hub.roomOf('alice')! };
 }
+
+// 两个真人开一局：甲建房、乙进房，各自在收到开局批次时建 RemoteMatch。wrapB 可以把乙的连接包一层（扣住批次用）
+async function humans(wrapB: (link: FakeLink) => MatchLink = (l) => l) {
+  const hub = new FakeHub({ botDelayMs: 0, timers: false, seed: () => 7, now: () => 5000 });
+  const la = hub.link('alice');
+  const lb = hub.link('bob');
+  const wrapped = wrapB(lb);
+  const openedA = openMatch(la);
+  const openedB = openMatch(wrapped);
+  const { code } = await la.createMatch({ nickname: '甲', seat: seat('demacia') });
+  await lb.joinMatch(code, { nickname: '乙', seat: seat('freljord') });
+  const [a, b] = await Promise.all([openedA, openedB]);
+  a.start(fakeDirector());
+  b.start(fakeDirector());
+  await settle();
+  return { hub, la, lb, a, b, code };
+}
+
+// 包一层连接：hold 为 true 时收到的批次先扣着，flush 再按顺序放给订阅者（模拟被拒的回包比批次先到）。别的消息直通
+function holdBatches(link: FakeLink): MatchLink & { hold: boolean; flush(): void } {
+  const handlers = new Set<(b: LinkBatch) => void>();
+  const held: LinkBatch[] = [];
+  const emit = (b: LinkBatch) => [...handlers].forEach((h) => h(b));
+  const wrapped: MatchLink & { hold: boolean; flush(): void } = {
+    hold: false,
+    flush() {
+      this.hold = false;
+      while (held.length) emit(held.shift()!);
+    },
+    identity: () => link.identity(),
+    currentMatch: () => link.currentMatch(),
+    createMatch: (req) => link.createMatch(req),
+    joinMatch: (code, req) => link.joinMatch(code, req),
+    leave: () => link.leave(),
+    submit: (action) => link.submit(action),
+    resume: (since) => link.resume(since),
+    send: (type, data, to) => link.send(type, data, to),
+    on: (type, handler) => {
+      if (type !== 'batch') return link.on(type, handler);
+      const h = handler as (b: LinkBatch) => void;
+      handlers.add(h);
+      return () => handlers.delete(h);
+    },
+  };
+  link.on('batch', (b) => (wrapped.hold ? held.push(b) : emit(b)));
+  return wrapped;
+}
+
+const mulliganOf = (m: RemoteMatch) => m.legalActions()!.find((a) => a.kind === 'mulligan')!;
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -108,6 +157,72 @@ describe('RemoteMatch', () => {
     expect(match.visible.phase).not.toBe('mulligan');
   });
 
+  it('换牌阶段双方同时提交：后到的被拒 stale，新批次到了自动重发一次，两边都换完牌，玩家不用再点', async () => {
+    const { la, lb, a, b } = await humans();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'info').mockImplementation(() => {});
+    const sentA = vi.spyOn(la, 'submit');
+    const sentB = vi.spyOn(lb, 'submit');
+    expect(a.submit(mulliganOf(a))).toBeNull();
+    expect(b.submit(mulliganOf(b))).toBeNull();
+    await settle();
+    // 甲的先到执行了，乙的撞上 version 被拒；乙的 RemoteMatch 按新 version 重发了同一个动作，平台接受
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]![0])).toContain('stale');
+    expect(sentA).toHaveBeenCalledTimes(1);
+    expect(sentB).toHaveBeenCalledTimes(2);
+    expect(sentB.mock.calls[1]![0]).toEqual(sentB.mock.calls[0]![0]);
+    expect(a.visible.players[0].mulliganDone).toBe(true);
+    expect(b.visible.players[1].mulliganDone).toBe(true);
+    expect(b.visible.phase).toBe('playing');
+    expect(a.waiting).toBe(false);
+    expect(b.waiting).toBe(false);
+  });
+
+  it('换牌撞车的被拒比批次先到：等批次期间输入仍锁定、不重发；批次到了才重发，且只重发一次', async () => {
+    let held!: ReturnType<typeof holdBatches>;
+    const { lb, a, b } = await humans((l) => (held = holdBatches(l)));
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'info').mockImplementation(() => {});
+    const sentB = vi.spyOn(lb, 'submit');
+    expect(a.submit(mulliganOf(a))).toBeNull();
+    expect(b.submit(mulliganOf(b))).toBeNull();
+    held.hold = true;
+    await settle();
+    // 乙已被拒，但乙的 RemoteMatch 还没收到甲那一步的批次：等着重发，界面上还是锁的
+    expect(sentB).toHaveBeenCalledTimes(1);
+    expect(b.version).toBe(0);
+    expect(b.waiting).toBe(true);
+    expect(b.legalActions()).toBeNull();
+    expect(b.submit({ kind: 'mulligan', player: 1, replace: [] })).toBe('input locked');
+    held.flush();
+    await settle();
+    expect(sentB).toHaveBeenCalledTimes(2);
+    expect(b.visible.players[1].mulliganDone).toBe(true);
+    expect(b.waiting).toBe(false);
+  });
+
+  it('对局阶段的 stale（和回合计时到点撞车）仍然只解除在途，不重发', async () => {
+    const { match, link, room } = await vsBot();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    match.submit(mulliganOf(match));
+    await settle();
+    // 等到轮到我（bot 先手的话它会出完牌结束回合）
+    for (let i = 0; i < 20 && match.visible.current !== 0; i++) await settle();
+    expect(match.visible.phase).toBe('playing');
+    expect(match.visible.current).toBe(0);
+    const sent = vi.spyOn(link, 'submit');
+    const before = match.version;
+    expect(match.submit(match.legalActions()!.find((a) => a.kind === 'end_turn')!)).toBeNull();
+    room.expire();
+    await settle();
+    expect(warn).toHaveBeenCalled();
+    expect(String(warn.mock.calls[0]![0])).toContain('stale');
+    expect(sent).toHaveBeenCalledTimes(1);
+    expect(match.waiting).toBe(false);
+    expect(match.version).toBeGreaterThan(before);
+  });
+
   it('换个连接 resume(null)（页面刷新）：拿到当前快照，用 viewFromState 建场景，导演不回放历史', async () => {
     const { hub, match, room } = await vsBot();
     match.submit(match.legalActions()!.find((a) => a.kind === 'mulligan')!);
@@ -162,5 +277,29 @@ describe('RemoteMatch', () => {
     await settle();
     expect(match.result).toEqual({ winner: 0, reason: 'abandon' });
     expect(match.opponent?.out).toBe(true);
+  });
+
+  it('对手断线中平台的广播没带宽限（runner 重启后恢复）：沿用之前的到期时刻；对手重连就清掉', async () => {
+    const { la, lb, a } = await humans();
+    lb.disconnect();
+    await settle();
+    // 到期时刻按 RemoteMatch 自己的时钟（Date.now）算，假平台给的 graceIn 是 60 秒
+    const graceUntil = a.opponent!.graceUntil!;
+    expect(graceUntil - Date.now()).toBeGreaterThan(55_000);
+    const seatsMsg = (connected: boolean, graceIn: number | null): SeatsBroadcast => ({
+      version: a.version,
+      started: true,
+      seats: [
+        { seat: 0, kind: 'human', player: 'alice', nickname: '甲', connected: true, graceIn: null, out: false },
+        { seat: 1, kind: 'human', player: 'bob', nickname: '乙', connected, graceIn, out: false },
+      ],
+    });
+    la.emit('seats', seatsMsg(false, null));
+    expect(a.opponent).toMatchObject({ connected: false, graceUntil, out: false });
+    la.emit('seats', seatsMsg(true, null));
+    expect(a.opponent).toMatchObject({ connected: true, graceUntil: null });
+    // 之前在线、第一条断线广播就没带宽限：没有到期时刻可用，是 null（界面直接显示正在判定）
+    la.emit('seats', seatsMsg(false, null));
+    expect(a.opponent).toMatchObject({ connected: false, graceUntil: null });
   });
 });

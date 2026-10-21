@@ -4,6 +4,8 @@
 // - submit 先在快照上 checkAction，不合法直接返回原因、不发送；合法就发出去，不改本地任何东西，等批次。
 // - 批次到了更新 visible、version、deadline，把事件交给导演。对手的动作一批批到，自然就是对手的节奏，没有 ai_thinking。
 // - 动作被拒（和计时到点撞车的 stale、apply 拒了的 invalid）解除在途、控制台记警告；其余拒绝码是缺陷，报错。
+//   例外是换牌阶段的 stale：双方同时提交换牌时后到的那条被拒，而换牌动作在新 version 上仍然合法（对手的换牌不改我的手牌），
+//   所以等下一条批次更新 version 后把同一个动作自动重发一次，玩家不用再点；只重发一次，再被拒就按上面处理。
 // - 页面刷新后的第一条批次是 cause 为 resume 的当前快照：用 viewFromState 建场景，不回放历史。
 // - 座位广播更新对手的昵称和在场状态，结束广播给出结果的原因。都不进导演队列。
 import { checkAction, listLegalActions, type Action, type GameState, type Side } from '../engine';
@@ -14,8 +16,12 @@ import type { PresentationEvent } from '../presentation/events';
 import { initialView, viewFromState, type ViewState } from '../presentation/viewState';
 import type { MatchSeat } from './seat';
 
-// 对手的状态（界面横幅、加载页、结算面板用）。graceUntil 是断线判负的到期时刻（本地时钟），在线为 null
+// 对手的状态（界面横幅、加载页、结算面板用）。graceUntil 是断线判负的到期时刻（本地时钟）：在线为 null；断线但平台的广播
+// 没带宽限（runner 重启后恢复的广播是这样）也为 null，这时判负由平台做、界面显示"正在判定"
 export type Opponent = { nickname: string | null; kind: 'human' | 'bot'; connected: boolean; graceUntil: number | null; out: boolean };
+
+// 动作被拒 stale 后怎么办：none 解除在途；now 马上再发（认输，任何 version 上都合法）；next_version 等 version 更新后重发一次（换牌）
+type Retry = 'none' | 'now' | 'next_version';
 
 export class RemoteMatch implements MatchSeat {
   readonly side: Side;
@@ -41,6 +47,8 @@ export class RemoteMatch implements MatchSeat {
   private pending: PresentationEvent[][] = [];
   // 在途的动作：发出时的 version。收到更新的批次或被拒时解除
   private inflight: { version: number } | null = null;
+  // 换牌撞车被拒 stale、等着重发的动作：version 超过 after 的批次到了就发。等的期间输入照样锁定
+  private resend: { action: MatchAction; after: number } | null = null;
   private readonly unsubscribe: (() => void)[];
   private readonly now: () => number;
 
@@ -90,9 +98,9 @@ export class RemoteMatch implements MatchSeat {
     return { winner: g.winner, reason: this.reason ?? 'game' };
   }
 
-  // 有一个动作已发出、还没回包
+  // 有一个动作已发出、还没回包（或者撞车后等着重发）
   get waiting(): boolean {
-    return this.inflight !== null;
+    return this.inflight !== null || this.resend !== null;
   }
 
   start(director: Director): void {
@@ -110,7 +118,7 @@ export class RemoteMatch implements MatchSeat {
   }
 
   legalActions(): Action[] | null {
-    if (!this.director || this.director.busy || this.inflight || !this.humanToAct()) return null;
+    if (!this.director || this.director.busy || this.waiting || !this.humanToAct()) return null;
     return listLegalActions(this.visible, this.side);
   }
 
@@ -118,7 +126,8 @@ export class RemoteMatch implements MatchSeat {
     if (!this.legalActions()) return 'input locked';
     const err = checkAction(this.visible, action);
     if (err) return err;
-    this.send(action);
+    // 换牌阶段双方同时提交会撞车（online.md 4.4）：被拒 stale 就等新批次到了重发一次。对局阶段的 stale 不重发
+    this.send(action, this.visible.phase === 'mulligan' && action.kind === 'mulligan' ? 'next_version' : 'none');
     return null;
   }
 
@@ -126,7 +135,7 @@ export class RemoteMatch implements MatchSeat {
   // 和别的动作撞车被拒 stale 时再发一次
   concede(): void {
     if (this.over) return;
-    this.send({ kind: 'concede' }, true);
+    this.send({ kind: 'concede' }, 'now');
   }
 
   stop(): void {
@@ -137,13 +146,13 @@ export class RemoteMatch implements MatchSeat {
     this.onResync = null;
   }
 
-  private send(action: MatchAction, retryStale = false): void {
+  private send(action: MatchAction, retry: Retry): void {
     const token = { version: this.version };
     if (action.kind !== 'concede') this.inflight = token;
     this.link
       .submit(action)
       .then((rejected) => {
-        if (rejected) this.rejected(action, rejected, token, retryStale);
+        if (rejected) this.rejected(action, rejected, token, retry);
       })
       .catch((err: unknown) => {
         console.error('[online] 发动作失败', action, err);
@@ -151,14 +160,36 @@ export class RemoteMatch implements MatchSeat {
       });
   }
 
-  private rejected(action: MatchAction, r: Rejected, token: { version: number }, retryStale: boolean): void {
+  private rejected(action: MatchAction, r: Rejected, token: { version: number }, retry: Retry): void {
     if (r.code === 'stale' || r.code === 'invalid') console.warn(`[online] 动作被拒（${r.code}）`, action, r.reason);
     else console.error(`[online] 动作被拒（${r.code}）`, action, r.reason);
-    if (retryStale && r.code === 'stale' && !this.over) {
-      this.send(action);
-      return;
+    if (r.code === 'stale' && !this.over) {
+      if (retry === 'now') {
+        this.send(action, 'now');
+        return;
+      }
+      if (retry === 'next_version') {
+        // 被拒说明平台已经执行了别的一步：那一步的批次可能先到了（adopt 已经解除在途、version 已更新），也可能还在路上。
+        // 先记下要重发的再解除在途：release 会通知界面刷新，这时 waiting 仍为真，输入不会放开
+        this.resend = { action, after: token.version };
+        this.release(token);
+        this.flushResend();
+        return;
+      }
     }
     this.release(token);
+  }
+
+  // 撞车后的重发：version 更新了、还在换牌阶段、我还没提交、动作在新快照上仍然合法才发。只发这一次（retry 为 none），
+  // 再被拒就按普通的被拒处理。局面变了（比如计时到点替我交了）就不发，等着重发的动作丢掉
+  private flushResend(): void {
+    const r = this.resend;
+    if (!r || this.version <= r.after) return;
+    this.resend = null;
+    if (this.inflight || this.visible.phase !== 'mulligan' || !this.humanToAct() || checkAction(this.visible, r.action) !== null) return;
+    console.info('[online] 换牌和对手同时提交，按新 version 重发', r.action);
+    this.send(r.action, 'none');
+    this.onChange?.();
   }
 
   // 解除在途（只解除这一个动作的；之后又发了新动作的不动）
@@ -196,18 +227,16 @@ export class RemoteMatch implements MatchSeat {
     this.deadline = toDeadline(b.deadlineIn, this.now);
     // 任何新的一步都让在途的动作有了结果：是它自己就执行了，不是它（计时到点抢先）它会被拒 stale
     if (this.inflight && b.version > this.inflight.version) this.inflight = null;
+    this.flushResend();
   }
 
   private applySeats(s: SeatsBroadcast): void {
     const opp: SeatInfo | undefined = s.seats.find((x) => x.seat !== this.side);
     if (!opp) return;
-    this.opponent = {
-      nickname: opp.nickname,
-      kind: opp.kind,
-      connected: opp.connected,
-      graceUntil: opp.connected || opp.graceIn === null ? null : this.now() + opp.graceIn,
-      out: opp.out,
-    };
+    const prev = this.opponent;
+    // 断线中的广播没带宽限（平台 runner 重启后恢复的广播是这样）：沿用上一条的到期时刻，倒计时不跳没；之前也没有就是 null
+    const graceUntil = opp.connected ? null : opp.graceIn !== null ? this.now() + opp.graceIn : prev && !prev.connected ? prev.graceUntil : null;
+    this.opponent = { nickname: opp.nickname, kind: opp.kind, connected: opp.connected, graceUntil, out: opp.out };
   }
 }
 

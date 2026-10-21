@@ -39,7 +39,8 @@ export type OnlineMatchUi = {
   opponentClass: HeroClass;
   phase: 'mulligan' | 'playing' | 'over';
   deadline: number | null; // 当前计时的到期时刻（本地时钟）
-  graceUntil: number | null; // 对手断线判负的到期时刻（本地时钟），对手在线为 null
+  opponentOffline: boolean; // 对手断线、还没被判负：顶部横幅显示中
+  graceUntil: number | null; // 对手断线判负的到期时刻（本地时钟）；对手在线、或者平台的广播没带宽限时为 null
 };
 
 export type UiState = {

@@ -97,8 +97,8 @@ class FakeHub {
   matches: FakeMatch[] = [];
   viewers = 0;
   inits: (Sdk.MedeoOptions | undefined)[] = [];
-  // 本地 runner 的 /_medeo/me 回的是没拍平的形状
-  nestedViewer = false;
+  // 身份接口回答里的 subject；空字符串模拟平台的回答坏了
+  subject = 'v_me';
   private n = 0;
 
   newMatch(): FakeMatch {
@@ -117,9 +117,9 @@ class FakeHub {
       local: true,
       viewer: () => {
         hub.viewers++;
-        const viewer = { kind: 'anonymous' as const, subject: 'v_me', scopes: [], profile: null, previous_subject: null };
+        const viewer = { kind: 'anonymous' as const, subject: hub.subject, scopes: [], profile: null, previous_subject: null };
         const app = { appKey: 'local', capabilities: { realtime: false, games: true, viewer_sign_in: false } };
-        return Promise.resolve((hub.nestedViewer ? { viewer, app } : { ...viewer, app }) as Sdk.Viewer);
+        return Promise.resolve({ ...viewer, app } as Sdk.Viewer);
       },
     };
     const games = (_m: Sdk.Medeo, options: Sdk.GamesOptions = {}): Sdk.Games => ({
@@ -225,8 +225,8 @@ describe('建房、进房', () => {
     expect(storedKey()).toBe('k1');
     await link.identity();
     expect(sdkLoads).toBe(1);
-    // 不用 SDK 的本机模式：身份和公开列表都要平台的
-    expect(hub.inits).toEqual([{ local: false }]);
+    // init 不带选项，本机模式与否由 SDK 自己按 host 和本地 runner 的 cookie 定
+    expect(hub.inits).toEqual([undefined]);
   });
 
   it('公开的房间才带 visibility；不带 bots 时不传空数组', async () => {
@@ -260,10 +260,10 @@ describe('建房、进房', () => {
     }
   });
 
-  it('身份：云端平铺的和本地 runner 没拍平的回答都认得出主体', async () => {
+  it('身份：主体是身份接口回答里的 subject；回答里没有主体就是 unavailable', async () => {
     expect(await link.identity()).toEqual({ player: 'v_me', nickname: null });
-    hub.nestedViewer = true;
-    expect(await link.identity()).toEqual({ player: 'v_me', nickname: null });
+    hub.subject = '';
+    await expect(link.identity()).rejects.toMatchObject({ code: 'unavailable' });
   });
 
   it('SDK 加载失败：抛 unavailable，下一次再试着加载', async () => {

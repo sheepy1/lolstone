@@ -116,16 +116,14 @@ export class AppShell {
 }
 
 // 托管平台的 SDK 脚本在这个 host 上有没有（docs/online.md 3.3）。先看 /_medeo/me 有没有 JSON 的回答（平台和本地 runner 都答，
-// 开发服务器和静态托管对不存在的路径回首页，答的是 HTML），有再找 SDK 脚本 /_medeo/sdk/v1.js。请求都带上 text/html 的 accept，
-// 没有平台的 host 回的是首页而不是 404，控制台不留报错。本地 runner 还不发 SDK 文件，开发时由开发服务器从仓库外的文件代发
-// （src/dev/vitePlugin.ts 的 /__dev/medeo-sdk.js），开发构建里先试它
+// 开发服务器和静态托管对不存在的路径回首页，答的是 HTML），有再找 SDK 脚本 /_medeo/sdk/v1.js（平台和本地 runner 都发，GET 和 HEAD）。
+// 请求都带上 text/html 的 accept，没有平台的 host 回的是首页而不是 404，控制台不留报错。
+// 直接从 Vite 的端口打开页面时两个探测都答首页，联机入口不出现，和单机一样；要联机就从本地 runner 的端口打开。
 const SDK_URL = '/_medeo/sdk/v1.js';
-const DEV_SDK_URL = '/__dev/medeo-sdk.js';
 
 async function findPlatformSdk(): Promise<string | null> {
   if (!(await answersJson('/_medeo/me'))) return null;
-  for (const url of import.meta.env.DEV ? [DEV_SDK_URL, SDK_URL] : [SDK_URL]) if (await isScript(url)) return url;
-  return null;
+  return (await isScript(SDK_URL)) ? SDK_URL : null;
 }
 
 async function isScript(url: string): Promise<boolean> {

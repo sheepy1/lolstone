@@ -1727,3 +1727,46 @@ SDK 的类型拷了一份在 `src/net/sdkTypes.d.ts`。RemoteMatch、联机界�
 | 逻辑模块 | 105 KB | 105.2 KB |
 
 `pnpm test`、`pnpm typecheck`、`pnpm build`、`pnpm build:logic` 通过；新加 `tests/platform-link.test.ts`（假的全局 Medeo 对象，25 个用例）。
+
+## 去掉接 SDK 时为本地 runner 加的三处兜底（2026-10-21）
+
+上一节接真平台时本地 runner 还有三个缺口（不发 SDK 文件、身份接口的回答没拍平、SDK 在 localhost 上默认进本机模式），lolstone 加了三处兜底顶着。
+平台已经把三个缺口都补上了：本地 runner 发 `/_medeo/sdk/v1.js`（GET 和 HEAD 都答，和云端同一个文件、同样的缓存头）；`/_medeo/me` 回拍平的
+`{ kind, subject, scopes, profile, previous_subject, app }`；经 runner 打开的页面 SDK 默认不进本机模式（runner 在每个回包里种 cookie
+`medeo_dev=<端口>`，SDK 拿它和页面的端口比对）。于是把兜底删掉，代码只剩生产路径：
+
+- Vite 代发 SDK 的那一套（`src/dev/vitePlugin.ts` 的 `/__dev/medeo-sdk.js`、`vite.config.ts` 读 `LOLSTONE_SDK_FILE`、`src/app/shell.ts` 开发构建先试代发地址）
+  全部删掉，探测只认 `/_medeo/sdk/v1.js`。`.env.local` 里的 `LOLSTONE_SDK_FILE` 没人读了，可以删。
+- `init({ local: false })` 改成 `init()`，用 SDK 的默认。页面只在探到平台（身份接口回 JSON、SDK 文件在）时才载联机代码，所以走到 init 的页面都是
+  平台或本地 runner 发的，SDK 不会进本机模式。
+- `/_medeo/me` 只认拍平的形状，`{ viewer: { subject } }` 的兼容删掉；回答里没有 subject 按连不上平台处理（unavailable）。
+- 测试跟着改（`tests/platform-link.test.ts`）：init 的断言改成不带选项，"两种形状都认"改成"没有主体就是 unavailable"。
+
+**从 Vite 的端口直接打开页面不会误导**：主菜单没有"联机"按钮，和单机一样。原因是探测的第一步 `/_medeo/me` 被 Vite 回成首页（text/html），
+探测就停了，SDK 脚本根本不加载，不会出现"入口在、点了连不上"的情况。要联机就从本地 runner 的端口打开（runner 把其他路径代理到 Vite）。
+浏览器的 cookie 不分端口，Vite 端口的页面也看得到 runner 种的 `medeo_dev`，但探测不过就走不到 SDK，SDK 自己也会比对端口。
+
+### 新版本地 runner 上重跑的冒烟
+
+内置浏览器；这次面板一直是隐藏的，rAF 几乎不走，每个标签页用 `setInterval(() => lolstone.gsap.ticker.tick(), 16)` 推时钟，定时器不受限。
+
+| 项 | 结果 |
+| --- | --- |
+| 两个标签页各带 `?autoplay` | 先开的建房，后开的从公开列表进去；第 1 局 209 步 54 回合到结算，1.5 秒后 0 号位建下一局、1 号位进房，第 2 局 133 步 32 回合到结算 |
+| 手动建房、进房、打完一局 | 昵称"甲"建房拿到邀请码，"乙"输小写邀请码进房（去空格、转大写），座位广播里两边都有名字，双方到换牌；控制台 `lolstone.autoplay()` 打到结算，192 步 48 回合，结算面板"盖伦 对阵 乙"；结束后拿到整局记录（192 步，source 全是 action） |
+| 刷新续局 | 甲在第 107 步刷新（地址不带 autoplay）：主菜单弹"还有一局没打完 · 对局还在进行。续上接着打，离开就算认输，对手获胜。"，点"续上"后按当前快照建场景（version 107），接着打到 192 结算 |
+| 人对 bot | `?autoplay&bot`：连打 6 局都到结算（64、36、37 步……），每局结束后拿到整局记录 |
+| 从 Vite 端口直接打开 | 见上，没有联机入口，只发了一次 `/_medeo/me`（回的是首页），SDK 没加载；控制台 0 报错 |
+| `?online=fake&autoplay`、单机 `?autoplay`（Vite 端口） | 各打完一局到结算（13 回合、12 回合），0 报错 |
+| 控制台 | 我们的页面 0 条报错。只有一条不是页面的问题：人对 bot 那个标签页启动时续局那一次请求（POST `/_medeo/matches/<旧 key>/grants`）回 404，浏览器记成资源加载失败；旧 key 是上一次会话留在这个浏览器 localStorage 里的、指向早已不存在的局，页面按"没有没打完的局"处理，和上一节记的一样 |
+
+### 体积和检查
+
+| | 上一节（a1a32ac） | 本分支 |
+| --- | --- | --- |
+| 首屏 JS（gzip -9） | `index` 102,396 B + `cards` 14,956 B | `index` 102,380 B + `cards` 14,956 B（少的 16 B 是探测那几行） |
+| 按需的 chunk | `online` 4,637 B、`platformLink` 2,981 B、`fakeLink` 4,072 B | `online` 4,639 B、`platformLink` 2,956 B、`fakeLink` 4,073 B |
+| CSS | 13,555 B | 13,555 B |
+| 逻辑模块 | 105.2 KB | 105.2 KB |
+
+`pnpm test`（728）、`pnpm typecheck`、`pnpm build`、`pnpm build:logic` 通过；生产构建里 grep 不到 `__dev/medeo-sdk`、`local: false`（压缩后的 `local:!1` 也没有）。

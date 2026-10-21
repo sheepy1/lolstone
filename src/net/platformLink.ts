@@ -227,14 +227,12 @@ export class PlatformLink implements MatchLink {
     }
   }
 
-  // 平台认的我是谁（匿名主体）。云端的回答是平铺的（SDK 的 Viewer 类型），本地 runner 回的是没拍平的 { viewer: { subject } }，
-  // 两种都认
+  // 平台认的我是谁（匿名主体）：身份接口回答里的 subject（SDK 的 Viewer 类型，云端和本地 runner 一个形状）
   private async subject(): Promise<string> {
     const { medeo } = await this.load();
-    const viewer = (await medeo.viewer().catch(unavailable)) as Sdk.Viewer & { viewer?: { subject?: unknown } };
-    const subject = typeof viewer.subject === 'string' ? viewer.subject : viewer.viewer?.subject;
+    const { subject } = await medeo.viewer().catch(unavailable);
     if (typeof subject !== 'string' || !subject) {
-      console.error('[platform] 平台的回答里没有主体', viewer);
+      console.error('[platform] 平台的回答里没有主体');
       throw new LinkError('unavailable');
     }
     return subject;
@@ -242,9 +240,9 @@ export class PlatformLink implements MatchLink {
 
   private load(): Promise<Api> {
     if (!this.api) {
-      // 不用 SDK 的本机模式（localhost 上默认开）：那是房主模式用 BroadcastChannel 在标签页之间玩的，身份是每个标签页随机的；
-      // 这里永远对着真平台（云端或本地 runner）说话，身份要平台认的那个，公开列表也要平台的
-      const loading = this.options.sdk().then((sdk) => ({ sdk, medeo: sdk.init({ local: false }) }));
+      // 用 SDK 的默认：云端和经本地 runner 打开的页面都对着平台说话（runner 靠回包里的 cookie 让 SDK 认出自己）；
+      // 这里的页面只在探到平台时才会走到这一步（shell.ts 的 findPlatformSdk），SDK 不会进它的本机模式
+      const loading = this.options.sdk().then((sdk) => ({ sdk, medeo: sdk.init() }));
       loading.catch(() => {
         if (this.api === loading) this.api = null;
       });

@@ -1770,3 +1770,67 @@ SDK 的类型拷了一份在 `src/net/sdkTypes.d.ts`。RemoteMatch、联机界�
 | 逻辑模块 | 105.2 KB | 105.2 KB |
 
 `pnpm test`（728）、`pnpm typecheck`、`pnpm build`、`pnpm build:logic` 通过；生产构建里 grep 不到 `__dev/medeo-sdk`、`local: false`（压缩后的 `local:!1` 也没有）。
+
+## 云端验收发现的三件小事（2026-10-21）
+
+STG 上的九项验收全过（见上一节），顺带发现三件 lolstone 侧的小事。原因和做法：
+
+### 三个音效每局 404
+
+`card.land_heavy`、`card.silence`、`combat.hit_low` 三个键在音效表里，每页进对局各报一次 "Failed to load resource"。原因是 2026-10-20
+补齐分镜的三处声音时把候选写进了 `scripts/data/audio-sources.json`、NOTES 里也记了选的素材，但没有重跑 `normalize:audio`：
+`public/audio/manifest.json` 的 generatedAt 还是 10-19 的，三个成品从来没生成过。`normalize-audio.ts` 对 mix（几路 amix 叠成一路）和
+lowpass（两级 lowpass，24 dB/倍频程）本来就实现了，脚本不用改。这次在 worktree 里 `pnpm fetch:sfx`（31 个来源全部已在，0 下载）、
+`pnpm normalize:audio --only sfx`：处理 3 个、跳过 42 个，清单只多了这三条和新的 generatedAt，进 git 的是 6 个成品文件和清单。
+
+| 键 | 素材 | 时长 | 最大瞬时响度（LUFS） | 150 Hz 以下 / 2.5 kHz 以上占整段的 RMS | 和同类比 |
+| --- | --- | --- | --- | --- | --- |
+| `card.land_heavy` | slam_02 叠 impactSoft_heavy_001（-3 dB） | 0.58 s | -18.6 | -2.2 dB / -16.3 dB | `card.land`：0.53 s、-19.1、-3.0 dB / -14.9 dB。同一个砸落声，低频多 0.8 dB、长 0.05 秒、响 0.5 LU |
+| `card.silence` | phaserDown3 过 2.5 kHz 低通 | 0.41 s | -18.0 | -14.8 dB / -28.3 dB | 原素材 2.5 kHz 以上是 -24.1 dB，低通后再少 4 dB；时长对上 E16 的 400 ms |
+| `combat.hit_low` | impactSoft_heavy_003 | 0.52 s | -19.1 | -0.4 dB / -61.7 dB | 几乎全是 150 Hz 以下、2.5 kHz 以上没有东西，是纯粹的低频层；`combat.hit_heavy` 是 -2.1 dB / -43.5 dB |
+
+听感按频段能量核过：低频层和消音声都像它们的用途；重落地和轻落地的差别不大（设计就是"同一个砸落声变沉"），嫌不够分明按
+"补齐分镜的三处声音"那节说的把 `card.land` 的 volume 调到 0.8。
+
+两个坑：worktree 里没有 `assets-src/`（不进 git），做法是 `mkdir assets-src && ln -s <主检出>/assets-src/audio assets-src/audio`，
+处理记录 `normalize-state.json` 也就写在主检出那一份里；worktree 的 node_modules 缺 esbuild（后来加的 devDependency），`pnpm install` 一次。
+
+### 换牌撞车后真人要再点一次
+
+双方同时提交换牌，平台按 version 串行、后到的那条拒 stale（online.md 4.4 原来写"撞车只有一种情况"，漏了换牌阶段双方都能动）。
+客户端原来只解除在途、记警告，真人要再点一次确认（自动驾驶是自己重发的，所以本地 runner 上没看出来）。
+
+换牌动作在新 version 上仍然合法（对手的换牌不改我的手牌），所以 `RemoteMatch` 现在把换牌阶段发出的 mulligan 动作被拒 stale 后记下来，
+等 version 超过发出时那个的批次到了（被拒的回包和那条批次谁先到都有可能，两种顺序都处理）再查一遍：还在换牌阶段、我还没提交、动作在
+新快照上合法，就把同一个动作再发一次。等的期间 `waiting` 为真、输入照样锁定，不会出现"解锁又锁上"的闪动，也不会和玩家再点一次撞上。
+只重发一次，再被拒按原来的处理；局面变了（比如计时到点替我交了）就不发；对局阶段的 stale 不重发。`send` 的第二个参数从
+`retryStale: boolean` 改成 `Retry`（none、now、next_version），认输是 now。online.md 3.3、4.4 和修订记录（v0.4.6）跟着改。
+
+`tests/remote-match.test.ts` 加三个用例：双方同时提交，后到的那方自动重发成功、两边都换完牌；被拒比批次先到时锁定不放、
+批次到了才重发且只一次（用一个扣住批次的 MatchLink 包装）；对局阶段和回合计时到点撞车的 stale 只解除在途、不重发。
+
+### 判负到点后横幅消失
+
+断线横幅原来倒数到 0 后显示"0 秒后判负"，平台判负晚到时（验收里撞上 runner 重启，65 秒后才结算）没有别的提示；而且 runner 重启后
+恢复的座位广播里对手是 `connected:false, graceIn:null`，客户端把 graceUntil 清成 null，横幅直接消失。现在：
+
+- `OnlineMatchUi` 加 `opponentOffline`（对手断线且还没被判负），横幅按它显示、不再按 graceUntil 是否为 null。
+- `src/ui/onlineBanner.ts` 的纯函数决定文案：宽限没到倒数剩几秒；到 0、或者没有宽限信息，显示"对手已断线，正在判定……"，直到结束广播
+  （结算面板接手）或对手重连（座位广播 connected 变回 true，横幅清掉）。
+- `RemoteMatch.applySeats` 在断线中收到不带宽限的广播时沿用上一条的到期时刻，倒计时不会跳没；之前就在线、第一条断线广播就没带宽限的，
+  到期时刻是 null，直接显示正在判定。
+
+测试：`tests/online-hud.test.ts`（文案的四种情况）和 remote-match 里一个用例（宽限沿用、重连清掉）。online.md 3.4 的对局行跟着改。
+
+### 体积和检查
+
+| | main（2349911） | 本分支 |
+| --- | --- | --- |
+| 首屏 JS（gzip -9） | `index` 102,380 B + `cards` 14,956 B | `index` 102,457 B（+77 B，横幅的判定逻辑在首包的 OnlineHud 里）+ `cards` 14,956 B |
+| 按需的 chunk | `online` 4,639 B | `online` 4,859 B（+220 B，换牌重发） |
+| CSS | `index-HSnZdCax.css` | 同名同内容 |
+| 音效文件 | 84 | 90（+6） |
+
+`pnpm test`（733，比上一节多 5 个）、`pnpm typecheck`、`pnpm build` 通过。开发服务器里 `?autoplay` 单机打完一局到结算：三个文件都是 200，
+`sfxLog` 里出现 `card.land_heavy`、`card.silence`、`combat.hit_low`，控制台 0 报错、0 个 404；`?online=fake` 建房到结算照常，
+断线横幅倒数到 0 后变成"正在判定……"，判负到了换成结算面板。
